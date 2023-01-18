@@ -1,0 +1,54 @@
+enum BadgeStatus {
+  InReview
+  Approved
+  Challenged
+  Removed
+}
+
+type Emitter @entity {
+  id: Bytes! # emitter address
+  creator: Bytes! # address
+  metadata: String!
+  # isVerified: Boolean!
+  # badgeTypes: [BadgeType!] @derivedFrom(field: "emitter")
+}
+
+type BadgeType @entity {
+  id: ID! # BadgeType id
+  metadataURL: String!
+  controllerName: String!
+  mintCost: BigInt!
+  mintFee: BigInt!
+  validFor: BigInt!
+  paused: Boolean!
+  emitter: Emitter!
+
+  klerosBadge: KlerosBadgeType @derivedFrom(field: "badgeType")
+
+  # mintedBadges: [Badge!]! @derivedFrom(field: "badgeType")
+  # badgesMintedAmount: BigInt!
+}
+
+type KlerosBadgeType @entity {
+  id: ID! # BadgeType id
+  badgeType: BadgeType!
+  klerosMetadataURL: String!
+  klerosTCRList: Bytes!
+  badgesMintedAmount: BigInt!
+  submissionBaseDeposit: BigInt!
+  challengePeriodDuration: BigInt!
+}
+
+# type Badge @entity {
+#   id: ID!
+#   badgeType: BadgeType!
+#   evidenceMetadataUrl: String
+#   status: BadgeStatus!
+#   user: User!
+# }
+
+# type User @entity {
+#   id: Bytes!
+#   badges: [Badge!]!
+#   mintedBadges: BigInt!
+# }

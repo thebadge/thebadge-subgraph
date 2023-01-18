@@ -1,0 +1,59 @@
+specVersion: 0.0.4
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: TheBadge
+    network: goerli
+    # network: gnosis
+    source:
+      address: "0xea198D80a35eD4E5E30D0471d1361e7CF0090Bc6" # goerli
+      startBlock: 8300887
+      # address: "" # gnosis
+      # startBlock:  # gnosis
+      abi: TheBadge
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - Emitter
+        - BadgeType
+      abis:
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+      eventHandlers:
+        - event: EmitterRegistered(indexed address,indexed address,string)
+          handler: handleEmitterRegistered
+        - event: BadgeTypeCreated(address,uint256,string)
+          handler: handleBadgeTypeCreated
+      file: ./src/theBadge.ts
+
+  - kind: ethereum
+    name: KlerosBadgeTypeController
+    network: goerli
+    # network: gnosis
+    source:
+      address: "0xBAE7c07155bA9A789a2fD0f6194c89Bc373838ca" # goerli
+      startBlock: 8300888
+      # address: "" # gnosis
+      # startBlock:  # gnosis
+      abi: KlerosBadgeTypeController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - BadgeType
+        - KlerosBadgeType
+      abis:
+        - name: KlerosBadgeTypeController
+          file: ./abis/KlerosBadgeTypeController.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+        - name: Arbitror
+          file: ./abis/Arbitror.json
+      eventHandlers:
+        - event: NewKlerosStrategy(indexed uint256,indexed address,string)
+          handler: handleNewKlerosBadgeType
+      file: ./src/theBadge.ts
