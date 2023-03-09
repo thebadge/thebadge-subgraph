@@ -1,16 +1,8 @@
 enum BadgeStatus {
   InReview
   Approved
-  Challenged
-  Removed
-}
-
-type Emitter @entity {
-  id: Bytes! # emitter address
-  creator: Bytes! # address
-  metadata: String!
-  # isVerified: Boolean!
-  # badgeTypes: [BadgeType!] @derivedFrom(field: "emitter")
+  Rejected
+  Revoked
 }
 
 type BadgeType @entity {
@@ -18,15 +10,13 @@ type BadgeType @entity {
   metadataURL: String!
   controllerName: String!
   mintCost: BigInt!
-  mintFee: BigInt!
   validFor: BigInt!
   paused: Boolean!
-  emitter: Emitter!
+  creator: User!
 
   klerosBadge: KlerosBadgeType @derivedFrom(field: "badgeType")
-
-  # mintedBadges: [Badge!]! @derivedFrom(field: "badgeType")
-  # badgesMintedAmount: BigInt!
+  mintedBadges: [Badge!]! @derivedFrom(field: "badgeType")
+  badgesMintedAmount: BigInt!
 }
 
 type KlerosBadgeType @entity {
@@ -34,21 +24,41 @@ type KlerosBadgeType @entity {
   badgeType: BadgeType!
   klerosMetadataURL: String!
   klerosTCRList: Bytes!
-  badgesMintedAmount: BigInt!
   submissionBaseDeposit: BigInt!
+  # badgesMintedAmount: BigInt!
+  # validFor: BigInt!
   challengePeriodDuration: BigInt!
 }
 
-# type Badge @entity {
-#   id: ID!
-#   badgeType: BadgeType!
-#   evidenceMetadataUrl: String
-#   status: BadgeStatus!
-#   user: User!
-# }
+type KlerosChallenge @entity {
+  id: ID!
+  tcr: String!
+  arbitrator: String!
+  rules: Boolean!
+  evidences: [String!]!
+}
 
-# type User @entity {
-#   id: Bytes!
-#   badges: [Badge!]!
-#   mintedBadges: BigInt!
-# }
+type Badge @entity {
+  id: ID!
+  externalId: Bytes
+  badgeType: BadgeType!
+  evidenceMetadataUrl: String
+  isChallenged: Boolean!
+  status: BadgeStatus!
+  receiver: User! # The receiver of the badge
+  requestedBy: Bytes! # The address who initiated the request.
+  reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
+  # challengeEvidences: String[!]
+}
+
+type User @entity {
+  id: ID!
+  badges: [Badge!] @derivedFrom(field: "receiver")
+  mintedBadgesAmount: BigInt!
+  # creator
+  isCreator: Boolean!
+  isVerified: Boolean!
+  createdBadgeTypes: [BadgeType!] @derivedFrom(field: "creator")
+  creatorMetadata: String
+  createdBadgesTypesAmount: BigInt!
+}

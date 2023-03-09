@@ -1,26 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_theBadge",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_arbitrator",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_tcrFactory",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "inputs": [],
     "name": "KlerosBadgeTypeController__claimBadge_insufficientBalance",
     "type": "error"
@@ -65,20 +44,14 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "callee",
-        "type": "address"
-      },
-      {
-        "indexed": true,
         "internalType": "uint256",
-        "name": "badgeTypeId",
+        "name": "badgeId",
         "type": "uint256"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "to",
+        "name": "wallet",
         "type": "address"
       },
       {
@@ -86,9 +59,28 @@
         "internalType": "string",
         "name": "evidence",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
       }
     ],
-    "name": "MintKlerosBadge",
+    "name": "BadgeChallenged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
     "type": "event"
   },
   {
@@ -97,7 +89,7 @@
       {
         "indexed": true,
         "internalType": "uint256",
-        "name": "strategyId",
+        "name": "badgeId",
         "type": "uint256"
       },
       {
@@ -113,7 +105,44 @@
         "type": "string"
       }
     ],
-    "name": "NewKlerosStrategy",
+    "name": "NewKlerosBadgeType",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "callee",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "badgeTypeId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "klerosItemID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "evidence",
+        "type": "string"
+      }
+    ],
+    "name": "RequestKlerosBadge",
     "type": "event"
   },
   {
@@ -207,6 +236,29 @@
         "internalType": "address",
         "name": "account",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "evidence",
+        "type": "string"
+      }
+    ],
+    "name": "challengeBadge",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "badgeId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
       }
     ],
     "name": "claimBadge",
@@ -230,6 +282,53 @@
     "name": "createBadgeType",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "badgeId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getChallengeValue",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_theBadge",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_arbitrator",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tcrFactory",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

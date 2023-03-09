@@ -7,8 +7,8 @@ dataSources:
     network: goerli
     # network: gnosis
     source:
-      address: "0xea198D80a35eD4E5E30D0471d1361e7CF0090Bc6" # goerli
-      startBlock: 8300887
+      address: "0x059a97A4ad4D148B39209Fa9Be262E6E00E97804" # goerli
+      startBlock: 8532474
       # address: "" # gnosis
       # startBlock:  # gnosis
       abi: TheBadge
@@ -25,8 +25,10 @@ dataSources:
       eventHandlers:
         - event: EmitterRegistered(indexed address,indexed address,string)
           handler: handleEmitterRegistered
-        - event: BadgeTypeCreated(address,uint256,string)
+        - event: BadgeTypeCreated(address,uint256,string,uint256)
           handler: handleBadgeTypeCreated
+        - event: BadgeStatusUpdated(indexed uint256,indexed address,uint8)
+          handler: handleBadgeStatusUpdated
       file: ./src/theBadge.ts
 
   - kind: ethereum
@@ -34,8 +36,8 @@ dataSources:
     network: goerli
     # network: gnosis
     source:
-      address: "0xBAE7c07155bA9A789a2fD0f6194c89Bc373838ca" # goerli
-      startBlock: 8300888
+      address: "0x21bDD74A233339Ee96e6f208b118f29FbF27BdEA" # goerli
+      startBlock: 8532474
       # address: "" # gnosis
       # startBlock:  # gnosis
       abi: KlerosBadgeTypeController
@@ -53,7 +55,13 @@ dataSources:
           file: ./abis/LightGeneralizedTCR.json
         - name: Arbitror
           file: ./abis/Arbitror.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
       eventHandlers:
-        - event: NewKlerosStrategy(indexed uint256,indexed address,string)
+        - event: NewKlerosBadgeType(indexed uint256,indexed address,string)
           handler: handleNewKlerosBadgeType
+        - event: RequestKlerosBadge(indexed address,indexed uint256,bytes32,indexed address,string)
+          handler: handleRequestKlerosBadge
+        - event: BadgeChallenged(indexed uint256,indexed address,string,address)
+          handler: handleBadgeChallenged
       file: ./src/theBadge.ts
