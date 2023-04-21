@@ -2,8 +2,8 @@ specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 dataSources:
-  - kind: ethereum
-    name: TheBadge
+  - name: TheBadge
+    kind: ethereum
     network: goerli
     # network: gnosis
     source:
@@ -14,7 +14,7 @@ dataSources:
       abi: TheBadge
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - Emitter
@@ -27,12 +27,12 @@ dataSources:
           handler: handleEmitterRegistered
         - event: BadgeTypeCreated(address,uint256,string,uint256)
           handler: handleBadgeTypeCreated
-        - event: BadgeStatusUpdated(indexed uint256,indexed address,uint8)
-          handler: handleBadgeStatusUpdated
+        - event: BadgeRequested(indexed uint256,indexed address,address,uint8,uint256)
+          handler: handleRequestBadge
       file: ./src/theBadge.ts
 
-  - kind: ethereum
-    name: KlerosBadgeTypeController
+  - name: KlerosBadgeTypeController
+    kind: ethereum
     network: goerli
     # network: gnosis
     source:
@@ -43,8 +43,9 @@ dataSources:
       abi: KlerosBadgeTypeController
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
+      file: ./src/kleros.ts
       entities:
         - BadgeType
         - KlerosBadgeType
@@ -64,4 +65,23 @@ dataSources:
           handler: handleRequestKlerosBadge
         - event: BadgeChallenged(indexed uint256,indexed address,string,address)
           handler: handleBadgeChallenged
-      file: ./src/theBadge.ts
+
+templates:
+  - name: LightGeneralizedTCR
+    kind: ethereum/contract
+    network: goerli
+    source:
+      abi: LightGeneralizedTCR
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/kleros.ts
+      entities:
+        - KlerosBadgeType
+      abis:
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+      eventHandlers:
+        - event: NewItem(indexed bytes32,string,bool)
+          handler: handleDefineIt

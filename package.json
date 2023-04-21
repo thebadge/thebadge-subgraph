@@ -4,12 +4,8 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy:goerli": "graph deploy --product hosted-service nicosampler/thebadge-goerli",
-    "deploy:gnosis": "graph deploy --product hosted-service nicosampler/thebadge-gnosis",
-    "deploy:studio": "graph deploy --studio thebadge",
-    "create-local": "graph create --node http://localhost:8020/ thebadge",
-    "remove-local": "graph remove --node http://localhost:8020/ thebadge",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 thebadge"
+    "deploy:dev": "graph deploy --product hosted-service thebadgeadmin/dev",
+    "deploy:studio": "graph deploy --studio thebadge"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.32.0",

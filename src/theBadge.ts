@@ -1,31 +1,14 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   EmitterRegistered,
   BadgeTypeCreated,
-  BadgeStatusUpdated,
+  BadgeRequested,
 } from "../generated/TheBadge/TheBadge";
-import {
-  NewKlerosBadgeType,
-  RequestKlerosBadge,
-  BadgeChallenged,
-} from "../generated/KlerosBadgeTypeController/KlerosBadgeTypeController";
-import { LightGeneralizedTCR } from "../generated/TheBadge/LightGeneralizedTCR";
-// import { Arbitror } from "../generated/TheBadge/Arbitror";
-import { User, BadgeType, KlerosBadgeType, Badge } from "../generated/schema";
 
-function loadUserOrGetDefault(id: string): User {
-  let user = User.load(id);
-  if (user) {
-    return user;
-  }
-  user = new User(id);
-  user.mintedBadgesAmount = BigInt.fromI32(0);
-  user.createdBadgesTypesAmount = BigInt.fromI32(0);
-  user.isCreator = false;
-  user.isVerified = false;
-  return user;
-}
+// import { Arbitror } from "../generated/TheBadge/Arbitror";
+import { BadgeType, Badge } from "../generated/schema";
+import { loadUserOrGetDefault } from "./utils";
 
 // event EmitterRegistered(address indexed emitter, address indexed registrant, string metadata);
 export function handleEmitterRegistered(event: EmitterRegistered): void {
@@ -43,6 +26,7 @@ export function handleBadgeTypeCreated(event: BadgeTypeCreated): void {
   const theBadge = TheBadge.bind(event.address);
   const badgeTypeInContract = theBadge.badgeType(badgeId);
   const badgeType = new BadgeType(badgeId.toString());
+
   badgeType.paused = false;
   badgeType.metadataURL = theBadge.uri(badgeId);
   badgeType.controllerName = badgeTypeInContract.getControllerName();
@@ -59,97 +43,49 @@ export function handleBadgeTypeCreated(event: BadgeTypeCreated): void {
   user.save();
 }
 
-// event NewKlerosBadgeType(uint256 indexed badgeId, address indexed klerosTCRAddress, string registrationMetadata)
-export function handleNewKlerosBadgeType(event: NewKlerosBadgeType): void {
-  const badgeId = event.params.badgeId;
-
-  // const klerosBadgeTypeController = KlerosBadgeTypeController.bind(
-  //   event.address
-  // );
-  const tcrList = LightGeneralizedTCR.bind(event.params.klerosTCRAddress);
-
-  const klerosBadgeType = new KlerosBadgeType(badgeId.toString());
-  klerosBadgeType.badgeType = badgeId.toString();
-  klerosBadgeType.klerosMetadataURL = event.params.registrationMetadata;
-  klerosBadgeType.klerosTCRList = event.params.klerosTCRAddress;
-  klerosBadgeType.submissionBaseDeposit = tcrList.submissionBaseDeposit();
-  klerosBadgeType.challengePeriodDuration = tcrList.challengePeriodDuration();
-  klerosBadgeType.save();
-}
-
-// event RequestKlerosBadge(address indexed callee, uint256 indexed badgeTypeId, bytes32 klerosItemID, address indexed to, string evidence)
-export function handleRequestKlerosBadge(event: RequestKlerosBadge): void {
-  const userId = event.params.to.toHexString();
+// event BadgeRequested(uint256 indexed badgeId,address indexed account,address registrant,BadgeStatus status,uint256 validFor);
+export function handleRequestBadge(event: BadgeRequested): void {
+  const userId = event.params.account.toHexString();
   const user = loadUserOrGetDefault(userId);
   user.mintedBadgesAmount = user.mintedBadgesAmount.plus(BigInt.fromI32(1));
   user.save();
 
-  // TODO: hardcoded for kleros
-  const klerosBadgeType = KlerosBadgeType.load(
-    event.params.badgeTypeId.toString()
-  );
-
   const badgeId =
-    event.params.to.toHexString() + "-" + event.params.badgeTypeId.toString();
+    event.params.account.toHexString() + "-" + event.params.badgeId.toString();
   const badge = new Badge(badgeId);
-  badge.externalId = event.params.klerosItemID;
-  badge.badgeType = event.params.badgeTypeId.toString();
-  badge.evidenceMetadataUrl = event.params.evidence;
-  badge.status = "InReview";
-  badge.isChallenged = false;
+  badge.badgeType = event.params.badgeId.toString();
   badge.receiver = userId;
-  badge.requestedBy = event.params.callee;
-  // TODO: hardcoded for kleros
-  if (klerosBadgeType) {
-    badge.reviewDueDate = event.block.timestamp.plus(
-      klerosBadgeType.challengePeriodDuration
-    );
-  } else {
-    badge.reviewDueDate = BigInt.fromI32(0);
-  }
+  badge.requestedBy = event.params.registrant;
+  badge.validFor = event.params.validFor.equals(BigInt.fromI32(0))
+    ? BigInt.fromI32(0)
+    : event.block.timestamp.plus(event.params.validFor);
 
   badge.save();
 }
 
 // event BadgeStatusUpdated(uint256 indexed badgeId, address indexed badgeOwner, BadgeStatus status);
-export function handleBadgeStatusUpdated(event: BadgeStatusUpdated): void {
-  const badgeTypeId = event.params.badgeId.toString();
-  const user = event.params.badgeOwner.toHexString();
+// TODO: remove or move to specific controller
+// export function handleBadgeStatusUpdated(event: BadgeStatusUpdated): void {
+//   const badgeTypeId = event.params.badgeId.toString();
+//   const user = event.params.badgeOwner.toHexString();
 
-  const badgeId = user + "-" + badgeTypeId;
-  const badge = Badge.load(badgeId);
+//   const badgeId = user + "-" + badgeTypeId;
+//   const badge = Badge.load(badgeId);
 
-  if (badge == null) {
-    log.error("Badge status update {}", [badgeId.toString()]);
-    return;
-  }
+//   if (badge == null) {
+//     log.error("Badge status update {}", [badgeId.toString()]);
+//     return;
+//   }
 
-  if (BigInt.fromI32(event.params.status) == BigInt.fromI32(2)) {
-    badge.status = "Approved";
-  }
-  if (BigInt.fromI32(event.params.status) == BigInt.fromI32(3)) {
-    badge.status = "Rejected";
-  }
-  if (BigInt.fromI32(event.params.status) == BigInt.fromI32(4)) {
-    badge.status = "Revoked";
-  }
+//   if (BigInt.fromI32(event.params.status) == BigInt.fromI32(2)) {
+//     badge.status = "Approved";
+//   }
+//   if (BigInt.fromI32(event.params.status) == BigInt.fromI32(3)) {
+//     badge.status = "Rejected";
+//   }
+//   if (BigInt.fromI32(event.params.status) == BigInt.fromI32(4)) {
+//     badge.status = "Revoked";
+//   }
 
-  badge.save();
-}
-
-// event BadgeChallenged(uint256 indexed badgeId, address indexed wallet, string evidence, address sender);
-export function handleBadgeChallenged(event: BadgeChallenged): void {
-  const badgeTypeId = event.params.badgeId.toString();
-  const user = event.params.wallet.toHexString();
-
-  const badgeId = user + "-" + badgeTypeId;
-  const badge = Badge.load(badgeId);
-
-  if (badge == null) {
-    log.error("Badge status update {}", [badgeId]);
-    return;
-  }
-
-  badge.isChallenged = true;
-  badge.save();
-}
+//   badge.save();
+// }
