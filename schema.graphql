@@ -1,8 +1,9 @@
 enum BadgeStatus {
-  InReview
+  Requested
   Approved
-  Rejected
-  Revoked
+  Challenged
+  RequestRemoval
+  Removed
 }
 
 enum KlerosRequestType {
@@ -14,85 +15,80 @@ enum Controller {
   kleros
 }
 
-enum KlerosStatus {
-  Absent # The item is not in the registry.
-  Registered # The item is in the registry.
-  RegistrationRequested # The item has a request to be added to the registry.
-  ClearingRequested # The item has a request to be removed from the registry.
-}
-
 ## - BADGE TYPE
 
-type BadgeType @entity {
+type BadgeModel @entity {
   id: ID! # BadgeType id
-  metadataURL: String!
-  controllerName: String!
-  mintCost: BigInt!
+  uri: String!
+  controllerType: String!
   validFor: BigInt!
+  creatorFee: BigInt!
   paused: Boolean!
   creator: User!
-
-  klerosBadge: KlerosBadgeType @derivedFrom(field: "badgeTypeId")
-
-  mintedBadges: [Badge!]! @derivedFrom(field: "badgeType")
   badgesMintedAmount: BigInt!
+
+  badgeModelKleros: BadgeModelKlerosMetadata @derivedFrom(field: "badgeModelId")
+  mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
-type KlerosBadgeType @entity {
-  id: ID! # BadgeType.id
-  badgeTypeId: BadgeType!
-  metadataURL: String! # TODO: handle all the possible files that can be updated.
-  #TODO: set governor and other values
+type BadgeModelKlerosMetadata @entity {
+  id: ID!
+  badgeModelId: BadgeModel!
+  registrationUri: String!
+  removalUri: String!
   tcrList: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
-  #TODO: set arbitrator
-  #TODO: set arbitrator params
-  #TODO: set arbitratorParamsIndex
+  #TODO: set governor, arbitrator, etc
 }
 
-# type KlerosBadgeTypeArbitrationParams @entity {
-#   id: ID! # badgeType-index
+# type KlerosBadgeModelArbitrationParams @entity {
+#   id: ID! # badgeModel-index
 # }
 
 ## - BADGE
 
 type Badge @entity {
   id: ID!
-  badgeType: BadgeType!
-  receiver: User! # The receiver of the badge
-  requestedBy: Bytes! # The address who initiated the request.
+  badgeModel: BadgeModel!
+  uri: String!
+  account: User! # The receiver of the badge
+  status: BadgeStatus!
   validFor: BigInt!
+
+  badgeKlerosMetadata: BadgeKlerosMetadata @derivedFrom(field: "badge")
 }
 
-type KlerosBadge @entity {
+type BadgeKlerosMetadata @entity {
   id: ID! # the same as ID as the BADGE
   badge: Badge!
-  status: KlerosStatus!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  isChallenged: Boolean! # marked to true when is challenged and to false when was ruled.
-  requests: [KlerosBadgeRequest!]!
+  # requests: [KlerosBadgeRequest!]!
+  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetadata")
 }
 
 type KlerosBadgeRequest @entity {
-  id: ID! # TODO: for now, it will be badgeType-address-requestIndex, will be migrated later to badgeID.
+  id: ID! # TODO: for now, it will be badgeModel-address-requestIndex, will be migrated later to badgeID.
+  badgeKlerosMetadata: BadgeKlerosMetadata!
+  requestIndex: BigInt!
   type: KlerosRequestType!
   submissionTime: BigInt!
   arbitrationParamsIndex: BigInt!
   requester: Bytes!
+  challenger: Bytes
 }
 
 ## - USER
 
 type User @entity {
   id: ID!
-  badges: [Badge!] @derivedFrom(field: "receiver") # TODO: check how to handle different types of badges
+  badges: [Badge!] @derivedFrom(field: "account") # TODO: check how to handle different types of badges
   mintedBadgesAmount: BigInt!
   # creator
   isCreator: Boolean!
   isVerified: Boolean!
-  createdBadgeTypes: [BadgeType!] @derivedFrom(field: "creator")
-  creatorMetadata: String
-  createdBadgesTypesAmount: BigInt!
+  createdBadgeModels: [BadgeModel!] @derivedFrom(field: "creator")
+  creatorUri: String
+  createdBadgesModelAmount: BigInt!
 }

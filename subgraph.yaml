@@ -7,8 +7,8 @@ dataSources:
     network: goerli
     # network: gnosis
     source:
-      address: "0x059a97A4ad4D148B39209Fa9Be262E6E00E97804" # goerli
-      startBlock: 8532474
+      address: "0x641dDCeDe396fA1C2B1AF323523508D2f8fd6825" # goerli
+      startBlock: 8970616
       # address: "" # gnosis
       # startBlock:  # gnosis
       abi: TheBadge
@@ -17,41 +17,41 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Emitter
-        - BadgeType
+        - User
+        - BadgeModel
       abis:
         - name: TheBadge
           file: ./abis/TheBadge.json
       eventHandlers:
-        - event: EmitterRegistered(indexed address,indexed address,string)
-          handler: handleEmitterRegistered
-        - event: BadgeTypeCreated(address,uint256,string,uint256)
-          handler: handleBadgeTypeCreated
-        - event: BadgeRequested(indexed uint256,indexed address,address,uint8,uint256)
-          handler: handleRequestBadge
+        - event: CreatorRegistered(indexed address,string)
+          handler: handleCreatorRegistered
+        - event: BadgeModelCreated(indexed uint256,string)
+          handler: handleBadgeModelCreated
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleMint
       file: ./src/theBadge.ts
 
-  - name: KlerosBadgeTypeController
+  - name: KlerosController
     kind: ethereum
     network: goerli
     # network: gnosis
     source:
-      address: "0x21bDD74A233339Ee96e6f208b118f29FbF27BdEA" # goerli
-      startBlock: 8532474
+      address: "0x6269Ae4D1Afae6bC88FF6Fbf09137deecB6799c7" # goerli
+      startBlock: 8970619
       # address: "" # gnosis
       # startBlock:  # gnosis
-      abi: KlerosBadgeTypeController
+      abi: KlerosController
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       file: ./src/kleros.ts
       entities:
-        - BadgeType
-        - KlerosBadgeType
+        - BadgeModel
+        - BadgeModelKlerosMetadata
       abis:
-        - name: KlerosBadgeTypeController
-          file: ./abis/KlerosBadgeTypeController.json
+        - name: KlerosController
+          file: ./abis/KlerosController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: Arbitror
@@ -59,13 +59,10 @@ dataSources:
         - name: TheBadge
           file: ./abis/TheBadge.json
       eventHandlers:
-        - event: NewKlerosBadgeType(indexed uint256,indexed address,string)
-          handler: handleNewKlerosBadgeType
-        - event: RequestKlerosBadge(indexed address,indexed uint256,bytes32,indexed address,string)
-          handler: handleRequestKlerosBadge
-        - event: BadgeChallenged(indexed uint256,indexed address,string,address)
-          handler: handleBadgeChallenged
-
+        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string)
+          handler: handleNewKlerosBadgeModel
+        - event: mintKlerosBadge(indexed uint256,string)
+          handler: handleMintKlerosBadge
 templates:
   - name: LightGeneralizedTCR
     kind: ethereum/contract
@@ -78,10 +75,14 @@ templates:
       language: wasm/assemblyscript
       file: ./src/kleros.ts
       entities:
-        - KlerosBadgeType
+        - BadgeModelKlerosMetadata
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
-      eventHandlers:
-        - event: NewItem(indexed bytes32,string,bool)
-          handler: handleDefineIt
+#       eventHandlers:
+#         - event: NewItem(indexed bytes32,string,bool)
+#           handler: handleMintKlerosBadge
+# TODO: handle claim
+# TODO: handle challenge
+# - event: KlerosBadgeChallenged(indexed uint256,indexed address,string,address)
+#           handler: handleKlerosBadgeChallenged

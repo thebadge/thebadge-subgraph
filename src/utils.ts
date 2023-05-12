@@ -6,10 +6,13 @@ export function loadUserOrGetDefault(id: string): User {
   if (user) {
     return user;
   }
+
   user = new User(id);
   user.mintedBadgesAmount = BigInt.fromI32(0);
-  user.createdBadgesTypesAmount = BigInt.fromI32(0);
   user.isCreator = false;
   user.isVerified = false;
+  user.creatorUri = null;
+  user.createdBadgesModelAmount = BigInt.fromI32(0);
+
   return user;
 }

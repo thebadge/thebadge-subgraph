@@ -1,101 +1,105 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, log } from "@graphprotocol/graph-ts";
 import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../generated/templates";
 import { LightGeneralizedTCR } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
-import { NewKlerosBadgeType } from "../generated/KlerosBadgeTypeController/KlerosBadgeTypeController";
 import {
-  KlerosBadgeType,
+  BadgeModelKlerosMetadata,
   Badge,
-  KlerosBadge,
+  BadgeKlerosMetadata,
   KlerosBadgeRequest,
 } from "../generated/schema";
 import {
-  RequestKlerosBadge,
-  BadgeChallenged,
-} from "../generated/KlerosBadgeTypeController/KlerosBadgeTypeController";
+  KlerosBadgeChallenged,
+  KlerosController,
+  NewKlerosBadgeModel,
+  mintKlerosBadge,
+} from "../generated/KlerosController/KlerosController";
+import { TheBadge } from "../generated/TheBadge/TheBadge";
 import { getArbitrationParamsIndex, getTCRRequestIndex } from "./tcrUtils";
 
-// event NewKlerosBadgeType(uint256 indexed badgeId, address indexed klerosTCRAddress, string registrationMetadata)
-export function handleNewKlerosBadgeType(event: NewKlerosBadgeType): void {
-  const badgeId = event.params.badgeId;
+// event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
+export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
+  const badgeModelId = event.params.badgeModelId;
 
-  LightGeneralizedTCRTemplate.create(event.params.klerosTCRAddress);
+  LightGeneralizedTCRTemplate.create(event.params.tcrAddress);
+  const tcrList = LightGeneralizedTCR.bind(event.params.tcrAddress);
 
-  const tcrList = LightGeneralizedTCR.bind(event.params.klerosTCRAddress);
-
-  const klerosBadgeType = new KlerosBadgeType(badgeId.toString());
-  klerosBadgeType.badgeTypeId = badgeId.toString();
-  klerosBadgeType.metadataURL = event.params.registrationMetadata;
-  klerosBadgeType.tcrList = event.params.klerosTCRAddress;
-  klerosBadgeType.submissionBaseDeposit = tcrList.submissionBaseDeposit();
-  klerosBadgeType.challengePeriodDuration = tcrList.challengePeriodDuration();
-  klerosBadgeType.save();
+  const badgeModelKlerosMetadata = new BadgeModelKlerosMetadata(
+    badgeModelId.toString()
+  );
+  badgeModelKlerosMetadata.badgeModelId = badgeModelId.toString();
+  badgeModelKlerosMetadata.registrationUri = event.params.metadataUri;
+  badgeModelKlerosMetadata.removalUri = "ipfs://TODO";
+  badgeModelKlerosMetadata.tcrList = event.params.tcrAddress;
+  badgeModelKlerosMetadata.submissionBaseDeposit = tcrList.submissionBaseDeposit();
+  badgeModelKlerosMetadata.challengePeriodDuration = tcrList.challengePeriodDuration();
+  badgeModelKlerosMetadata.save();
 }
 
-// event RequestKlerosBadge(address indexed callee, uint256 indexed badgeTypeId, bytes32 klerosItemID, address indexed to, string evidence)
-export function handleRequestKlerosBadge(event: RequestKlerosBadge): void {
-  const klerosBadgeType = KlerosBadgeType.load(
-    event.params.badgeTypeId.toString()
-  );
+// event MintKlerosBadge(uint256 indexed badgeId, string evidence);
+export function handleMintKlerosBadge(event: mintKlerosBadge): void {
+  const klerosController = KlerosController.bind(event.address);
+  const theBadge = TheBadge.bind(klerosController.theBadge());
 
-  if (!klerosBadgeType) {
-    log.error("KlerosBadgeType not found {}", [
-      event.params.badgeTypeId.toString(),
+  const badgeId = event.params.badgeId;
+
+  const badgeModelId = theBadge
+    .badge(badgeId)
+    .getBadgeModelId()
+    .toString();
+  const _badgeModelKlerosMetadata = BadgeModelKlerosMetadata.load(badgeModelId);
+
+  if (!_badgeModelKlerosMetadata) {
+    log.error("KlerosBadgeType not found. badgeId {} badgeModelId {}", [
+      badgeId.toString(),
+      badgeModelId,
     ]);
     return;
   }
 
-  //---------------
-  //-- kleros badge
-  //---------------
-
-  const badgeId =
-    event.params.to.toHexString() + "-" + event.params.badgeTypeId.toString();
-
-  const klerosBadge = new KlerosBadge(badgeId);
-  klerosBadge.badge = badgeId;
-  klerosBadge.status = "RegistrationRequested";
-  klerosBadge.itemID = event.params.klerosItemID;
-  klerosBadge.reviewDueDate = event.block.timestamp.plus(
-    klerosBadgeType.challengePeriodDuration
+  // badgeKlerosMetadata
+  const badgeKlerosMetadata = new BadgeKlerosMetadata(badgeId.toString());
+  badgeKlerosMetadata.badge = badgeId.toString();
+  badgeKlerosMetadata.itemID = klerosController
+    .klerosBadge(badgeId)
+    .getItemID();
+  badgeKlerosMetadata.reviewDueDate = event.block.timestamp.plus(
+    _badgeModelKlerosMetadata.challengePeriodDuration
   );
-  klerosBadge.isChallenged = false;
+  badgeKlerosMetadata.save();
 
-  // kleros badge request
-  const requestId =
-    badgeId +
-    "-" +
-    getTCRRequestIndex(
-      Address.fromBytes(klerosBadgeType.tcrList),
-      klerosBadge.itemID
-    ).toString();
-
+  // request
+  const requestIndex = getTCRRequestIndex(
+    Address.fromBytes(_badgeModelKlerosMetadata.tcrList),
+    badgeKlerosMetadata.itemID
+  );
+  const requestId = badgeId.toString() + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestId);
+  request.badgeKlerosMetadata = badgeId.toString();
+  request.requestIndex = requestIndex;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(
-    Address.fromBytes(klerosBadgeType.tcrList)
+    Address.fromBytes(_badgeModelKlerosMetadata.tcrList)
   );
   request.type = "Registration";
   request.submissionTime = event.block.timestamp;
-  request.requester = event.params.callee;
+  request.requester = theBadge.badge(badgeId).getAccount();
   request.save();
-
-  klerosBadge.requests.push(request.id);
-
-  klerosBadge.save();
 }
 
-// event BadgeChallenged(uint256 indexed badgeId, address indexed wallet, string evidence, address sender);
-export function handleBadgeChallenged(event: BadgeChallenged): void {
-  const badgeTypeId = event.params.badgeId.toString();
-  const user = event.params.wallet.toHexString();
+// event KlerosBadgeChallenged(uint256 indexed badgeId, address indexed wallet, string evidence, address sender);
+// export function handleKlerosBadgeChallenged(
+//   event: KlerosBadgeChallenged
+// ): void {
+//   const badgeTypeId = event.params.badgeId.toString();
+//   const user = event.params.wallet.toHexString();
 
-  const badgeId = user + "-" + badgeTypeId;
-  const badge = Badge.load(badgeId);
+//   const badgeId = user + "-" + badgeTypeId;
+//   const badge = Badge.load(badgeId);
 
-  if (badge == null) {
-    log.error("Badge status update {}", [badgeId]);
-    return;
-  }
+//   if (badge == null) {
+//     log.error("Badge status update {}", [badgeId]);
+//     return;
+//   }
 
-  // badge.isChallenged = true;
-  badge.save();
-}
+//   // badge.isChallenged = true;
+//   badge.save();
+// }
