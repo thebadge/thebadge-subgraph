@@ -69,13 +69,16 @@ type BadgeKlerosMetadata @entity {
 }
 
 type KlerosBadgeRequest @entity {
-  id: ID! # TODO: for now, it will be badgeModel-address-requestIndex, will be migrated later to badgeID.
+  id: ID!
   badgeKlerosMetadata: BadgeKlerosMetadata!
   requestIndex: BigInt!
-  type: KlerosRequestType!
   submissionTime: BigInt!
   arbitrationParamsIndex: BigInt!
-  requester: Bytes!
+
+  type: KlerosRequestType!
+  requestBadgeEvidenceUri: String
+  removeOrChallengeEvidenceUri: String
+  extraEvidenceUris: [String!]!
   challenger: Bytes
 }
 

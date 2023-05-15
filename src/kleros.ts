@@ -76,12 +76,16 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   const request = new KlerosBadgeRequest(requestId);
   request.badgeKlerosMetadata = badgeId.toString();
   request.requestIndex = requestIndex;
+  request.submissionTime = event.block.timestamp;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(
     Address.fromBytes(_badgeModelKlerosMetadata.tcrList)
   );
+
   request.type = "Registration";
-  request.submissionTime = event.block.timestamp;
-  request.requester = theBadge.badge(badgeId).getAccount();
+  request.requestBadgeEvidenceUri = event.params.evidence;
+  //removeOrChallengeEvidenceUri: String;
+  request.extraEvidenceUris = [];
+  // request.challenger: Bytes;
   request.save();
 }
 
