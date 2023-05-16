@@ -1,11 +1,15 @@
-import { Address, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../generated/templates";
-import { LightGeneralizedTCR } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+import {
+  ItemStatusChange,
+  LightGeneralizedTCR,
+} from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeModelKlerosMetadata,
   Badge,
   BadgeKlerosMetadata,
   KlerosBadgeRequest,
+  KlerosBadgeIdToBadgeId,
 } from "../generated/schema";
 import {
   KlerosBadgeChallenged,
@@ -14,7 +18,14 @@ import {
   mintKlerosBadge,
 } from "../generated/KlerosController/KlerosController";
 import { TheBadge } from "../generated/TheBadge/TheBadge";
-import { getArbitrationParamsIndex, getTCRRequestIndex } from "./tcrUtils";
+import {
+  STATUS_ABSENT,
+  STATUS_CLEARING_REQUESTED,
+  STATUS_REGISTERED,
+  STATUS_REGISTRATION_REQUESTED,
+  getArbitrationParamsIndex,
+  getTCRRequestIndex,
+} from "./tcrUtils";
 
 // event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
@@ -59,13 +70,19 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   // badgeKlerosMetadata
   const badgeKlerosMetadata = new BadgeKlerosMetadata(badgeId.toString());
   badgeKlerosMetadata.badge = badgeId.toString();
-  badgeKlerosMetadata.itemID = klerosController
-    .klerosBadge(badgeId)
-    .getItemID();
+  const itemId = klerosController.klerosBadge(badgeId).getItemID();
+  badgeKlerosMetadata.itemID = itemId;
   badgeKlerosMetadata.reviewDueDate = event.block.timestamp.plus(
     _badgeModelKlerosMetadata.challengePeriodDuration
   );
   badgeKlerosMetadata.save();
+
+  // KlerosBadgeIdToBadgeId
+  const klerosBadgeIdToBadgeId = new KlerosBadgeIdToBadgeId(
+    itemId.toHexString()
+  );
+  klerosBadgeIdToBadgeId.badgeId = badgeId.toString();
+  klerosBadgeIdToBadgeId.save();
 
   // request
   const requestIndex = getTCRRequestIndex(
@@ -89,21 +106,69 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.save();
 }
 
-// event KlerosBadgeChallenged(uint256 indexed badgeId, address indexed wallet, string evidence, address sender);
-// export function handleKlerosBadgeChallenged(
-//   event: KlerosBadgeChallenged
-// ): void {
-//   const badgeTypeId = event.params.badgeId.toString();
-//   const user = event.params.wallet.toHexString();
+// event ItemStatusChange(bytes32 indexed _itemID, bool _updatedDirectly);
+export function handleItemStatusChange(event: ItemStatusChange): void {
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+    event.params._itemID.toHexString()
+  );
 
-//   const badgeId = user + "-" + badgeTypeId;
-//   const badge = Badge.load(badgeId);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [
+      event.params._itemID.toHexString(),
+    ]);
+    return;
+  }
 
-//   if (badge == null) {
-//     log.error("Badge status update {}", [badgeId]);
-//     return;
-//   }
+  const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
+  if (!badge) {
+    log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
+    return;
+  }
 
-//   // badge.isChallenged = true;
-//   badge.save();
-// }
+  const tcrList = LightGeneralizedTCR.bind(event.address);
+  const item = tcrList.items(event.params._itemID);
+
+  if (BigInt.fromI32(item.getStatus()) == STATUS_ABSENT) {
+    badge.status = "Absent";
+  }
+
+  if (BigInt.fromI32(item.getStatus()) == STATUS_REGISTRATION_REQUESTED) {
+    badge.status = "Requested";
+  }
+
+  if (BigInt.fromI32(item.getStatus()) == STATUS_REGISTERED) {
+    badge.status = "Approved";
+  }
+
+  if (BigInt.fromI32(item.getStatus()) == STATUS_CLEARING_REQUESTED) {
+    badge.status = "RequestRemoval";
+  }
+
+  badge.save();
+}
+
+// event Dispute(IArbitrator indexed _arbitrator, uint indexed _disputeID, uint _metaEvidenceID, uint _evidenceGroupID);
+export function handleDispute(event: ItemStatusChange): void {
+  // TODO: handle evidence
+  // TODO: handle dispute data
+
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+    event.params._itemID.toHexString()
+  );
+
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [
+      event.params._itemID.toHexString(),
+    ]);
+    return;
+  }
+
+  const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
+  if (!badge) {
+    log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
+    return;
+  }
+
+  badge.status = "Challenged";
+  badge.save();
+}

@@ -79,10 +79,8 @@ templates:
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
-#       eventHandlers:
-#         - event: NewItem(indexed bytes32,string,bool)
-#           handler: handleMintKlerosBadge
-# TODO: handle claim
-# TODO: handle challenge
-# - event: KlerosBadgeChallenged(indexed uint256,indexed address,string,address)
-#           handler: handleKlerosBadgeChallenged
+      eventHandlers:
+        - event: ItemStatusChange(indexed bytes32,bool)
+          handler: handleItemStatusChange
+        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
+          handler: handleDispute

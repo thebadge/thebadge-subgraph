@@ -1,9 +1,9 @@
 enum BadgeStatus {
+  Absent
   Requested
   Approved
   Challenged
   RequestRemoval
-  Removed
 }
 
 enum KlerosRequestType {
@@ -66,6 +66,11 @@ type BadgeKlerosMetadata @entity {
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
   # requests: [KlerosBadgeRequest!]!
   requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetadata")
+}
+
+type KlerosBadgeIdToBadgeId @entity {
+  id: ID! # itemID from kleros.
+  badgeId: String! # badge id.
 }
 
 type KlerosBadgeRequest @entity {
