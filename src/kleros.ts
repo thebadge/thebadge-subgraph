@@ -5,9 +5,9 @@ import {
   LightGeneralizedTCR,
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
-  BadgeModelKlerosMetadata,
+  BadgeModelKlerosMetaData,
   Badge,
-  BadgeKlerosMetadata,
+  BadgeKlerosMetaData,
   KlerosBadgeRequest,
   KlerosBadgeIdToBadgeId,
 } from "../generated/schema";
@@ -34,16 +34,16 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   LightGeneralizedTCRTemplate.create(event.params.tcrAddress);
   const tcrList = LightGeneralizedTCR.bind(event.params.tcrAddress);
 
-  const badgeModelKlerosMetadata = new BadgeModelKlerosMetadata(
+  const BadgeModelKlerosMetaData = new BadgeModelKlerosMetaData(
     badgeModelId.toString()
   );
-  badgeModelKlerosMetadata.badgeModelId = badgeModelId.toString();
-  badgeModelKlerosMetadata.registrationUri = event.params.metadataUri;
-  badgeModelKlerosMetadata.removalUri = "ipfs://TODO";
-  badgeModelKlerosMetadata.tcrList = event.params.tcrAddress;
-  badgeModelKlerosMetadata.submissionBaseDeposit = tcrList.submissionBaseDeposit();
-  badgeModelKlerosMetadata.challengePeriodDuration = tcrList.challengePeriodDuration();
-  badgeModelKlerosMetadata.save();
+  BadgeModelKlerosMetaData.badgeModelId = badgeModelId.toString();
+  BadgeModelKlerosMetaData.registrationUri = event.params.metadataUri;
+  BadgeModelKlerosMetaData.removalUri = "ipfs://TODO";
+  BadgeModelKlerosMetaData.tcrList = event.params.tcrAddress;
+  BadgeModelKlerosMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
+  BadgeModelKlerosMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
+  BadgeModelKlerosMetaData.save();
 }
 
 // event MintKlerosBadge(uint256 indexed badgeId, string evidence);
@@ -57,9 +57,9 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
     .badge(badgeId)
     .getBadgeModelId()
     .toString();
-  const _badgeModelKlerosMetadata = BadgeModelKlerosMetadata.load(badgeModelId);
+  const _BadgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(badgeModelId);
 
-  if (!_badgeModelKlerosMetadata) {
+  if (!_BadgeModelKlerosMetaData) {
     log.error("KlerosBadgeType not found. badgeId {} badgeModelId {}", [
       badgeId.toString(),
       badgeModelId,
@@ -67,15 +67,15 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
     return;
   }
 
-  // badgeKlerosMetadata
-  const badgeKlerosMetadata = new BadgeKlerosMetadata(badgeId.toString());
-  badgeKlerosMetadata.badge = badgeId.toString();
+  // BadgeKlerosMetaData
+  const BadgeKlerosMetaData = new BadgeKlerosMetaData(badgeId.toString());
+  BadgeKlerosMetaData.badge = badgeId.toString();
   const itemId = klerosController.klerosBadge(badgeId).getItemID();
-  badgeKlerosMetadata.itemID = itemId;
-  badgeKlerosMetadata.reviewDueDate = event.block.timestamp.plus(
-    _badgeModelKlerosMetadata.challengePeriodDuration
+  BadgeKlerosMetaData.itemID = itemId;
+  BadgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
+    _BadgeModelKlerosMetaData.challengePeriodDuration
   );
-  badgeKlerosMetadata.save();
+  BadgeKlerosMetaData.save();
 
   // KlerosBadgeIdToBadgeId
   const klerosBadgeIdToBadgeId = new KlerosBadgeIdToBadgeId(
@@ -86,16 +86,16 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
 
   // request
   const requestIndex = getTCRRequestIndex(
-    Address.fromBytes(_badgeModelKlerosMetadata.tcrList),
-    badgeKlerosMetadata.itemID
+    Address.fromBytes(_BadgeModelKlerosMetaData.tcrList),
+    BadgeKlerosMetaData.itemID
   );
   const requestId = badgeId.toString() + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestId);
-  request.badgeKlerosMetadata = badgeId.toString();
+  request.BadgeKlerosMetaData = badgeId.toString();
   request.requestIndex = requestIndex;
   request.submissionTime = event.block.timestamp;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(
-    Address.fromBytes(_badgeModelKlerosMetadata.tcrList)
+    Address.fromBytes(_BadgeModelKlerosMetaData.tcrList)
   );
 
   request.type = "Registration";

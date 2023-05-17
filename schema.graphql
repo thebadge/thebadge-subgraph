@@ -27,11 +27,11 @@ type BadgeModel @entity {
   creator: User!
   badgesMintedAmount: BigInt!
 
-  badgeModelKleros: BadgeModelKlerosMetadata @derivedFrom(field: "badgeModelId")
+  badgeModelKleros: BadgeModelKlerosMetaData @derivedFrom(field: "badgeModelId")
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
-type BadgeModelKlerosMetadata @entity {
+type BadgeModelKlerosMetaData @entity {
   id: ID!
   badgeModelId: BadgeModel!
   registrationUri: String!
@@ -56,16 +56,16 @@ type Badge @entity {
   status: BadgeStatus!
   validFor: BigInt!
 
-  badgeKlerosMetadata: BadgeKlerosMetadata @derivedFrom(field: "badge")
+  BadgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
-type BadgeKlerosMetadata @entity {
+type BadgeKlerosMetaData @entity {
   id: ID! # the same as ID as the BADGE
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
   # requests: [KlerosBadgeRequest!]!
-  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetadata")
+  requests: KlerosBadgeRequest @derivedFrom(field: "BadgeKlerosMetaData")
 }
 
 type KlerosBadgeIdToBadgeId @entity {
@@ -75,7 +75,7 @@ type KlerosBadgeIdToBadgeId @entity {
 
 type KlerosBadgeRequest @entity {
   id: ID!
-  badgeKlerosMetadata: BadgeKlerosMetadata!
+  BadgeKlerosMetaData: BadgeKlerosMetaData!
   requestIndex: BigInt!
   submissionTime: BigInt!
   arbitrationParamsIndex: BigInt!

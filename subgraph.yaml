@@ -47,8 +47,8 @@ dataSources:
       language: wasm/assemblyscript
       file: ./src/kleros.ts
       entities:
-        - BadgeModel
-        - BadgeModelKlerosMetadata
+        - BadgeModelKlerosMetaData
+        - BadgeKlerosMetaData
       abis:
         - name: KlerosController
           file: ./abis/KlerosController.json
@@ -75,7 +75,7 @@ templates:
       language: wasm/assemblyscript
       file: ./src/kleros.ts
       entities:
-        - BadgeModelKlerosMetadata
+        - BadgeModelKlerosMetaData
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
