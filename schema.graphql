@@ -56,7 +56,7 @@ type Badge @entity {
   status: BadgeStatus!
   validFor: BigInt!
 
-  BadgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
+  badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
 type BadgeKlerosMetaData @entity {
@@ -75,7 +75,7 @@ type KlerosBadgeIdToBadgeId @entity {
 
 type KlerosBadgeRequest @entity {
   id: ID!
-  BadgeKlerosMetaData: BadgeKlerosMetaData!
+  badgeKlerosMetaData: BadgeKlerosMetaData!
   requestIndex: BigInt!
   submissionTime: BigInt!
   arbitrationParamsIndex: BigInt!
