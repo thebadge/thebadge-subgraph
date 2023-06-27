@@ -4,8 +4,9 @@
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy:dev": "graph deploy --product hosted-service thebadgeadmin/dev",
-    "deploy:studio": "graph deploy --studio thebadge"
+    "deploy:dev": "yarn build && graph deploy --product hosted-service thebadgeadmin/dev-testing",
+    "deploy:studio": "graph deploy --studio thebadge",
+    "auth": "./scripts/auth.sh"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.49.0",

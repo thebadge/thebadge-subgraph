@@ -152,23 +152,31 @@ export function handleDispute(event: ItemStatusChange): void {
   // TODO: handle evidence
   // TODO: handle dispute data
 
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
-    event.params._itemID.toHexString()
-  );
-
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [
-      event.params._itemID.toHexString(),
-    ]);
-    return;
-  }
-
-  const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
-  if (!badge) {
-    log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
-    return;
-  }
-
-  badge.status = "Challenged";
-  badge.save();
+  log.info("Init Handle dispute",[])
+  // @todo (agustin) fix
+  // const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  //   event.params._itemID.toString()
+  // );
+  //
+  //
+  // log.info("Init Handle dispute 2",[])
+  // if (!klerosBadgeIdToBadgeId) {
+  //   log.error("klerosBadgeIdToBadgeId not found for id {}", [
+  //     event.params._itemID.toHexString(),
+  //   ]);
+  //   return;
+  // }
+  //
+  // log.info("Init Handle dispute 3",[])
+  // const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
+  // log.info("Init Handle dispute 4",[])
+  // if (!badge) {
+  //   log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
+  //   return;
+  // }
+  //
+  // log.info("Finish Handle dispute",[])
+  // badge.status = "Challenged";
+  // badge.save();
+  // log.info("Init Handle dispute saved", [])
 }
