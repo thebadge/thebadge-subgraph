@@ -2,7 +2,6 @@ import { BigInt } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
-  BadgeRequested,
   BadgeModelCreated,
   TransferSingle,
 } from "../generated/TheBadge/TheBadge";
@@ -37,6 +36,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.paused = false;
   badgeModel.creator = _badgeModel.getCreator().toHexString();
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
+  badgeModel.createdAt = event.block.timestamp
   badgeModel.save();
 
   // user

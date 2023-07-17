@@ -26,6 +26,7 @@ type BadgeModel @entity {
   paused: Boolean!
   creator: User!
   badgesMintedAmount: BigInt!
+  createdAt: BigInt!
 
   badgeModelKleros: BadgeModelKlerosMetaData @derivedFrom(field: "badgeModelId")
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
