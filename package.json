@@ -6,7 +6,7 @@
     "build": "graph build",
     "deploy:dev": "yarn build && graph deploy --product hosted-service thebadgeadmin/dev-testing",
     "deploy:studio": "graph deploy --studio thebadge",
-    "auth": "graph auth --product hosted-service eval $(grep '^$THE_GRAPH_DEV_TESTING_AUTH_TOKEN' .env)",
+    "auth": "graph auth --product hosted-service eval $(grep '^$THE_GRAPH_DEV_TESTING_AUTH_TOKEN' .env)"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.49.0",
