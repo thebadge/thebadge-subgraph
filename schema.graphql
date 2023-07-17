@@ -56,7 +56,7 @@ type Badge @entity {
   account: User! # The receiver of the badge
   status: BadgeStatus!
   validFor: BigInt!
-
+  createdAt: BigInt!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
@@ -76,16 +76,20 @@ type KlerosBadgeIdToBadgeId @entity {
 
 type KlerosBadgeRequest @entity {
   id: ID!
+  type: KlerosRequestType!
+  createdAt: BigInt!
   badgeKlerosMetaData: BadgeKlerosMetaData!
   requestIndex: BigInt!
-  submissionTime: BigInt!
   arbitrationParamsIndex: BigInt!
 
-  type: KlerosRequestType!
+  #disputeId: BigInt!
+  requester: Bytes!
+  #challenger: Bytes
+
+  # TODO: Replace with evidences()
   requestBadgeEvidenceUri: String
   removeOrChallengeEvidenceUri: String
   extraEvidenceUris: [String!]!
-  challenger: Bytes
 }
 
 ## - USER

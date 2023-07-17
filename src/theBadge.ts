@@ -58,8 +58,10 @@ export function handleMint(event: TransferSingle): void {
   const badge = new Badge(badgeId);
   badge.badgeModel = _badge.getBadgeModelId().toString();
   badge.account = event.params.to.toHexString();
-  badge.validFor = _badge.getDueDate();
   badge.status = "Requested";
+  badge.validFor = _badge.getDueDate();
+  badge.createdAt = event.block.timestamp;
+
   badge.uri = theBadge.uri(event.params.id);
   badge.save();
 
