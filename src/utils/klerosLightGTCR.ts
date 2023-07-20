@@ -1,5 +1,5 @@
-import {Address, BigInt, Bytes, log} from "@graphprotocol/graph-ts";
-import { LRegistry, LRound } from "../../generated/schema";
+import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { LRegistry } from "../../generated/schema";
 
 let ABSENT = "Absent";
 let REGISTERED = "Registered";
@@ -30,7 +30,7 @@ CONTRACT_STATUS_NAMES.set(REGISTRATION_REQUESTED_CODE, "RegistrationRequested");
 CONTRACT_STATUS_NAMES.set(CLEARING_REQUESTED_CODE, "ClearingRequested");
 
 let ZERO_ADDRESS = Bytes.fromHexString(
-    '0x0000000000000000000000000000000000000000',
+  "0x0000000000000000000000000000000000000000"
 ) as Bytes;
 
 /**
@@ -105,30 +105,6 @@ function updateCounters(
   registry.save();
 }
 
-function buildNewRound(
-  roundID: string,
-  requestID: string,
-  timestamp: BigInt
-): LRound {
-  let newRound = new LRound(roundID);
-  newRound.amountPaidRequester = BigInt.fromI32(0);
-  newRound.amountPaidChallenger = BigInt.fromI32(0);
-  newRound.feeRewards = BigInt.fromI32(0);
-  newRound.hasPaidRequester = false;
-  newRound.hasPaidChallenger = false;
-  newRound.lastFundedRequester = BigInt.fromI32(0);
-  newRound.lastFundedChallenger = BigInt.fromI32(0);
-  newRound.request = requestID;
-  newRound.appealPeriodStart = BigInt.fromI32(0);
-  newRound.appealPeriodEnd = BigInt.fromI32(0);
-  newRound.rulingTime = BigInt.fromI32(0);
-  newRound.ruling = NONE;
-  newRound.creationTime = timestamp;
-  newRound.numberOfContributions = BigInt.fromI32(0);
-  newRound.appealed = false;
-  return newRound;
-}
-
 function getExtendedStatus(disputed: boolean, status: string): number {
   if (disputed) {
     if (status == CONTRACT_STATUS_NAMES.get(REGISTRATION_REQUESTED_CODE))
@@ -144,8 +120,14 @@ function getStatus(status: number): string {
   if (status == REGISTERED_CODE) return REGISTERED;
   if (status == REGISTRATION_REQUESTED_CODE) return REGISTRATION_REQUESTED;
   if (status == CLEARING_REQUESTED_CODE) return CLEARING_REQUESTED;
-  return 'Error';
+  return "Error";
 }
 
-
-export { updateCounters, buildNewRound, getExtendedStatus, getStatus, REGISTRATION_REQUESTED, NONE, ZERO_ADDRESS };
+export {
+  updateCounters,
+  getExtendedStatus,
+  getStatus,
+  REGISTRATION_REQUESTED,
+  NONE,
+  ZERO_ADDRESS
+};

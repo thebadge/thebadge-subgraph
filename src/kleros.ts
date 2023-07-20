@@ -29,11 +29,17 @@ import {
   STATUS_REGISTRATION_REQUESTED,
   getArbitrationParamsIndex,
   getTCRRequestIndex,
-  buildNewRound,
   getExtendedStatus,
-  updateCounters, REGISTRATION_REQUESTED, NONE, ZERO_ADDRESS, getStatus
+  updateCounters,
+  REGISTRATION_REQUESTED,
+  NONE,
+  ZERO_ADDRESS,
+  getStatus
 } from "./utils";
-import {Dispute, RequestSubmitted} from "../generated/KlerosController/LightGeneralizedTCR";
+import {
+  Dispute,
+  RequestSubmitted
+} from "../generated/KlerosController/LightGeneralizedTCR";
 
 // event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
@@ -109,6 +115,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
   request.requester = klerosController.klerosBadge(badgeIdBigInt).getCallee();
 
+  // todo remove
   // Both request.disputeId and request.challenger are left null as this is the first time when the badge is created.
   //  request.disputeId = 1
 
@@ -240,19 +247,11 @@ export function handleRequestChallenged(event: Dispute): void {
 
   request.disputed = true;
   request.challenger = event.transaction.from;
-  request.numberOfRounds = BigInt.fromI32(2);
   request.disputeID = event.params._disputeID;
-
-  let newRoundID =
-    requestID +
-    "-" +
-    request.numberOfRounds.minus(BigInt.fromI32(1)).toString();
-  let newRound = buildNewRound(newRoundID, request.id, event.block.timestamp);
 
   // Accounting.
   updateCounters(previousStatus, newStatus, event.address);
 
-  newRound.save();
   request.save();
   item.save();
 }
@@ -260,7 +259,7 @@ export function handleRequestChallenged(event: Dispute): void {
 export function handleRequestSubmitted(event: RequestSubmitted): void {
   log.error("This is a test of handleRequestSubmitted", []);
   let graphItemID =
-      event.params._itemID.toHexString() + '@' + event.address.toHexString();
+    event.params._itemID.toHexString() + "@" + event.address.toHexString();
 
   let tcr = LightGeneralizedTCR.bind(event.address);
   let itemInfo = tcr.getItemInfo(event.params._itemID);
@@ -273,7 +272,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   let registry = LRegistry.load(event.address.toHexString());
   if (!registry) {
     log.error(`LRegistry at address {} not found`, [
-      event.address.toHexString(),
+      event.address.toHexString()
     ]);
     return;
   }
@@ -295,7 +294,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   let newStatus = getExtendedStatus(item.disputed, item.status);
 
   let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
-  let requestID = graphItemID + '-' + requestIndex.toString();
+  let requestID = graphItemID + "-" + requestIndex.toString();
 
   let request = new LRequest(requestID);
   request.disputed = false;
@@ -311,7 +310,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.resolved = false;
   request.disputeID = BigInt.fromI32(0);
   request.submissionTime = event.block.timestamp;
-  request.numberOfRounds = BigInt.fromI32(1);
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
   request.creationTx = event.transaction.hash;
@@ -319,29 +317,23 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     request.metaEvidence = registry.registrationMetaEvidence;
   else request.metaEvidence = registry.clearingMetaEvidence;
 
-  let roundID = requestID + '-0';
-
-  // Note that everything related to the deposit (e.g. contribution creation)
-  // is handled in handleContribution.
-  let round = buildNewRound(roundID, requestID, event.block.timestamp);
-
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
     // This is the first request for this item, which must be
     // a registration request.
     registry.numberOfRegistrationRequested = registry.numberOfRegistrationRequested.plus(
-        BigInt.fromI32(1),
+      BigInt.fromI32(1)
     );
   } else {
     updateCounters(previousStatus, newStatus, event.address);
   }
 
   let evidenceGroupIDToLRequest = new EvidenceGroupIDToLRequest(
-      event.params._evidenceGroupID.toString() + "@" + event.address.toHexString())
-  evidenceGroupIDToLRequest.request = requestID
+    event.params._evidenceGroupID.toString() + "@" + event.address.toHexString()
+  );
+  evidenceGroupIDToLRequest.request = requestID;
 
-  evidenceGroupIDToLRequest.save()
-  round.save();
+  evidenceGroupIDToLRequest.save();
   request.save();
   item.save();
   registry.save();

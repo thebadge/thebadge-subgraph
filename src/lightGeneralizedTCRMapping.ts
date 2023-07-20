@@ -19,26 +19,22 @@ import {
   MetaEvidence as MetaEvidenceEvent,
   Evidence as EvidenceEvent,
   NewItem,
-  RewardWithdrawn,
   Ruling
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   Arbitrator,
   EvidenceGroupIDToLRequest,
   ItemProp,
-  LContribution,
   LEvidence,
   LItem,
   LRegistry,
   LRequest,
-  LRound,
   MetaEvidence
 } from "../generated/schema";
 import {
   AppealDecision,
   AppealPossible
 } from "../generated/KlerosController/Arbitror";
-import { IArbitrator } from "../generated/templates/LightGeneralizedTCR/IArbitrator";
 import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -128,30 +124,6 @@ function getFinalRuling(outcome: number): string {
   return "Error";
 }
 
-function buildNewRound(
-  roundID: string,
-  requestID: string,
-  timestamp: BigInt
-): LRound {
-  let newRound = new LRound(roundID);
-  newRound.amountPaidRequester = BigInt.fromI32(0);
-  newRound.amountPaidChallenger = BigInt.fromI32(0);
-  newRound.feeRewards = BigInt.fromI32(0);
-  newRound.hasPaidRequester = false;
-  newRound.hasPaidChallenger = false;
-  newRound.lastFundedRequester = BigInt.fromI32(0);
-  newRound.lastFundedChallenger = BigInt.fromI32(0);
-  newRound.request = requestID;
-  newRound.appealPeriodStart = BigInt.fromI32(0);
-  newRound.appealPeriodEnd = BigInt.fromI32(0);
-  newRound.rulingTime = BigInt.fromI32(0);
-  newRound.ruling = NONE;
-  newRound.creationTime = timestamp;
-  newRound.numberOfContributions = BigInt.fromI32(0);
-  newRound.appealed = false;
-  return newRound;
-}
-
 /**
  * Decrements and increments registry counters based on item status change.
  *
@@ -160,7 +132,7 @@ function buildNewRound(
  * after the one this is being called on? Do they call updateCounters?
  * @param previousStatus The previous extended status of the item.
  * @param newStatus The new extended status of the item.
- * @param registry The registry to which update the counters.
+ * @param registryAddress
  */
 function updateCounters(
   previousStatus: number,
@@ -460,19 +432,12 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.resolved = false;
   request.disputeID = BigInt.fromI32(0);
   request.submissionTime = event.block.timestamp;
-  request.numberOfRounds = BigInt.fromI32(1);
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
   request.creationTx = event.transaction.hash;
   if (request.requestType == REGISTRATION_REQUESTED)
     request.metaEvidence = registry.registrationMetaEvidence;
   else request.metaEvidence = registry.clearingMetaEvidence;
-
-  let roundID = requestID + "-0";
-
-  // Note that everything related to the deposit (e.g. contribution creation)
-  // is handled in handleContribution.
-  let round = buildNewRound(roundID, requestID, event.block.timestamp);
 
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
@@ -491,7 +456,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   evidenceGroupIDToLRequest.request = requestID;
 
   evidenceGroupIDToLRequest.save();
-  round.save();
   request.save();
   item.save();
   registry.save();
@@ -512,72 +476,6 @@ export function handleContribution(event: Contribution): void {
     return;
   }
 
-  let roundID = requestID + "-" + event.params._roundID.toString();
-  let round = LRound.load(roundID);
-  if (!round) {
-    log.error(`LRound {} not found.`, [roundID]);
-    return;
-  }
-
-  let tcr = LightGeneralizedTCR.bind(event.address);
-  if (event.params._roundID == BigInt.fromI32(0)) {
-    if (event.params._side == 1) {
-      round.amountPaidRequester = event.params._contribution;
-      round.hasPaidRequester = true;
-    } else {
-      round.amountPaidChallenger = event.params._contribution;
-      round.hasPaidChallenger = true;
-    }
-  } else {
-    let roundInfo = tcr.getRoundInfo(
-      event.params._itemID,
-      event.params._requestID,
-      event.params._roundID.minus(BigInt.fromI32(1))
-    );
-
-    // we cannot get round.appealed from this roundInfo because
-    // of a smart contract bug.
-    // can only be set on AppealDecision.
-    round.amountPaidRequester = roundInfo.value1[REQUESTER_CODE];
-    round.amountPaidChallenger = roundInfo.value1[CHALLENGER_CODE];
-    round.hasPaidRequester = roundInfo.value2[REQUESTER_CODE];
-    round.hasPaidChallenger = roundInfo.value2[CHALLENGER_CODE];
-    round.feeRewards = roundInfo.value3;
-  }
-
-  if (event.params._side === 1) {
-    round.lastFundedRequester = event.block.timestamp;
-  } else {
-    round.lastFundedChallenger = event.block.timestamp;
-  }
-
-  let requestInfo = tcr.getRequestInfo(
-    event.params._itemID,
-    event.params._requestID
-  );
-  if (round.appealed) {
-    // ERROR: NOT a boolean
-    // requestInfo.value5 is requestInfo.numberOfRounds.
-    let newRoundID =
-      requestID + "-" + requestInfo.value5.minus(BigInt.fromI32(1)).toString();
-    let newRound = buildNewRound(newRoundID, request.id, event.block.timestamp);
-    newRound.save();
-    request.numberOfRounds = requestInfo.value5;
-  }
-
-  let contributionID = roundID + "-" + round.numberOfContributions.toString();
-  let contribution = new LContribution(contributionID);
-  contribution.round = round.id;
-  contribution.side = BigInt.fromI32(event.params._side);
-  contribution.withdrawable = false;
-  contribution.contributor = event.params._contributor;
-
-  round.numberOfContributions = round.numberOfContributions.plus(
-    BigInt.fromI32(1)
-  );
-
-  contribution.save();
-  round.save();
   request.save();
 }
 
@@ -609,19 +507,11 @@ export function handleRequestChallenged(event: Dispute): void {
 
   request.disputed = true;
   request.challenger = event.transaction.from;
-  request.numberOfRounds = BigInt.fromI32(2);
   request.disputeID = event.params._disputeID;
-
-  let newRoundID =
-    requestID +
-    "-" +
-    request.numberOfRounds.minus(BigInt.fromI32(1)).toString();
-  let newRound = buildNewRound(newRoundID, request.id, event.block.timestamp);
 
   // Accounting.
   updateCounters(previousStatus, newStatus, event.address);
 
-  newRound.save();
   request.save();
   item.save();
 }
@@ -651,73 +541,10 @@ export function handleAppealPossible(event: AppealPossible): void {
     return;
   }
 
-  let roundID =
-    request.id +
-    "-" +
-    request.numberOfRounds.minus(BigInt.fromI32(1)).toString();
-  let round = LRound.load(roundID);
-  if (!round) {
-    log.error(`LRound {} not found.`, [roundID]);
-    return;
-  }
-
-  let arbitrator = IArbitrator.bind(event.address);
-  let appealPeriod = arbitrator.appealPeriod(event.params._disputeID);
-  round.appealPeriodStart = appealPeriod.value0;
-  round.appealPeriodEnd = appealPeriod.value1;
-  round.rulingTime = event.block.timestamp;
-
-  let currentRuling = arbitrator.currentRuling(request.disputeID);
-  round.ruling = currentRuling.equals(BigInt.fromI32(0))
-    ? NONE
-    : currentRuling.equals(BigInt.fromI32(1))
-    ? ACCEPT
-    : REJECT;
-
   item.save();
-  round.save();
 }
 
-export function handleAppealDecision(event: AppealDecision): void {
-  let registry = LRegistry.load(event.params._arbitrable.toHexString());
-  if (registry == null) return; // Event not related to a GTCR.
 
-  let tcr = LightGeneralizedTCR.bind(event.params._arbitrable);
-  let itemID = tcr.arbitratorDisputeIDToItemID(
-    event.address,
-    event.params._disputeID
-  );
-  let graphItemID =
-    itemID.toHexString() + "@" + event.params._arbitrable.toHexString();
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.error(`LItem {} not found.`, [graphItemID]);
-    return;
-  }
-
-  let requestID =
-    item.id + "-" + item.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
-    return;
-  }
-
-  let roundID =
-    request.id +
-    "-" +
-    request.numberOfRounds.minus(BigInt.fromI32(1)).toString();
-  let round = LRound.load(roundID);
-  if (!round) {
-    log.error(`LRound {} not found.`, [roundID]);
-    return;
-  }
-
-  round.appealed = true;
-  round.appealedAt = event.block.timestamp;
-
-  round.save();
-}
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
   // This handler is used to handle transations to item statuses 0 and 1.
@@ -775,113 +602,10 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   request.resolved = true;
   request.resolutionTime = event.block.timestamp;
   request.resolutionTx = event.transaction.hash;
-  // requestInfo.value6 is request.ruling.
   request.disputeOutcome = getFinalRuling(requestInfo.value6);
-
-  // Iterate over every contribution and mark it as withdrawable if it is.
-  // Start from the second round as the first is automatically withdrawn
-  // when the request resolves.
-  for (
-    let i = BigInt.fromI32(1);
-    i.lt(request.numberOfRounds);
-    i = i.plus(BigInt.fromI32(1))
-  ) {
-    // Iterate over every round of the request.
-    let roundID = requestID + "-" + i.toString();
-    let round = LRound.load(roundID);
-    if (!round) {
-      log.error(`LRound {} not found.`, [roundID]);
-      return;
-    }
-
-    for (
-      let j = BigInt.fromI32(0);
-      j.lt(round.numberOfContributions);
-      j = j.plus(BigInt.fromI32(1))
-    ) {
-      // Iterate over every contribution of the round.
-      let contributionID = roundID + "-" + j.toString();
-      let contribution = LContribution.load(contributionID);
-      if (!contribution) {
-        log.error(`LContribution {} not found.`, [contributionID]);
-        return;
-      }
-
-      if (requestInfo.value6 == NO_RULING_CODE) {
-        // The final ruling is refuse to rule. There is no winner
-        // or loser so every contribution is withdrawable.
-        contribution.withdrawable = true;
-      } else if (requestInfo.value6 == REQUESTER_CODE) {
-        // The requester won so only contributions to the requester
-        // are withdrawable.
-        // The only exception is in the case the last round the loser
-        // (challenger in this case) raised some funds but not enough
-        // to be fully funded before the deadline. In this case
-        // the contributors get to withdraw.
-        if (contribution.side == BigInt.fromI32(REQUESTER_CODE)) {
-          contribution.withdrawable = true;
-        } else if (i.equals(request.numberOfRounds.minus(BigInt.fromI32(1)))) {
-          // Contribution was made to the challenger (loser) and this
-          // is the last round.
-          contribution.withdrawable = true;
-        }
-      } else {
-        // The challenger won so only contributions to the challenger
-        // are withdrawable.
-        // The only exception is in the case the last round the loser
-        // (requester in this case) raised some funds but not enough
-        // to be fully funded before the deadline. In this case
-        // the contributors get to withdraw.
-        if (contribution.side == BigInt.fromI32(CHALLENGER_CODE)) {
-          contribution.withdrawable = true;
-        } else if (i.equals(request.numberOfRounds.minus(BigInt.fromI32(1)))) {
-          // Contribution was made to the requester (loser) and this
-          // is the last round.
-          contribution.withdrawable = true;
-        }
-      }
-
-      contribution.save();
-    }
-  }
 
   request.save();
   item.save();
-}
-
-export function handleRewardWithdrawn(event: RewardWithdrawn): void {
-  let graphItemID =
-    event.params._itemID.toHexString() + "@" + event.address.toHexString();
-  let requestID = graphItemID + "-" + event.params._request.toString();
-  let roundID = requestID + "-" + event.params._round.toString();
-  let round = LRound.load(roundID);
-  if (!round) {
-    log.error(`LRound {} not found.`, [roundID]);
-    return;
-  }
-
-  for (
-    let i = BigInt.fromI32(0);
-    i.lt(round.numberOfContributions);
-    i = i.plus(BigInt.fromI32(1))
-  ) {
-    let contributionID = roundID + "-" + i.toString();
-    let contribution = LContribution.load(contributionID);
-    if (!contribution) {
-      log.error(`LContribution {} not found.`, [contributionID]);
-      return;
-    }
-    // Check if the contribution is from the beneficiary.
-
-    if (
-      contribution.contributor.toHexString() !=
-      event.params._beneficiary.toHexString()
-    )
-      continue;
-
-    contribution.withdrawable = false;
-    contribution.save();
-  }
 }
 
 export function handleMetaEvidence(event: MetaEvidenceEvent): void {
@@ -991,7 +715,6 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  request.finalRuling = event.params._ruling;
   request.resolutionTime = event.block.timestamp;
   request.save();
 }
