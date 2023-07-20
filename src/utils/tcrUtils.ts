@@ -1,5 +1,5 @@
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
-import { LightGeneralizedTCR } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+import {Address, BigInt, Bytes, log} from "@graphprotocol/graph-ts";
+import { LightGeneralizedTCR } from "../../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 
 export const STATUS_ABSENT = BigInt.fromI32(0);
 export const STATUS_REGISTERED = BigInt.fromI32(1);

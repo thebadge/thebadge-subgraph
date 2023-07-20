@@ -8,7 +8,7 @@ import {
 
 // import { Arbitror } from "../generated/TheBadge/Arbitror";
 import { BadgeModel, Badge } from "../generated/schema";
-import { loadUserOrGetDefault } from "./utils";
+import { loadUserOrGetDefault } from "./utils/utils";
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {

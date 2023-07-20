@@ -1,4 +1,4 @@
-import { User } from "../generated/schema";
+import { User } from "../../generated/schema";
 import { BigInt } from "@graphprotocol/graph-ts";
 
 export function loadUserOrGetDefault(id: string): User {
