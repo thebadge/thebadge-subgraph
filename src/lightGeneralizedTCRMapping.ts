@@ -11,7 +11,6 @@ import {
 } from "@graphprotocol/graph-ts";
 
 import {
-  Contribution,
   Dispute,
   LightGeneralizedTCR,
   ItemStatusChange,
@@ -28,13 +27,9 @@ import {
   LEvidence,
   LItem,
   LRegistry,
-  LRequest,
-  MetaEvidence
+  LRequest
 } from "../generated/schema";
-import {
-  AppealDecision,
-  AppealPossible
-} from "../generated/KlerosController/Arbitror";
+
 import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -73,10 +68,6 @@ let CLEARING_REQUESTED = "ClearingRequested";
 let NONE = "None";
 let ACCEPT = "Accept";
 let REJECT = "Reject";
-
-let NO_RULING_CODE = 0;
-let REQUESTER_CODE = 1;
-let CHALLENGER_CODE = 2;
 
 let ABSENT_CODE = 0;
 let REGISTERED_CODE = 1;
@@ -435,9 +426,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
   request.creationTx = event.transaction.hash;
-  if (request.requestType == REGISTRATION_REQUESTED)
-    request.metaEvidence = registry.registrationMetaEvidence;
-  else request.metaEvidence = registry.clearingMetaEvidence;
 
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
@@ -459,24 +447,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.save();
   item.save();
   registry.save();
-}
-
-export function handleContribution(event: Contribution): void {
-  // This handler is triggered in 3 situations:
-  // - When a user places a request
-  // - When a user challenges a request
-  // - When a user funds a side of an appeal.
-
-  let graphItemID =
-    event.params._itemID.toHexString() + "@" + event.address.toHexString();
-  let requestID = graphItemID + "-" + event.params._requestID.toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} no found.`, [requestID]);
-    return;
-  }
-
-  request.save();
 }
 
 export function handleRequestChallenged(event: Dispute): void {
@@ -515,36 +485,6 @@ export function handleRequestChallenged(event: Dispute): void {
   request.save();
   item.save();
 }
-
-export function handleAppealPossible(event: AppealPossible): void {
-  let registry = LRegistry.load(event.params._arbitrable.toHexString());
-  if (registry == null) return; // Event not related to a GTCR.
-
-  let tcr = LightGeneralizedTCR.bind(event.params._arbitrable);
-  let itemID = tcr.arbitratorDisputeIDToItemID(
-    event.address,
-    event.params._disputeID
-  );
-  let graphItemID =
-    itemID.toHexString() + "@" + event.params._arbitrable.toHexString();
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.error(`LItem {} not found.`, [graphItemID]);
-    return;
-  }
-
-  let requestID =
-    item.id + "-" + item.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
-    return;
-  }
-
-  item.save();
-}
-
-
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
   // This handler is used to handle transations to item statuses 0 and 1.
@@ -632,26 +572,6 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
       arbitrator = new Arbitrator(arbitratorAddr.toHexString());
       arbitrator.save();
     }
-  }
-
-  let metaEvidence = MetaEvidence.load(
-    registry.id + "-" + registry.metaEvidenceCount.toString()
-  );
-  if (metaEvidence == null) {
-    metaEvidence = new MetaEvidence(
-      registry.id + "-" + registry.metaEvidenceCount.toString()
-    );
-  }
-
-  metaEvidence.URI = event.params._evidence;
-  metaEvidence.save();
-
-  if (
-    registry.metaEvidenceCount.mod(BigInt.fromI32(2)).equals(BigInt.fromI32(1))
-  ) {
-    registry.registrationMetaEvidence = metaEvidence.id;
-  } else {
-    registry.clearingMetaEvidence = metaEvidence.id;
   }
 
   registry.save();

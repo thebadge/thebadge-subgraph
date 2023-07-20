@@ -3,18 +3,13 @@ import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../generated
 import {
   ItemStatusChange,
   LightGeneralizedTCR,
-  LightGeneralizedTCR__requestsDisputeDataResult
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeModelKlerosMetaData,
   Badge,
   BadgeKlerosMetaData,
   KlerosBadgeRequest,
-  KlerosBadgeIdToBadgeId,
-  LItem,
-  LRequest,
-  LRegistry,
-  EvidenceGroupIDToLRequest
+  KlerosBadgeIdToBadgeId
 } from "../generated/schema";
 import {
   KlerosController,
@@ -28,18 +23,9 @@ import {
   STATUS_REGISTERED,
   STATUS_REGISTRATION_REQUESTED,
   getArbitrationParamsIndex,
-  getTCRRequestIndex,
-  getExtendedStatus,
-  updateCounters,
-  REGISTRATION_REQUESTED,
-  NONE,
-  ZERO_ADDRESS,
-  getStatus
+  getTCRRequestIndex
 } from "./utils";
-import {
-  Dispute,
-  RequestSubmitted
-} from "../generated/KlerosController/LightGeneralizedTCR";
+import { Dispute } from "../generated/templates/GeneralizedTCR/GeneralizedTCR";
 
 // event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
@@ -171,24 +157,10 @@ export function handleItemStatusChange(event: ItemStatusChange): void {
 }
 
 // event Dispute(IArbitrator indexed _arbitrator, uint indexed _disputeID, uint _metaEvidenceID, uint _evidenceGroupID);
-export function handleDispute(
-  event: LightGeneralizedTCR__requestsDisputeDataResult
-): void {
+export function handleDispute(event: Dispute): void {
   // TODO: handle evidence
   // TODO: handle dispute data
   log.info("Init Handle dispute", []);
-
-  log.debug("This is a test", []);
-  event.getStatus().toString();
-  log.debug("Value1: {} value2: {}, value3: {}", [
-    event.value0.toString(),
-    event.value1.toString(),
-    event.value2.toString()
-  ]);
-  log.debug("dispute id value: {}, status: {}", [
-    event.getDisputeID().toString(),
-    event.getStatus().toString()
-  ]);
 
   // @todo (agustin) fix
   // const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
@@ -216,125 +188,4 @@ export function handleDispute(
   // badge.status = "Challenged";
   // badge.save();
   // log.info("Init Handle dispute saved", [])
-}
-
-export function handleRequestChallenged(event: Dispute): void {
-  log.error("This is a test of handleRequestChallenged", []);
-  let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemID = tcr.arbitratorDisputeIDToItemID(
-    event.params._arbitrator,
-    event.params._disputeID
-  );
-  let graphItemID = itemID.toHexString() + "@" + event.address.toHexString();
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.warning(`LItem {} not found.`, [graphItemID]);
-    return;
-  }
-
-  let previousStatus = getExtendedStatus(item.disputed, item.status);
-  item.disputed = true;
-  item.latestChallenger = event.transaction.from;
-  let newStatus = getExtendedStatus(item.disputed, item.status);
-
-  let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
-  let requestID = graphItemID + "-" + requestIndex.toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
-    return;
-  }
-
-  request.disputed = true;
-  request.challenger = event.transaction.from;
-  request.disputeID = event.params._disputeID;
-
-  // Accounting.
-  updateCounters(previousStatus, newStatus, event.address);
-
-  request.save();
-  item.save();
-}
-
-export function handleRequestSubmitted(event: RequestSubmitted): void {
-  log.error("This is a test of handleRequestSubmitted", []);
-  let graphItemID =
-    event.params._itemID.toHexString() + "@" + event.address.toHexString();
-
-  let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemInfo = tcr.getItemInfo(event.params._itemID);
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.error(`LItem for graphItemID {} not found.`, [graphItemID]);
-    return;
-  }
-
-  let registry = LRegistry.load(event.address.toHexString());
-  if (!registry) {
-    log.error(`LRegistry at address {} not found`, [
-      event.address.toHexString()
-    ]);
-    return;
-  }
-
-  // `previousStatus` and `newStatus` are used for accounting.
-  // Note that if this is the very first request of an item,
-  // item.status and item.dispute are dirty because they were set by
-  // handleNewItem, executed before this handler and so `previousStatus`
-  // would be wrong. We use a condition to detect if its the very
-  // first request and if so, ignore its contents (see below in accounting).
-  let previousStatus = getExtendedStatus(item.disputed, item.status);
-
-  item.numberOfRequests = item.numberOfRequests.plus(BigInt.fromI32(1));
-  item.status = getStatus(itemInfo.value0);
-  item.latestRequester = event.transaction.from;
-  item.latestRequestResolutionTime = BigInt.fromI32(0);
-  item.latestRequestSubmissionTime = event.block.timestamp;
-
-  let newStatus = getExtendedStatus(item.disputed, item.status);
-
-  let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
-  let requestID = graphItemID + "-" + requestIndex.toString();
-
-  let request = new LRequest(requestID);
-  request.disputed = false;
-  request.arbitrator = tcr.arbitrator();
-  request.arbitratorExtraData = tcr.arbitratorExtraData();
-  request.challenger = ZERO_ADDRESS;
-  request.requester = event.transaction.from;
-  request.numberOfEvidence = BigInt.fromI32(0);
-  request.item = item.id;
-  request.registry = registry.id;
-  request.resolutionTime = BigInt.fromI32(0);
-  request.disputeOutcome = NONE;
-  request.resolved = false;
-  request.disputeID = BigInt.fromI32(0);
-  request.submissionTime = event.block.timestamp;
-  request.requestType = item.status;
-  request.evidenceGroupID = event.params._evidenceGroupID;
-  request.creationTx = event.transaction.hash;
-  if (request.requestType == REGISTRATION_REQUESTED)
-    request.metaEvidence = registry.registrationMetaEvidence;
-  else request.metaEvidence = registry.clearingMetaEvidence;
-
-  // Accounting.
-  if (itemInfo.value1.equals(BigInt.fromI32(1))) {
-    // This is the first request for this item, which must be
-    // a registration request.
-    registry.numberOfRegistrationRequested = registry.numberOfRegistrationRequested.plus(
-      BigInt.fromI32(1)
-    );
-  } else {
-    updateCounters(previousStatus, newStatus, event.address);
-  }
-
-  let evidenceGroupIDToLRequest = new EvidenceGroupIDToLRequest(
-    event.params._evidenceGroupID.toString() + "@" + event.address.toHexString()
-  );
-  evidenceGroupIDToLRequest.request = requestID;
-
-  evidenceGroupIDToLRequest.save();
-  request.save();
-  item.save();
-  registry.save();
 }

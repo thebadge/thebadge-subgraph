@@ -136,10 +136,7 @@ type Arbitrator @entity {
 type Registry @entity {
   "The registry address"
   id: ID!
-  "The current registration meta evidence"
-  registrationMetaEvidence: MetaEvidence!
-  "The current removal meta evidence"
-  clearingMetaEvidence: MetaEvidence!
+
   "The number of MetaEvidence event logs emitted."
   metaEvidenceCount: BigInt!
   "The items submitted to this list"
@@ -153,10 +150,7 @@ type Registry @entity {
 type LRegistry @entity {
   "The registry address"
   id: ID!
-  "The current registration meta evidence"
-  registrationMetaEvidence: MetaEvidence!
-  "The current removal meta evidence"
-  clearingMetaEvidence: MetaEvidence!
+
   "The number of MetaEvidence event logs emitted."
   metaEvidenceCount: BigInt!
   "The items submitted to this list"
@@ -174,13 +168,6 @@ type LRegistry @entity {
   numberOfChallengedRegistrations: BigInt!
   "The total number of items in the challenged removal state."
   numberOfChallengedClearing: BigInt!
-}
-
-type MetaEvidence @entity {
-  "The meta evidence ID."
-  id: ID!
-  "The URI of the meta evidence file."
-  URI: String!
 }
 
 type Evidence @entity {
@@ -323,8 +310,7 @@ type LRequest @entity {
   evidenceGroupID: BigInt!
   "Whether it was requested to add or remove the item to/from the list."
   requestType: Status!
-  "The URI to the meta evidence used for this request."
-  metaEvidence: MetaEvidence!
+
   "Evidence provided regarding this request (matching evidenceGroupID)."
   evidences: [LEvidence!]! @derivedFrom(field: "request")
   "Number of evidences."
@@ -393,8 +379,7 @@ type Request @entity {
   evidenceGroupID: BigInt!
   "Whether it was requested to add or remove the item to/from the list."
   requestType: Status!
-  "The URI to the meta evidence used for this request."
-  metaEvidence: MetaEvidence!
+
   "The item this request belongs to."
   item: Item!
   "The registry where this request was submitted."

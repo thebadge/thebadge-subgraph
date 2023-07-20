@@ -1,12 +1,6 @@
 /* eslint-disable prefer-const */
 import { Bytes, log, BigInt } from "@graphprotocol/graph-ts";
-import {
-  Item,
-  Request,
-  Registry,
-  MetaEvidence,
-  Arbitrator
-} from "../generated/schema";
+import { Item, Request, Registry, Arbitrator } from "../generated/schema";
 import { AppealPossible } from "../generated/templates/IArbitrator/IArbitrator";
 import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
 import {
@@ -37,8 +31,6 @@ let CLEARING_REQUESTED = "ClearingRequested";
 let NONE = "None";
 let ACCEPT = "Accept";
 let REJECT = "Reject";
-
-let REQUESTER_CODE = 1;
 
 function getStatus(status: number): string {
   if (status == 0) return ABSENT;
@@ -108,11 +100,6 @@ export function handleRequestSubmitted(event: RequestEvidenceGroupID): void {
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
 
-  if (request.requestType == REGISTRATION_REQUESTED) {
-    request.metaEvidence = registry.registrationMetaEvidence;
-  } else {
-    request.metaEvidence = registry.clearingMetaEvidence;
-  }
   request.save();
   item.save();
 }
@@ -216,26 +203,6 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
     IArbitratorDataSourceTemplate.create(arbitratorAddr);
     arbitrator = new Arbitrator(arbitratorAddr.toHexString());
     arbitrator.save();
-  }
-
-  let metaEvidence = MetaEvidence.load(
-    registry.id + "-" + registry.metaEvidenceCount.toString()
-  );
-  if (metaEvidence == null) {
-    metaEvidence = new MetaEvidence(
-      registry.id + "-" + registry.metaEvidenceCount.toString()
-    );
-  }
-
-  metaEvidence.URI = event.params._evidence;
-  metaEvidence.save();
-
-  if (
-    registry.metaEvidenceCount.mod(BigInt.fromI32(2)).equals(BigInt.fromI32(1))
-  ) {
-    registry.registrationMetaEvidence = metaEvidence.id;
-  } else {
-    registry.clearingMetaEvidence = metaEvidence.id;
   }
 
   registry.save();

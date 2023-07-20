@@ -20,7 +20,6 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - MetaEvidence
         - LRegistry
       abis:
         - name: LightGTCRFactory
@@ -41,7 +40,6 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - MetaEvidence
         - Registry
       abis:
         - name: GTCRFactory
@@ -128,7 +126,6 @@ templates:
         - ItemProp,
         - LRequest,
         - LRegistry,
-        - MetaEvidence,
         - Arbitrator,
       abis:
         - name: LightGeneralizedTCR
@@ -144,13 +141,10 @@ templates:
           handler: handleRequestChallenged
         - event: ItemStatusChange(indexed bytes32,bool)
           handler: handleStatusUpdated
-        - event: Contribution(indexed bytes32,uint256,uint256,indexed address,uint256,uint8)
-          handler: handleContribution
         - event: MetaEvidence(indexed uint256,string)
           handler: handleMetaEvidence
-          # TODO Maybe re-enable as this creates new evidences items
-        #        - event: Evidence(indexed address,indexed uint256,indexed address,string)
-        #          handler: handleEvidence
+        - event: Evidence(indexed address,indexed uint256,indexed address,string)
+          handler: handleEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
       file: ./src/lightGeneralizedTCRMapping.ts
@@ -170,9 +164,6 @@ templates:
           file: ./abis/IArbitrator.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
-      eventHandlers:
-        - event: AppealPossible(indexed uint256,indexed address)
-          handler: handleAppealPossible
       file: ./src/lightGeneralizedTCRMapping.ts
   - kind: ethereum/contract
     name: GeneralizedTCR
@@ -187,7 +178,6 @@ templates:
         - Item
         - Request
         - Registry
-        - MetaEvidence
         - Arbitrator
       abis:
         - name: GeneralizedTCR
@@ -201,11 +191,8 @@ templates:
           handler: handleRequestSubmitted
         - event: Dispute(indexed address,indexed uint256,uint256,uint256)
           handler: handleRequestChallenged
-
-        #        - event: MetaEvidence(indexed uint256,string)
-        #          handler: handleMetaEvidence
-        #        - event: Evidence(indexed address,indexed uint256,indexed address,string)
-        #          handler: handleEvidence
+        - event: MetaEvidence(indexed uint256,string)
+          handler: handleMetaEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
       file: ./src/generalizedTCRMapping.ts
@@ -221,9 +208,7 @@ templates:
       entities:
         - Item
         - Request
-        - Round
         - Registry
-        - MetaEvidence
         - Arbitrator
       abis:
         - name: IArbitrator
