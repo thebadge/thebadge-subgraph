@@ -1,6 +1,5 @@
 specVersion: 0.0.4
 features:
-  - fullTextSearch
   - ipfsOnEthereumContracts
 description: TB <=> Kleros Graph
 repository: https://github.com/thebadge/thebadge-subgraph
@@ -123,7 +122,6 @@ templates:
       language: wasm/assemblyscript
       entities:
         - LItem
-        - ItemProp,
         - LRequest,
         - LRegistry,
         - Arbitrator,

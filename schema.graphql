@@ -15,8 +15,7 @@ enum Controller {
   kleros
 }
 
-## - BADGE TYPE
-
+## - BADGE Model
 type BadgeModel @entity {
   id: ID! # BadgeType id
   uri: String!
@@ -42,10 +41,6 @@ type BadgeModelKlerosMetaData @entity {
   challengePeriodDuration: BigInt!
   #TODO: set governor, arbitrator, etc
 }
-
-# type KlerosBadgeModelArbitrationParams @entity {
-#   id: ID! # badgeModel-index
-# }
 
 ## - BADGE
 
@@ -233,8 +228,6 @@ type LItem @entity {
   itemID: Bytes!
   "The data describing the item."
   data: String!
-  "The parsed data describing the item."
-  props: [ItemProp!]! @derivedFrom(field: "item")
   "First indexable value of the json file."
   key0: String
   "Second indexable value of the json file."
@@ -265,24 +258,6 @@ type LItem @entity {
   latestRequester: Bytes!
   "The account that challenged the latest request, if any."
   latestChallenger: Bytes!
-}
-
-type _Schema_
-  @fulltext(
-    name: "itemSearch"
-    language: en
-    algorithm: rank
-    include: [{ entity: "LItem", fields: [{ name: "keywords" }] }]
-  )
-
-type ItemProp @entity {
-  id: ID!
-  type: String!
-  label: String!
-  description: String!
-  isIdentifier: Boolean!
-  value: String
-  item: LItem!
 }
 
 type LRequest @entity {

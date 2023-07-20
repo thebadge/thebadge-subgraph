@@ -23,7 +23,6 @@ import {
 import {
   Arbitrator,
   EvidenceGroupIDToLRequest,
-  ItemProp,
   LEvidence,
   LItem,
   LRegistry,
@@ -312,58 +311,12 @@ export function handleNewItem(event: NewItem): void {
     return;
   }
 
-  let columns = columnsValue.toArray();
-
   let valuesValue = jsonObj.get("values");
   if (!valuesValue) {
     log.error(`Error getting valuesValue for graphItemID {}`, [graphItemID]);
     item.save();
     registry.save();
     return;
-  }
-  let values = valuesValue.toObject();
-
-  let identifier = 0;
-  for (let i = 0; i < columns.length; i++) {
-    let col = columns[i];
-    let colObj = col.toObject();
-
-    let label = colObj.get("label");
-
-    // We must account for items with missing fields.
-    let checkedLabel = label
-      ? label.toString()
-      : "missing-label".concat(i.toString());
-
-    let description = colObj.get("description");
-    let _type = colObj.get("type");
-    let isIdentifier = colObj.get("isIdentifier");
-    let value = values.get(checkedLabel);
-    let itemPropId = graphItemID + "@" + checkedLabel;
-    let itemProp = new ItemProp(itemPropId);
-
-    itemProp.value = JSONValueToMaybeString(value);
-    itemProp.type = JSONValueToMaybeString(_type);
-    itemProp.label = JSONValueToMaybeString(label);
-    itemProp.description = JSONValueToMaybeString(description);
-    itemProp.isIdentifier = JSONValueToBool(isIdentifier);
-    itemProp.item = item.id;
-
-    if (itemProp.isIdentifier) {
-      if (identifier == 0) item.key0 = itemProp.value;
-      else if (identifier == 1) item.key1 = itemProp.value;
-      else if (identifier == 2) item.key2 = itemProp.value;
-      else if (identifier == 3) item.key3 = itemProp.value;
-      else if (identifier == 4) item.key4 = itemProp.value;
-      identifier += 1;
-    }
-
-    if (itemProp.isIdentifier && itemProp.value != null && item.keywords) {
-      item.keywords =
-        (item.keywords as string) + " | " + (itemProp.value as string);
-    }
-
-    itemProp.save();
   }
 
   item.save();
