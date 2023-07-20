@@ -21,7 +21,6 @@ import {
   Ruling
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
-  Arbitrator,
   EvidenceGroupIDToLRequest,
   LEvidence,
   LItem,
@@ -511,21 +510,6 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
   registry.metaEvidenceCount = registry.metaEvidenceCount.plus(
     BigInt.fromI32(1)
   );
-
-  if (registry.metaEvidenceCount.equals(BigInt.fromI32(1))) {
-    // This means this is the first meta evidence event emitted,
-    // in the constructor.
-    // Use this opportunity to create the arbitrator datasource
-    // to start monitoring it for events (if we aren't already).
-    let tcr = LightGeneralizedTCR.bind(event.address);
-    let arbitratorAddr = tcr.arbitrator();
-    let arbitrator = Arbitrator.load(arbitratorAddr.toHexString());
-    if (!arbitrator) {
-      IArbitratorDataSourceTemplate.create(arbitratorAddr);
-      arbitrator = new Arbitrator(arbitratorAddr.toHexString());
-      arbitrator.save();
-    }
-  }
 
   registry.save();
 }

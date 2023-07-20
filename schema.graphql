@@ -123,11 +123,6 @@ enum Ruling {
   Reject
 }
 
-type Arbitrator @entity {
-  "The address of the arbitrator"
-  id: ID!
-}
-
 type Registry @entity {
   "The registry address"
   id: ID!

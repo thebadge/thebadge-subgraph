@@ -124,7 +124,6 @@ templates:
         - LItem
         - LRequest,
         - LRegistry,
-        - Arbitrator,
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
@@ -147,23 +146,6 @@ templates:
           handler: handleRuling
       file: ./src/lightGeneralizedTCRMapping.ts
   - kind: ethereum/contract
-    name: LIArbitrator
-    network: goerli
-    source:
-      abi: IArbitrator
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Arbitrator
-      abis:
-        - name: IArbitrator
-          file: ./abis/IArbitrator.json
-        - name: LightGeneralizedTCR
-          file: ./abis/LightGeneralizedTCR.json
-      file: ./src/lightGeneralizedTCRMapping.ts
-  - kind: ethereum/contract
     name: GeneralizedTCR
     network: goerli
     source:
@@ -176,7 +158,6 @@ templates:
         - Item
         - Request
         - Registry
-        - Arbitrator
       abis:
         - name: GeneralizedTCR
           file: ./abis/GeneralizedTCR.json

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
 import { Bytes, log, BigInt } from "@graphprotocol/graph-ts";
-import { Item, Request, Registry, Arbitrator } from "../generated/schema";
+import { Item, Request, Registry } from "../generated/schema";
 import { AppealPossible } from "../generated/templates/IArbitrator/IArbitrator";
 import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
 import {
@@ -189,21 +189,6 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
   registry.metaEvidenceCount = registry.metaEvidenceCount.plus(
     BigInt.fromI32(1)
   );
-
-  if (registry.metaEvidenceCount.equals(BigInt.fromI32(1))) {
-    // This means this is the first meta evidence event emitted,
-    // in the constructor.
-    // Use this opportunity to create the arbitrator datasource
-    // to start monitoring it for events (if we aren't already).
-    let tcr = GeneralizedTCR.bind(event.address);
-    let arbitratorAddr = tcr.arbitrator();
-    let arbitrator = Arbitrator.load(arbitratorAddr.toHexString());
-    if (arbitrator) return; // Data source already created.
-
-    IArbitratorDataSourceTemplate.create(arbitratorAddr);
-    arbitrator = new Arbitrator(arbitratorAddr.toHexString());
-    arbitrator.save();
-  }
 
   registry.save();
 }
