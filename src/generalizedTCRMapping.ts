@@ -2,7 +2,6 @@
 import { Bytes, log, BigInt } from "@graphprotocol/graph-ts";
 import { Item, Request, Registry } from "../generated/schema";
 import { AppealPossible } from "../generated/templates/IArbitrator/IArbitrator";
-import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
 import {
   Dispute,
   GeneralizedTCR,
@@ -193,33 +192,7 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
   registry.save();
 }
 
-export function handleAppealPossible(event: AppealPossible): void {
-  let registry = Registry.load(event.params._arbitrable.toHexString());
-  if (registry == null) return; // Event not related to a GTCR.
 
-  let tcr = GeneralizedTCR.bind(event.params._arbitrable);
-  let itemID = tcr.arbitratorDisputeIDToItem(
-    event.address,
-    event.params._disputeID
-  );
-  let graphItemID =
-    itemID.toHexString() + "@" + event.params._arbitrable.toHexString();
-  let item = Item.load(graphItemID);
-  if (!item) {
-    log.error("Item of graphItemID {} not found.", [graphItemID]);
-    return;
-  }
-
-  let requestID =
-    item.id + "-" + item.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-  let request = Request.load(requestID);
-  if (!request) {
-    log.error(`Request of requestID {} not found.`, [requestID]);
-    return;
-  }
-
-  item.save();
-}
 
 export function handleRuling(event: Ruling): void {
   let tcr = GeneralizedTCR.bind(event.address);

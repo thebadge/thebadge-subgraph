@@ -28,8 +28,6 @@ import {
   LRequest
 } from "../generated/schema";
 
-import { IArbitrator as IArbitratorDataSourceTemplate } from "../generated/templates";
-
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.
 // - (1) Registered: The item is registered and there are no pending requests.
