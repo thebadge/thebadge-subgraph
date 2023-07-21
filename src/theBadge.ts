@@ -6,7 +6,6 @@ import {
   TransferSingle,
 } from "../generated/TheBadge/TheBadge";
 
-// import { Arbitror } from "../generated/TheBadge/Arbitror";
 import { BadgeModel, Badge } from "../generated/schema";
 import { loadUserOrGetDefault } from "./utils/utils";
 

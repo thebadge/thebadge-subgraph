@@ -27,26 +27,6 @@ dataSources:
         - event: NewGTCR(indexed address)
           handler: handleNewGTCR
       file: ./src/lightGTCRFactoryMapping.ts
-  - kind: ethereum/contract
-    name: GTCRFactory
-    network: goerli
-    source:
-      address: "0x9aad77bab5f18165f9ca81da9c3d392d9e382c23"
-      abi: GTCRFactory
-      startBlock: 7486799
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Registry
-      abis:
-        - name: GTCRFactory
-          file: ./abis/GTCRFactory.json
-      eventHandlers:
-        - event: NewGTCR(indexed address)
-          handler: handleNewGTCR
-      file: ./src/gTCRFactoryMapping.ts
 
   - kind: ethereum/contract
     name: TheBadge
@@ -145,36 +125,6 @@ templates:
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
       file: ./src/lightGeneralizedTCRMapping.ts
-  - kind: ethereum/contract
-    name: GeneralizedTCR
-    network: goerli
-    source:
-      abi: GeneralizedTCR
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Item
-        - Request
-        - Registry
-      abis:
-        - name: GeneralizedTCR
-          file: ./abis/GeneralizedTCR.json
-        - name: IArbitrator
-          file: ./abis/IArbitrator.json
-      eventHandlers:
-        - event: ItemStatusChange(indexed bytes32,indexed uint256,indexed uint256,bool,bool)
-          handler: handleRequestResolved
-        - event: RequestEvidenceGroupID(indexed bytes32,indexed uint256,indexed uint256)
-          handler: handleRequestSubmitted
-        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
-          handler: handleRequestChallenged
-        - event: MetaEvidence(indexed uint256,string)
-          handler: handleMetaEvidence
-        - event: Ruling(indexed address,indexed uint256,uint256)
-          handler: handleRuling
-      file: ./src/generalizedTCRMapping.ts
   - kind: ethereum/contract
     name: TBLightGeneralizedTCR
     network: goerli

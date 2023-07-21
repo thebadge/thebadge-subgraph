@@ -17,3 +17,4 @@ export function getArbitrationParamsIndex(tcrAddress: Address): BigInt {
   const tcrList = LightGeneralizedTCR.bind(tcrAddress);
   return BigInt.fromI32(tcrList.arbitrationParamsChanges.length - 1);
 }
+

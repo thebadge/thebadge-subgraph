@@ -5,8 +5,6 @@ import {
   Address,
   ipfs,
   json,
-  JSONValue,
-  JSONValueKind,
   log
 } from "@graphprotocol/graph-ts";
 
@@ -22,6 +20,7 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   EvidenceGroupIDToLRequest,
+  KlerosBadgeIdToBadgeId,
   LEvidence,
   LItem,
   LRegistry,
@@ -187,54 +186,6 @@ let ZERO_ADDRESS = Bytes.fromHexString(
   "0x0000000000000000000000000000000000000000"
 ) as Bytes;
 
-function JSONValueToMaybeString(
-  value: JSONValue | null,
-  _default: string = "-"
-): string {
-  // Subgraph considers an empty string to be null and
-  // the handler crashes when attempting to save the entity.
-  // This is a security vulnerability because an adversary
-  // could manually craft an item with missing columns
-  // and the item would not show up in the UI, passing
-  // the challenge period unoticed.
-  //
-  // We fix this by setting the field manually to a hifen.
-  if (value == null || value.isNull()) {
-    return "-";
-  }
-
-  switch (value.kind) {
-    case JSONValueKind.BOOL:
-      return value.toBool() == true ? "true" : "false";
-    case JSONValueKind.STRING:
-      return value.toString();
-    case JSONValueKind.NUMBER:
-      return value.toBigInt().toHexString();
-    default:
-      return _default;
-  }
-}
-
-function JSONValueToBool(
-  value: JSONValue | null,
-  _default: boolean = false
-): boolean {
-  if (value == null || value.isNull()) {
-    return _default;
-  }
-
-  switch (value.kind) {
-    case JSONValueKind.BOOL:
-      return value.toBool();
-    case JSONValueKind.STRING:
-      return value.toString() == "true";
-    case JSONValueKind.NUMBER:
-      return value.toBigInt().notEqual(BigInt.fromString("0"));
-    default:
-      return _default;
-  }
-}
-
 export function handleNewItem(event: NewItem): void {
   // We assume this is an item added via addItemDirectly and care
   // only about saving the item json data.
@@ -250,6 +201,14 @@ export function handleNewItem(event: NewItem): void {
   let registry = LRegistry.load(event.address.toHexString());
   if (!registry) {
     log.error(`LRegistry {} not found`, [event.address.toHexString()]);
+    return;
+  }
+
+  // todo review, ignores items that are not from TheBadge
+  const tcrItemID = event.params._itemID.toHexString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
@@ -324,11 +283,21 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   let graphItemID =
     event.params._itemID.toHexString() + "@" + event.address.toHexString();
 
+  const itemId = event.params._itemID.toHexString();
+
   let tcr = LightGeneralizedTCR.bind(event.address);
   let itemInfo = tcr.getItemInfo(event.params._itemID);
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem for graphItemID {} not found.`, [graphItemID]);
+    return;
+  }
+
+  // todo review, ignores items that are not from TheBadge
+  const tcrItemID = item.itemID.toHexString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
@@ -412,6 +381,14 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
+  // todo review, ignores items that are not from TheBadge
+  const tcrItemID = item.itemID.toHexString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
+    return;
+  }
+
   let previousStatus = getExtendedStatus(item.disputed, item.status);
   item.disputed = true;
   item.latestChallenger = event.transaction.from;
@@ -455,6 +432,14 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem {} not found.`, [graphItemID]);
+    return;
+  }
+
+  // todo review, ignores items that are not from TheBadge
+  const tcrItemID = item.itemID.toHexString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
@@ -559,6 +544,14 @@ export function handleRuling(event: Ruling): void {
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem {} not found.`, [graphItemID]);
+    return;
+  }
+
+  // todo review, ignores items that are not from TheBadge
+  const tcrItemID = item.itemID.toHexString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
