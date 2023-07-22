@@ -485,6 +485,8 @@ type Request @entity {
   requestType: Status!
   "The URI to the meta evidence used for this request."
   metaEvidence: MetaEvidence!
+  "Number of evidences."
+  numberOfEvidence: BigInt
   "The item this request belongs to."
   item: Item!
   "The registry where this request was submitted."

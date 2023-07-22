@@ -7,6 +7,8 @@ import {
     Registry,
     MetaEvidence,
     Arbitrator,
+    Evidence,
+    EvidenceGroupIDToRequest
 } from '../generated/schema';
 import {
     AppealPossible,
@@ -21,6 +23,7 @@ import {
     ItemStatusChange,
     RequestEvidenceGroupID,
     MetaEvidence as MetaEvidenceEvent,
+    Evidence as EvidenceEvent,
 } from '../generated/templates/GeneralizedTCR/GeneralizedTCR';
 import {Ruling} from "../generated/templates/IArbitrator/GeneralizedTCR";
 
@@ -457,4 +460,38 @@ export function handleRuling(event: Ruling): void {
     request.finalRuling = event.params._ruling;
     request.resolutionTime = event.block.timestamp;
     request.save()
+}
+
+export function handleEvidence(event: EvidenceEvent): void {
+    let evidenceGroupIDToRequest = EvidenceGroupIDToRequest.load(
+        event.params._evidenceGroupID.toString() + "@" + event.address.toHexString());
+    if (!evidenceGroupIDToRequest) {
+        log.error('EvidenceGroupID {} not registered for {}.',
+            [event.params._evidenceGroupID.toString(), event.address.toHexString()]);
+        return;
+    }
+
+    let request = Request.load(evidenceGroupIDToRequest.request)
+    if (!request) {
+        log.error('Request {} not found.', [evidenceGroupIDToRequest.request]);
+        return;
+    }
+
+    let evidence = new Evidence(
+        request.id + '-' + request.numberOfEvidence.toString(),
+    );
+
+    evidence.arbitrator = event.params._arbitrator;
+    evidence.evidenceGroupID = event.params._evidenceGroupID;
+    evidence.party = event.params._party;
+    evidence.URI = event.params._evidence;
+    evidence.request = request.id;
+    evidence.number = request.numberOfEvidence;
+    evidence.item = request.item;
+    evidence.timestamp = event.block.timestamp;
+
+    request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
+
+    request.save();
+    evidence.save();
 }

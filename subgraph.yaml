@@ -213,8 +213,8 @@ templates:
 #          handler: handleHasPaidAppealFee
 #        - event: MetaEvidence(indexed uint256,string)
 #          handler: handleMetaEvidence
-#        - event: Evidence(indexed address,indexed uint256,indexed address,string)
-#          handler: handleEvidence
+        - event: Evidence(indexed address,indexed uint256,indexed address,string)
+          handler: handleEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
       file: ./src/generalizedTCRMapping.ts
