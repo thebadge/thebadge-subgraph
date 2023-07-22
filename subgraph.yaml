@@ -133,7 +133,7 @@ templates:
         - LRegistry,
         - MetaEvidence,
         - Arbitrator,
-        - LContribution,
+        - LContribution
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
