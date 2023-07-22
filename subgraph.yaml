@@ -35,7 +35,8 @@ dataSources:
     source:
       address: '0x9aad77bab5f18165f9ca81da9c3d392d9e382c23'
       abi: GTCRFactory
-      startBlock: 7486799
+      startBlock: 8970619
+     # startBlock: 7486799
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -153,9 +154,8 @@ templates:
           handler: handleRewardWithdrawn
         - event: MetaEvidence(indexed uint256,string)
           handler: handleMetaEvidence
-          # TODO Maybe re-enable as this creates new evidences items
-#        - event: Evidence(indexed address,indexed uint256,indexed address,string)
-#          handler: handleEvidence
+        - event: Evidence(indexed address,indexed uint256,indexed address,string)
+          handler: handleEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
       file: ./src/lightGeneralizedTCRMapping.ts

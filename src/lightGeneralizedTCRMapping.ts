@@ -160,7 +160,7 @@ function buildNewRound(
  * after the one this is being called on? Do they call updateCounters?
  * @param previousStatus The previous extended status of the item.
  * @param newStatus The new extended status of the item.
- * @param registry The registry to which update the counters.
+ * @param registryAddress
  */
 function updateCounters(
   previousStatus: number,

@@ -88,10 +88,12 @@ let ZERO_ADDRESS = Bytes.fromHexString(
     '0x0000000000000000000000000000000000000000',
 ) as Bytes;
 
+
 export function handleRequestSubmitted(event: RequestEvidenceGroupID): void {
     let tcr = GeneralizedTCR.bind(event.address);
     let graphItemID =
         event.params._itemID.toHexString() + '@' + event.address.toHexString();
+
     let itemInfo = tcr.getItemInfo(event.params._itemID);
     let registry = Registry.load(event.address.toHexString());
     if (!registry) {
@@ -137,9 +139,11 @@ export function handleRequestSubmitted(event: RequestEvidenceGroupID): void {
     request.numberOfRounds = BigInt.fromI32(1);
     request.requestType = item.status;
     request.evidenceGroupID = event.params._evidenceGroupID;
+    request.numberOfEvidence = BigInt.fromI32(0);
 
     let roundID = requestID + '-0';
     let round = new Round(roundID);
+
     let arbitrator = IArbitrator.bind(changetype<Address>(request.arbitrator));
     if (request.requestType == REGISTRATION_REQUESTED) {
         round.amountPaidRequester = tcr
@@ -152,6 +156,7 @@ export function handleRequestSubmitted(event: RequestEvidenceGroupID): void {
             .plus(arbitrator.arbitrationCost(request.arbitratorExtraData));
         request.metaEvidence = registry.clearingMetaEvidence;
     }
+
     round.feeRewards = round.amountPaidRequester;
     round.amountPaidChallenger = BigInt.fromI32(0);
     round.hasPaidRequester = true;
@@ -162,6 +167,11 @@ export function handleRequestSubmitted(event: RequestEvidenceGroupID): void {
     round.rulingTime = BigInt.fromI32(0);
     round.ruling = NONE;
     round.creationTime = event.block.timestamp;
+    let evidenceGroupIDToLRequest = new EvidenceGroupIDToRequest(
+        event.params._evidenceGroupID.toString() + "@" + event.address.toHexString())
+    evidenceGroupIDToLRequest.request = requestID
+
+    evidenceGroupIDToLRequest.save()
     round.save();
     request.save();
     item.save();
@@ -472,13 +482,14 @@ export function handleEvidence(event: EvidenceEvent): void {
     }
 
     let request = Request.load(evidenceGroupIDToRequest.request)
-    if (!request) {
+    if (!request || !request.numberOfEvidence) {
         log.error('Request {} not found.', [evidenceGroupIDToRequest.request]);
         return;
     }
 
+    const numberOfEvidences: BigInt = request.numberOfEvidence as BigInt
     let evidence = new Evidence(
-        request.id + '-' + request.numberOfEvidence.toString(),
+        request.id + '-' + numberOfEvidences.toString(),
     );
 
     evidence.arbitrator = event.params._arbitrator;
@@ -486,11 +497,11 @@ export function handleEvidence(event: EvidenceEvent): void {
     evidence.party = event.params._party;
     evidence.URI = event.params._evidence;
     evidence.request = request.id;
-    evidence.number = request.numberOfEvidence;
+    evidence.number = numberOfEvidences;
     evidence.item = request.item;
     evidence.timestamp = event.block.timestamp;
 
-    request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
+    request.numberOfEvidence = numberOfEvidences.plus(BigInt.fromI32(1));
 
     request.save();
     evidence.save();
