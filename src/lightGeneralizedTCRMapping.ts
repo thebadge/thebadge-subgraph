@@ -20,6 +20,9 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   EvidenceGroupIDToLRequest,
+  KlerosBadgeEvidence,
+  KlerosBadgeIdToBadgeId,
+  KlerosBadgeRequest,
   LEvidence,
   LItem,
   LRegistry,
@@ -186,6 +189,30 @@ let ZERO_ADDRESS = Bytes.fromHexString(
 ) as Bytes;
 
 export function handleNewItem(event: NewItem): void {
+  // todo review, ignores items that are not from TheBadge
+  log.debug("ID TEST: {} and kleros badge id: {}", [
+    event.address.toHexString(),
+    event.params._itemID.toHexString()
+  ]);
+  const tcrItemID = event.params._itemID.toHexString();
+
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+    event.params._itemID.toString()
+  );
+
+  let test = [
+    "0xab6ab0e1eafd0a8e3b64c5b8185045bb88b32368b4202cb3b1cb2839aa23bd03",
+    "0xf9fa866cb7a33f3ba7de8d87cf3a13da8f9dc76783ac254bd819ab659eb425f7",
+    "0x7328d4763b4c965e8c4b4432378fbf07a44a497a226818fe37e414c24cdb2075",
+    "0xf54c469d64d60643e9fcae0d70f6330375d4e6f15aa7f13298c38985159b5544",
+    "0x82f17d681de91b71b9e4a8a1a2cdc3c1e5d33c72e71b03cf636d3499a3152292"
+  ];
+
+  if (!test.includes(tcrItemID.toLowerCase())) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
+    return;
+  }
+
   // We assume this is an item added via addItemDirectly and care
   // only about saving the item json data.
   // If it was emitted via addItem, all the missing/wrong data regarding
@@ -196,15 +223,15 @@ export function handleNewItem(event: NewItem): void {
   // inside handleStatusUpdated.
   let graphItemID =
     event.params._itemID.toHexString() + "@" + event.address.toHexString();
-  let gtcrContract = LightGeneralizedTCR.bind(event.address);
+
   let registry = LRegistry.load(event.address.toHexString());
   if (!registry) {
     log.error(`LRegistry {} not found`, [event.address.toHexString()]);
     return;
   }
 
+  let gtcrContract = LightGeneralizedTCR.bind(event.address);
   let itemInfo = gtcrContract.getItemInfo(event.params._itemID);
-
   let item = new LItem(graphItemID);
   item.itemID = event.params._itemID;
   item.data = event.params._data;
@@ -275,7 +302,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     event.params._itemID.toHexString() + "@" + event.address.toHexString();
 
   let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemInfo = tcr.getItemInfo(event.params._itemID);
+
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem for graphItemID {} not found.`, [graphItemID]);
@@ -297,7 +324,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   // would be wrong. We use a condition to detect if its the very
   // first request and if so, ignore its contents (see below in accounting).
   let previousStatus = getExtendedStatus(item.disputed, item.status);
-
+  let itemInfo = tcr.getItemInfo(event.params._itemID);
   item.numberOfRequests = item.numberOfRequests.plus(BigInt.fromI32(1));
   item.status = getStatus(itemInfo.value0);
   item.latestRequester = event.transaction.from;
@@ -346,7 +373,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     event.params._evidenceGroupID.toString() + "@" + event.address.toHexString()
   );
   evidenceGroupIDToLRequest.request = requestID;
-
   evidenceGroupIDToLRequest.save();
   request.save();
   item.save();
@@ -485,10 +511,17 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
+  log.error(`Creating evidence for group id: {}, number of evidences: {}`, [
+    event.params._evidenceGroupID.toString(),
+    request.numberOfEvidence.toString()
+  ]);
+
+  // A new evidence is added but before the counter of evidences should be updated, otherwise the old one is going to be overwritten
+  request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
+
   let evidence = new LEvidence(
     request.id + "-" + request.numberOfEvidence.toString()
   );
-
   evidence.arbitrator = event.params._arbitrator;
   evidence.evidenceGroupID = event.params._evidenceGroupID;
   evidence.party = event.params._party;
@@ -497,10 +530,30 @@ export function handleEvidence(event: EvidenceEvent): void {
   evidence.number = request.numberOfEvidence;
   evidence.item = request.item;
   evidence.timestamp = event.block.timestamp;
-
-  request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
-
+  evidence.save();
   request.save();
+
+  const itemID = request.item.split("@")[0].toString();
+  const kbRequestID = itemID + "-" + request.id.toString().split("-")[1];
+  const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
+
+  if (!klerosBadgeRequest) {
+    log.error("KlerosBadgeRequest {} not found.", [kbRequestID]);
+    return;
+  }
+
+  const klerosBadgeEvidence = new KlerosBadgeEvidence(
+    klerosBadgeRequest.id + "-" + request.numberOfEvidence.toString()
+  );
+  klerosBadgeEvidence.URI = event.params._evidence;
+  klerosBadgeEvidence.timestamp = event.block.timestamp;
+  klerosBadgeEvidence.save();
+
+  const auxEvidences = klerosBadgeRequest.evidences;
+  auxEvidences.push(klerosBadgeEvidence.id);
+  klerosBadgeRequest.evidences = auxEvidences;
+  klerosBadgeRequest.save();
+
   evidence.save();
 }
 

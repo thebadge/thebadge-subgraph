@@ -69,6 +69,15 @@ type KlerosBadgeIdToBadgeId @entity {
   badgeId: String! # badge id.
 }
 
+type KlerosBadgeEvidence @entity {
+  "<Request.id>-<evidence number>"
+  id: ID!
+  "The URI of the evidence file."
+  URI: String!
+  "When was this evidence posted"
+  timestamp: BigInt!
+}
+
 type KlerosBadgeRequest @entity {
   id: ID!
   type: KlerosRequestType!
@@ -82,9 +91,11 @@ type KlerosBadgeRequest @entity {
   challenger: Bytes
 
   # TODO: Replace with evidences()
-  requestBadgeEvidenceUri: String
-  removeOrChallengeEvidenceUri: String
-  extraEvidenceUris: [String!]!
+#  requestBadgeEvidenceUri: String
+#  removeOrChallengeEvidenceUri: String
+#  extraEvidenceUris: [String!]!
+#
+  evidences: [KlerosBadgeEvidence!]!
 }
 
 ## - USER
@@ -181,6 +192,7 @@ type LEvidence @entity {
   "When was this evidence posted"
   timestamp: BigInt!
 }
+
 
 type EvidenceGroupIDToLRequest @entity {
   "<EvidenceGroupID>@<contract address>"
