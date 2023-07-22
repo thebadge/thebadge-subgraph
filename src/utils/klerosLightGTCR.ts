@@ -1,5 +1,5 @@
-import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
-import { LRegistry } from "../../generated/schema";
+import {Address, BigInt, Bytes, log} from "@graphprotocol/graph-ts";
+import { LRegistry, LRound } from "../../generated/schema";
 
 let ABSENT = "Absent";
 let REGISTERED = "Registered";
@@ -41,7 +41,7 @@ let ZERO_ADDRESS = Bytes.fromHexString(
  * after the one this is being called on? Do they call updateCounters?
  * @param previousStatus The previous extended status of the item.
  * @param newStatus The new extended status of the item.
- * @param registry The registry to which update the counters.
+ * @param registryAddress
  */
 function updateCounters(
   previousStatus: number,
@@ -105,6 +105,30 @@ function updateCounters(
   registry.save();
 }
 
+function buildNewRound(
+  roundID: string,
+  requestID: string,
+  timestamp: BigInt
+): LRound {
+  let newRound = new LRound(roundID);
+  newRound.amountPaidRequester = BigInt.fromI32(0);
+  newRound.amountPaidChallenger = BigInt.fromI32(0);
+  newRound.feeRewards = BigInt.fromI32(0);
+  newRound.hasPaidRequester = false;
+  newRound.hasPaidChallenger = false;
+  newRound.lastFundedRequester = BigInt.fromI32(0);
+  newRound.lastFundedChallenger = BigInt.fromI32(0);
+  newRound.request = requestID;
+  newRound.appealPeriodStart = BigInt.fromI32(0);
+  newRound.appealPeriodEnd = BigInt.fromI32(0);
+  newRound.rulingTime = BigInt.fromI32(0);
+  newRound.ruling = NONE;
+  newRound.creationTime = timestamp;
+  newRound.numberOfContributions = BigInt.fromI32(0);
+  newRound.appealed = false;
+  return newRound;
+}
+
 function getExtendedStatus(disputed: boolean, status: string): number {
   if (disputed) {
     if (status == CONTRACT_STATUS_NAMES.get(REGISTRATION_REQUESTED_CODE))
@@ -123,11 +147,5 @@ function getStatus(status: number): string {
   return "Error";
 }
 
-export {
-  updateCounters,
-  getExtendedStatus,
-  getStatus,
-  REGISTRATION_REQUESTED,
-  NONE,
-  ZERO_ADDRESS
-};
+
+export { updateCounters, buildNewRound, getExtendedStatus, getStatus, REGISTRATION_REQUESTED, NONE, ZERO_ADDRESS };

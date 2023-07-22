@@ -20,7 +20,6 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   EvidenceGroupIDToLRequest,
-  KlerosBadgeIdToBadgeId,
   LEvidence,
   LItem,
   LRegistry,
@@ -204,14 +203,6 @@ export function handleNewItem(event: NewItem): void {
     return;
   }
 
-  // todo review, ignores items that are not from TheBadge
-  const tcrItemID = event.params._itemID.toHexString();
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
-    return;
-  }
-
   let itemInfo = gtcrContract.getItemInfo(event.params._itemID);
 
   let item = new LItem(graphItemID);
@@ -283,21 +274,11 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   let graphItemID =
     event.params._itemID.toHexString() + "@" + event.address.toHexString();
 
-  const itemId = event.params._itemID.toHexString();
-
   let tcr = LightGeneralizedTCR.bind(event.address);
   let itemInfo = tcr.getItemInfo(event.params._itemID);
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem for graphItemID {} not found.`, [graphItemID]);
-    return;
-  }
-
-  // todo review, ignores items that are not from TheBadge
-  const tcrItemID = item.itemID.toHexString();
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
@@ -342,9 +323,13 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.resolved = false;
   request.disputeID = BigInt.fromI32(0);
   request.submissionTime = event.block.timestamp;
+  request.numberOfRounds = BigInt.fromI32(1);
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
   request.creationTx = event.transaction.hash;
+  if (request.requestType == REGISTRATION_REQUESTED)
+    request.metaEvidence = registry.registrationMetaEvidence;
+  else request.metaEvidence = registry.clearingMetaEvidence;
 
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
@@ -381,14 +366,6 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  // todo review, ignores items that are not from TheBadge
-  const tcrItemID = item.itemID.toHexString();
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
-    return;
-  }
-
   let previousStatus = getExtendedStatus(item.disputed, item.status);
   item.disputed = true;
   item.latestChallenger = event.transaction.from;
@@ -404,6 +381,7 @@ export function handleRequestChallenged(event: Dispute): void {
 
   request.disputed = true;
   request.challenger = event.transaction.from;
+  request.numberOfRounds = BigInt.fromI32(2);
   request.disputeID = event.params._disputeID;
 
   // Accounting.
@@ -432,14 +410,6 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   let item = LItem.load(graphItemID);
   if (!item) {
     log.error(`LItem {} not found.`, [graphItemID]);
-    return;
-  }
-
-  // todo review, ignores items that are not from TheBadge
-  const tcrItemID = item.itemID.toHexString();
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
     return;
   }
 
@@ -547,14 +517,6 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  // todo review, ignores items that are not from TheBadge
-  const tcrItemID = item.itemID.toHexString();
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(tcrItemID);
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [tcrItemID]);
-    return;
-  }
-
   let requestID =
     item.id + "-" + item.numberOfRequests.minus(BigInt.fromI32(1)).toString();
   let request = LRequest.load(requestID);
@@ -563,6 +525,7 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
+  request.finalRuling = event.params._ruling;
   request.resolutionTime = event.block.timestamp;
   request.save();
 }
