@@ -415,6 +415,19 @@ export function handleRequestChallenged(event: Dispute): void {
 
   request.save();
   item.save();
+
+  const klerosItemID = request.item.split("@")[0].toString();
+  const kbRequestID = klerosItemID + "-" + request.id.toString().split("-")[1];
+  const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
+
+  if (!klerosBadgeRequest) {
+    log.error("KlerosBadgeRequest {} not found.", [kbRequestID]);
+    return;
+  }
+
+  klerosBadgeRequest.challenger = event.transaction.from
+  klerosBadgeRequest.save();
+
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {

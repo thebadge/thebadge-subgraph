@@ -85,16 +85,9 @@ type KlerosBadgeRequest @entity {
   badgeKlerosMetaData: BadgeKlerosMetaData!
   requestIndex: BigInt!
   arbitrationParamsIndex: BigInt!
-
   disputeId: BigInt
   requester: Bytes
   challenger: Bytes
-
-  # TODO: Replace with evidences()
-#  requestBadgeEvidenceUri: String
-#  removeOrChallengeEvidenceUri: String
-#  extraEvidenceUris: [String!]!
-#
   evidences: [KlerosBadgeEvidence!]!
 }
 
@@ -192,7 +185,6 @@ type LEvidence @entity {
   "When was this evidence posted"
   timestamp: BigInt!
 }
-
 
 type EvidenceGroupIDToLRequest @entity {
   "<EvidenceGroupID>@<contract address>"
