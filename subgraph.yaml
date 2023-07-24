@@ -105,24 +105,19 @@ templates:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - LItem,
-        - LRegistry
+        - LItem
       abis:
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: IArbitrator
           file: ./abis/IArbitrator.json
       eventHandlers:
-        - event: NewItem(indexed bytes32,string,bool)
-          handler: handleNewItem
         - event: RequestSubmitted(indexed bytes32,uint256)
           handler: handleRequestSubmitted
         - event: Dispute(indexed address,indexed uint256,uint256,uint256)
           handler: handleRequestChallenged
         - event: ItemStatusChange(indexed bytes32,bool)
           handler: handleStatusUpdated
-        - event: MetaEvidence(indexed uint256,string)
-          handler: handleMetaEvidence
         - event: Evidence(indexed address,indexed uint256,indexed address,string)
           handler: handleEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
@@ -186,5 +181,3 @@ templates:
       eventHandlers:
         - event: ItemStatusChange(indexed bytes32,bool)
           handler: handleItemStatusChange
-        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
-          handler: handleDispute

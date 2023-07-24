@@ -8,9 +8,9 @@ import {
   BadgeModelKlerosMetaData,
   Badge,
   BadgeKlerosMetaData,
-  KlerosBadgeRequest,
   KlerosBadgeIdToBadgeId,
-  KlerosBadgeEvidence
+  Request,
+  Evidence
 } from "../generated/schema";
 import {
   KlerosController,
@@ -24,9 +24,9 @@ import {
   STATUS_REGISTERED,
   STATUS_REGISTRATION_REQUESTED,
   getArbitrationParamsIndex,
-  getTCRRequestIndex, NONE
+  getTCRRequestIndex,
+  NONE
 } from "./utils";
-import { Dispute } from "../generated/KlerosController/LightGeneralizedTCR";
 
 // event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
@@ -62,7 +62,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   const _badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(badgeModelId);
 
   if (!_badgeModelKlerosMetaData) {
-    log.error("KlerosBadgeType not found. badgeId {} badgeModelId {}", [
+    log.error("BadgeModel not found. badgeId {} badgeModelId {}", [
       badgeId,
       badgeModelId
     ]);
@@ -95,7 +95,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   );
 
   const requestId = itemId.toHexString() + "-" + requestIndex.toString();
-  const request = new KlerosBadgeRequest(requestId);
+  const request = new Request(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   request.type = "Registration";
   request.createdAt = event.block.timestamp;
@@ -109,14 +109,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.resolved = false;
   request.resolutionTime = BigInt.fromI32(0);
 
-  // todo remove
-  // Both request.disputeId and request.challenger are left null as this is the first time when the badge is created.
-  //  request.disputeId = 1
-
-  //  klerosController.klerosBadge(badgeId).request.disputeId = 1;
-  //request.challenger = 1;*/
-
-  let evidence = new KlerosBadgeEvidence(request.id + "-" + "0");
+  let evidence = new Evidence(requestId + "-" + "0");
   evidence.URI = event.params.evidence;
   evidence.timestamp = event.block.timestamp;
   evidence.save();
@@ -131,15 +124,18 @@ export function handleItemStatusChange(event: ItemStatusChange): void {
   );
 
   if (!klerosBadgeIdToBadgeId) {
-    log.error("klerosBadgeIdToBadgeId not found for id {}", [
-      event.params._itemID.toHexString()
-    ]);
+    log.error(
+      "handleItemStatusChange - klerosBadgeIdToBadgeId not found for id {}",
+      [event.params._itemID.toHexString()]
+    );
     return;
   }
 
   const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
   if (!badge) {
-    log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
+    log.error("handleItemStatusChange - badge not found for id {}", [
+      klerosBadgeIdToBadgeId.badgeId
+    ]);
     return;
   }
 
@@ -163,38 +159,4 @@ export function handleItemStatusChange(event: ItemStatusChange): void {
   }
 
   badge.save();
-}
-
-// event Dispute(IArbitrator indexed _arbitrator, uint indexed _disputeID, uint _metaEvidenceID, uint _evidenceGroupID);
-export function handleDispute(event: Dispute): void {
-  // TODO: handle evidence
-  // TODO: handle dispute data
-  log.info("Init Handle dispute", []);
-
-  // @todo (agustin) fix
-  // const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
-  //   event.params._itemID.toString()
-  // );
-
-  //
-  // log.info("Init Handle dispute 2",[])
-  // if (!klerosBadgeIdToBadgeId) {
-  //   log.error("klerosBadgeIdToBadgeId not found for id {}", [
-  //     event.params._itemID.toHexString(),
-  //   ]);
-  //   return;
-  // }
-  //
-  // log.info("Init Handle dispute 3",[])
-  // const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
-  // log.info("Init Handle dispute 4",[])
-  // if (!badge) {
-  //   log.error("badge not found for id {}", [klerosBadgeIdToBadgeId.badgeId]);
-  //   return;
-  // }
-  //
-  // log.info("Finish Handle dispute",[])
-  // badge.status = "Challenged";
-  // badge.save();
-  // log.info("Init Handle dispute saved", [])
 }
