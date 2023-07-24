@@ -64,7 +64,7 @@ type BadgeKlerosMetaData @entity {
   # requests: [KlerosBadgeRequest!]!
   "The total number of requests for this item."
   numberOfRequests: BigInt!
-  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
+  requests: Request @derivedFrom(field: "badgeKlerosMetaData")
 }
 
 type KlerosBadgeIdToBadgeId @entity {
@@ -72,39 +72,11 @@ type KlerosBadgeIdToBadgeId @entity {
   badgeId: String! # badge id.
 }
 
-type KlerosBadgeEvidence @entity {
-  "<Request.id>-<evidence number>"
+type EvidenceGroupIDToRequestIDToItemID @entity {
   id: ID!
-  "The URI of the evidence file."
-  URI: String!
-  "When was this evidence posted"
-  timestamp: BigInt!
-}
-
-## Equivalent to Kleros LRequest
-type KlerosBadgeRequest @entity {
-  id: ID!
-  type: KlerosRequestType!
-  createdAt: BigInt!
-  badgeKlerosMetaData: BadgeKlerosMetaData!
-  requestIndex: BigInt!
-  arbitrationParamsIndex: BigInt!
-  disputeID: BigInt
-  requester: Bytes
-  challenger: Bytes
-  evidences: [KlerosBadgeEvidence!]!
-  "Number of evidences."
-  numberOfEvidences: BigInt!
-  "The time the request was resolved."
-  resolutionTime: BigInt!
-  "Whether the item is currently disputed."
-  disputed: Boolean!
-  "True if the request was executed and/or any raised disputes were resolved."
-  resolved: Boolean!
-  "The hash of the transaction that solved this request."
-  resolutionTx: Bytes
-  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
-  disputeOutcome: Ruling!
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  request: String!
+  itemID: String!
 }
 
 ## - USER
@@ -123,17 +95,6 @@ type User @entity {
 
 ## Kleros Entities, source: https://github.com/kleros/gtcr-subgraph/blob/master/schema.graphql
 
-enum Status {
-  "The item is not registered on the TCR and there are no pending requests."
-  Absent
-  "The item is registered and there are no pending requests."
-  Registered
-  "The item is not registered on the TCR, but there is a pending registration request."
-  RegistrationRequested
-  "The item is registered on the TCR, but there is a pending removal request. These are sometimes also called removal requests."
-  ClearingRequested
-}
-
 enum Ruling {
   "The arbitrator did not rule or refused to rule."
   None
@@ -143,9 +104,39 @@ enum Ruling {
   Reject
 }
 
-type Arbitrator @entity {
-  "The address of the arbitrator"
+type Evidence @entity {
+  "<Request.id>-<evidence number>"
   id: ID!
+  "The URI of the evidence file."
+  URI: String!
+  "When was this evidence posted"
+  timestamp: BigInt!
+}
+
+## Equivalent to Kleros LRequest
+type Request @entity {
+  id: ID!
+  type: KlerosRequestType!
+  createdAt: BigInt!
+  badgeKlerosMetaData: BadgeKlerosMetaData
+  requestIndex: BigInt
+  arbitrationParamsIndex: BigInt
+  disputeID: BigInt
+  requester: Bytes
+  challenger: Bytes
+  evidences: [Evidence!]
+  "Number of evidences."
+  numberOfEvidences: BigInt!
+  "The time the request was resolved."
+  resolutionTime: BigInt!
+  "Whether the item is currently disputed."
+  disputed: Boolean!
+  "True if the request was executed and/or any raised disputes were resolved."
+  resolved: Boolean!
+  "The hash of the transaction that solved this request."
+  resolutionTx: Bytes
+  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
+  disputeOutcome: Ruling!
 }
 
 type LRegistry @entity {
@@ -153,8 +144,6 @@ type LRegistry @entity {
   id: ID!
   "The number of MetaEvidence event logs emitted."
   metaEvidenceCount: BigInt!
-  "The items submitted to this list"
-  items: [LItem!]! @derivedFrom(field: "registry")
   "The total number of items in absent state."
   numberOfAbsent: BigInt!
   "The total number of items in registered state."
@@ -166,70 +155,4 @@ type LRegistry @entity {
   numberOfChallengedRegistrations: BigInt!
   "The total number of items in the challenged removal state."
   numberOfChallengedClearing: BigInt!
-}
-
-type EvidenceGroupIDToKlerosBadgeRequest @entity {
-  "<EvidenceGroupID>@<contract address>"
-  id: ID!
-  "KlerosBadgeRequest ID"
-  request: KlerosBadgeRequest!
-}
-
-type LItem @entity {
-  "The id of the item in the subgraph entity. Format: <itemID>@<listaddress_lowercase>"
-  id: ID!
-  "The ID of the item in the registry. Also the keccak256 hash of the data."
-  itemID: Bytes!
-  "The data describing the item."
-  data: String!
-  "The parsed data describing the item."
-  props: [ItemProp!]! @derivedFrom(field: "item")
-  "First indexable value of the json file."
-  key0: String
-  "Second indexable value of the json file."
-  key1: String
-  "Third indexable value of the json file."
-  key2: String
-  "Fourth indexable value of the json file."
-  key3: String
-  "Fifth indexable value of the json file."
-  key4: String
-  "The item identifiers combined as a single string."
-  keywords: String
-  "The address of the mint transaction hash"
-  mintTxHash: Bytes!
-  "The current status of the item."
-  status: Status!
-  "The total number of requests for this item."
-  numberOfRequests: BigInt!
-  "The registry where this item was submitted."
-  registry: LRegistry!
-  "Time when the latest request was made."
-  latestRequestSubmissionTime: BigInt!
-  "The time the latest request was resolved."
-  latestRequestResolutionTime: BigInt!
-  "Whether the item is currently disputed."
-  disputed: Boolean!
-  "The account that made the latest request to the item."
-  latestRequester: Bytes!
-  "The account that challenged the latest request, if any."
-  latestChallenger: Bytes!
-}
-
-type _Schema_
-  @fulltext(
-    name: "itemSearch"
-    language: en
-    algorithm: rank
-    include: [{ entity: "LItem", fields: [{ name: "keywords" }] }]
-  )
-
-type ItemProp @entity {
-  id: ID!
-  type: String!
-  label: String!
-  description: String!
-  isIdentifier: Boolean!
-  value: String
-  item: LItem!
 }
