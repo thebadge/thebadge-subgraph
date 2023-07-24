@@ -138,21 +138,3 @@ type Request @entity {
   "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
   disputeOutcome: Ruling!
 }
-
-type LRegistry @entity {
-  "The registry address"
-  id: ID!
-  "The number of MetaEvidence event logs emitted."
-  metaEvidenceCount: BigInt!
-  "The total number of items in absent state."
-  numberOfAbsent: BigInt!
-  "The total number of items in registered state."
-  numberOfRegistered: BigInt!
-  "The total number of items in the registration requested state."
-  numberOfRegistrationRequested: BigInt!
-  numberOfClearingRequested: BigInt!
-  "The total number of items in the challenged registration state."
-  numberOfChallengedRegistrations: BigInt!
-  "The total number of items in the challenged removal state."
-  numberOfChallengedClearing: BigInt!
-}
