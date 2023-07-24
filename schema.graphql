@@ -135,10 +135,6 @@ type Arbitrator @entity {
 type LRegistry @entity {
   "The registry address"
   id: ID!
-  "The current registration meta evidence"
-  registrationMetaEvidence: MetaEvidence!
-  "The current removal meta evidence"
-  clearingMetaEvidence: MetaEvidence!
   "The number of MetaEvidence event logs emitted."
   metaEvidenceCount: BigInt!
   "The items submitted to this list"
@@ -156,13 +152,6 @@ type LRegistry @entity {
   numberOfChallengedRegistrations: BigInt!
   "The total number of items in the challenged removal state."
   numberOfChallengedClearing: BigInt!
-}
-
-type MetaEvidence @entity {
-  "The meta evidence ID."
-  id: ID!
-  "The URI of the meta evidence file."
-  URI: String!
 }
 
 type LEvidence @entity {
@@ -214,6 +203,8 @@ type LItem @entity {
   key4: String
   "The item identifiers combined as a single string."
   keywords: String
+  "The address of the mint transaction hash"
+  mintTxHash: Bytes!
   "The current status of the item."
   status: Status!
   "List of status change requests made for the item in the form requests[requestID]."
@@ -281,8 +272,6 @@ type LRequest @entity {
   numberOfRounds: BigInt!
   "Whether it was requested to add or remove the item to/from the list."
   requestType: Status!
-  "The URI to the meta evidence used for this request."
-  metaEvidence: MetaEvidence!
   "Evidence provided regarding this request (matching evidenceGroupID)."
   evidences: [LEvidence!]! @derivedFrom(field: "request")
   "Number of evidences."

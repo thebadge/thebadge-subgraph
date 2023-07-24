@@ -244,6 +244,7 @@ export function handleNewItem(event: NewItem): void {
   item.latestRequestResolutionTime = BigInt.fromI32(0);
   item.latestRequestSubmissionTime = BigInt.fromI32(0);
 
+  item.mintTxHash = event.transaction.hash;
   item.keywords = event.address.toHexString();
 
   // Offchain item data could be unavailable. We cannot let
@@ -354,9 +355,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.requestType = item.status;
   request.evidenceGroupID = event.params._evidenceGroupID;
   request.creationTx = event.transaction.hash;
-  if (request.requestType == REGISTRATION_REQUESTED)
-    request.metaEvidence = registry.registrationMetaEvidence;
-  else request.metaEvidence = registry.clearingMetaEvidence;
 
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
@@ -425,9 +423,8 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  klerosBadgeRequest.challenger = event.transaction.from
+  klerosBadgeRequest.challenger = event.transaction.from;
   klerosBadgeRequest.save();
-
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
