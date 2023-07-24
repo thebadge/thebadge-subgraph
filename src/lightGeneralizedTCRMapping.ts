@@ -23,7 +23,6 @@ import {
   KlerosBadgeEvidence,
   KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
-  LEvidence,
   LItem,
   LRegistry,
   LRequest
@@ -528,19 +527,6 @@ export function handleEvidence(event: EvidenceEvent): void {
 
   // A new evidence is added but before the counter of evidences should be updated, otherwise the old one is going to be overwritten
   request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
-
-  let evidence = new LEvidence(
-    request.id + "-" + request.numberOfEvidence.toString()
-  );
-  evidence.arbitrator = event.params._arbitrator;
-  evidence.evidenceGroupID = event.params._evidenceGroupID;
-  evidence.party = event.params._party;
-  evidence.URI = event.params._evidence;
-  evidence.request = request.id;
-  evidence.number = request.numberOfEvidence;
-  evidence.item = request.item;
-  evidence.timestamp = event.block.timestamp;
-  evidence.save();
   request.save();
 
   const itemID = request.item.split("@")[0].toString();
@@ -563,8 +549,6 @@ export function handleEvidence(event: EvidenceEvent): void {
   auxEvidences.push(klerosBadgeEvidence.id);
   klerosBadgeRequest.evidences = auxEvidences;
   klerosBadgeRequest.save();
-
-  evidence.save();
 }
 
 export function handleRuling(event: Ruling): void {
