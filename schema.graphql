@@ -243,8 +243,6 @@ type LRequest @entity {
   arbitratorExtraData: Bytes!
   "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
   disputeOutcome: Ruling!
-  "Tracks each round of a dispute in the form rounds[roundID]."
-  rounds: [LRound!]! @derivedFrom(field: "request")
   "The ID of the evidence group for this request."
   evidenceGroupID: BigInt!
   "The total number of rounds on this request."
@@ -266,42 +264,3 @@ type LRequest @entity {
   "The hash of the transaction that solved this request."
   resolutionTx: Bytes
 }
-
-type LRound @entity {
-  id: ID!
-  "The total amount of appeal fees contributed to the requester in this round."
-  amountPaidRequester: BigInt!
-  "The total amount of appeal fees contributed to the challenger in this round."
-  amountPaidChallenger: BigInt!
-  "Whether the requester is fully funded."
-  hasPaidRequester: Boolean!
-  "Whether the challenger is fully funded."
-  hasPaidChallenger: Boolean!
-  "When was the last contribution for requester (hack for curate bot)"
-  lastFundedRequester: BigInt!
-  "When was the last contribution for challenger (hack for curate bot)"
-  lastFundedChallenger: BigInt!
-  "Sum of reimbursable fees and stake rewards available to the parties that made contributions to the side that ultimately wins a dispute."
-  feeRewards: BigInt!
-  "The request to which this round belongs."
-  request: LRequest!
-  "The time the appeal period starts, if in the appeal period."
-  appealPeriodStart: BigInt!
-  "The time the appeal period ends, if in the appeal period."
-  appealPeriodEnd: BigInt!
-  "The time the round received the ruling."
-  rulingTime: BigInt!
-  "The ruling given by the arbitrator."
-  ruling: Ruling!
-  "The moment the round was created."
-  creationTime: BigInt!
-  "The contributions made to this round."
-  contributions: [LContribution!]! @derivedFrom(field: "round")
-  "The number of contributions made to this round"
-  numberOfContributions: BigInt!
-  "Whether this round was appealed."
-  appealed: Boolean!
-  "When this round was appealed, if it was appealed"
-  appealedAt: BigInt
-}
-
