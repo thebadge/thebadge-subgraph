@@ -1,6 +1,5 @@
 specVersion: 0.0.4
 features:
-  - fullTextSearch
   - ipfsOnEthereumContracts
 description: TB <=> Kleros Graph
 repository: https://github.com/thebadge/thebadge-subgraph
@@ -99,45 +98,6 @@ templates:
           handler: handleEvidence
         - event: Ruling(indexed address,indexed uint256,uint256)
           handler: handleRuling
-      file: ./src/lightGeneralizedTCRMapping.ts
-
-  - kind: ethereum/contract
-    name: LIArbitrator
-    network: goerli
-    source:
-      abi: IArbitrator
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Arbitrator
-      abis:
-        - name: IArbitrator
-          file: ./abis/IArbitrator.json
-        - name: LightGeneralizedTCR
-          file: ./abis/LightGeneralizedTCR.json
-      eventHandlers:
-        - event: AppealPossible(indexed uint256,indexed address)
-          handler: handleAppealPossible
-        - event: AppealDecision(indexed uint256,indexed address)
-          handler: handleAppealDecision
-      file: ./src/lightGeneralizedTCRMapping.ts
-
-  - kind: ethereum/contract
-    name: IArbitrator
-    network: goerli
-    source:
-      abi: IArbitrator
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Arbitrator
-      abis:
-        - name: IArbitrator
-          file: ./abis/IArbitrator.json
       file: ./src/lightGeneralizedTCRMapping.ts
 
   - kind: ethereum/contract
