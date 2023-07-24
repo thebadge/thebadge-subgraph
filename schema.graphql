@@ -50,8 +50,9 @@ type Badge @entity {
   uri: String!
   account: User! # The receiver of the badge
   status: BadgeStatus!
-  validFor: BigInt!
+  validUntil: BigInt!
   createdAt: BigInt!
+  createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
