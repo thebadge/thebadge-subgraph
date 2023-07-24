@@ -19,13 +19,13 @@ import {
   Ruling
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
+  BadgeKlerosMetaData,
   EvidenceGroupIDToLRequest,
   KlerosBadgeEvidence,
   KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
   LItem,
-  LRegistry,
-  LRequest
+  LRegistry
 } from "../generated/schema";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -336,25 +336,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
   let requestID = graphItemID + "-" + requestIndex.toString();
 
-  let request = new LRequest(requestID);
-  request.disputed = false;
-  request.arbitrator = tcr.arbitrator();
-  request.arbitratorExtraData = tcr.arbitratorExtraData();
-  request.challenger = ZERO_ADDRESS;
-  request.requester = event.transaction.from;
-  request.numberOfEvidence = BigInt.fromI32(0);
-  request.item = item.id;
-  request.registry = registry.id;
-  request.resolutionTime = BigInt.fromI32(0);
-  request.disputeOutcome = NONE;
-  request.resolved = false;
-  request.disputeID = BigInt.fromI32(0);
-  request.submissionTime = event.block.timestamp;
-  request.numberOfRounds = BigInt.fromI32(1);
-  request.requestType = item.status;
-  request.evidenceGroupID = event.params._evidenceGroupID;
-  request.creationTx = event.transaction.hash;
-
   // Accounting.
   if (itemInfo.value1.equals(BigInt.fromI32(1))) {
     // This is the first request for this item, which must be
@@ -371,50 +352,64 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   );
   evidenceGroupIDToLRequest.request = requestID;
   evidenceGroupIDToLRequest.save();
-  request.save();
   item.save();
   registry.save();
+
+  const itemID = event.params._itemID.toString();
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(itemID);
+
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [itemID]);
+    return;
+  }
+
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(
+    klerosBadgeIdToBadgeId.badgeId
+  );
+
+  if (!badgeKlerosMetadata) {
+    log.error("badgeKlerosMetadata not found for id {}", [
+      klerosBadgeIdToBadgeId.badgeId
+    ]);
+    return;
+  }
+
+  badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus(
+    BigInt.fromI32(1)
+  );
+  badgeKlerosMetadata.save();
 }
 
 export function handleRequestChallenged(event: Dispute): void {
   let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemID = tcr.arbitratorDisputeIDToItemID(
-    event.params._arbitrator,
-    event.params._disputeID
+  let itemID = tcr
+    .arbitratorDisputeIDToItemID(
+      event.params._arbitrator,
+      event.params._disputeID
+    )
+    .toString();
+
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(itemID);
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [itemID]);
+    return;
+  }
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(
+    klerosBadgeIdToBadgeId.badgeId
   );
-  let graphItemID = itemID.toHexString() + "@" + event.address.toHexString();
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.warning(`LItem {} not found.`, [graphItemID]);
+
+  if (!badgeKlerosMetadata) {
+    log.error("badgeKlerosMetadata not found for id {}", [
+      klerosBadgeIdToBadgeId.badgeId
+    ]);
     return;
   }
 
-  let previousStatus = getExtendedStatus(item.disputed, item.status);
-  item.disputed = true;
-  item.latestChallenger = event.transaction.from;
-  let newStatus = getExtendedStatus(item.disputed, item.status);
+  let requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
+    BigInt.fromI32(1)
+  );
 
-  let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
-  let requestID = graphItemID + "-" + requestIndex.toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
-    return;
-  }
-
-  request.disputed = true;
-  request.challenger = event.transaction.from;
-  request.numberOfRounds = BigInt.fromI32(2);
-  request.disputeID = event.params._disputeID;
-
-  // Accounting.
-  updateCounters(previousStatus, newStatus, event.address);
-
-  request.save();
-  item.save();
-
-  const klerosItemID = request.item.split("@")[0].toString();
-  const kbRequestID = klerosItemID + "-" + request.id.toString().split("-")[1];
+  const kbRequestID = itemID + "-" + requestIndex.toString();
   const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
 
   if (!klerosBadgeRequest) {
@@ -423,6 +418,8 @@ export function handleRequestChallenged(event: Dispute): void {
   }
 
   klerosBadgeRequest.challenger = event.transaction.from;
+  klerosBadgeRequest.disputeID = event.params._disputeID;
+  klerosBadgeRequest.disputed = true;
   klerosBadgeRequest.save();
 }
 
@@ -430,7 +427,8 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   // This handler is used to handle transations to item statuses 0 and 1.
   // All other status updates are handled elsewhere.
   let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemInfo = tcr.getItemInfo(event.params._itemID);
+  const itemID = event.params._itemID;
+  let itemInfo = tcr.getItemInfo(itemID);
   if (
     itemInfo.value0 == REGISTRATION_REQUESTED_CODE ||
     itemInfo.value0 == CLEARING_REQUESTED_CODE
@@ -440,52 +438,49 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  let graphItemID =
-    event.params._itemID.toHexString() + "@" + event.address.toHexString();
-  let item = LItem.load(graphItemID);
-  if (!item) {
-    log.error(`LItem {} not found.`, [graphItemID]);
+  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+    itemID.toHexString()
+  );
+
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("klerosBadgeIdToBadgeId not found for id {}", [
+      itemID.toHexString()
+    ]);
     return;
   }
 
-  // We take the previous and new extended statuses for accounting purposes.
-  let previousStatus = getExtendedStatus(item.disputed, item.status);
-  item.status = getStatus(itemInfo.value0);
-  item.disputed = false;
-  let newStatus = getExtendedStatus(item.disputed, item.status);
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(
+    klerosBadgeIdToBadgeId.badgeId
+  );
 
-  if (previousStatus != newStatus) {
-    // Accounting.
-    updateCounters(previousStatus, newStatus, event.address);
-  }
-
-  if (event.params._updatedDirectly) {
-    // Direct actions (e.g. addItemDirectly and removeItemDirectly)
-    // don't envolve any requests. Only the item is updated.
-    item.save();
-
+  if (!badgeKlerosMetadata) {
+    log.error("badgeKlerosMetadata not found for id {}", [
+      klerosBadgeIdToBadgeId.badgeId
+    ]);
     return;
   }
 
-  item.latestRequestResolutionTime = event.block.timestamp;
+  let requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
+    BigInt.fromI32(1)
+  );
 
-  let requestIndex = item.numberOfRequests.minus(BigInt.fromI32(1));
   let requestInfo = tcr.getRequestInfo(event.params._itemID, requestIndex);
 
-  let requestID = graphItemID + "-" + requestIndex.toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
+  // todo change requestIndex with badgeKLeros metadata
+  const kbRequestID =
+    event.params._itemID.toHexString() + "-" + requestIndex.toString();
+  const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
+
+  if (!klerosBadgeRequest) {
+    log.error("KlerosBadgeRequest {} not found.", [kbRequestID]);
     return;
   }
 
-  request.resolved = true;
-  request.resolutionTime = event.block.timestamp;
-  request.resolutionTx = event.transaction.hash;
-  request.disputeOutcome = getFinalRuling(requestInfo.value6);
-
-  request.save();
-  item.save();
+  klerosBadgeRequest.resolved = true;
+  klerosBadgeRequest.resolutionTime = event.block.timestamp;
+  klerosBadgeRequest.resolutionTx = event.transaction.hash;
+  klerosBadgeRequest.disputeOutcome = getFinalRuling(requestInfo.value6);
+  klerosBadgeRequest.save();
 }
 
 export function handleMetaEvidence(event: MetaEvidenceEvent): void {
@@ -514,23 +509,9 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
-  let request = LRequest.load(evidenceGroupIDToLRequest.request);
-  if (!request) {
-    log.error("Request {} not found.", [evidenceGroupIDToLRequest.request]);
-    return;
-  }
-
-  log.error(`Creating evidence for group id: {}, number of evidences: {}`, [
-    event.params._evidenceGroupID.toString(),
-    request.numberOfEvidence.toString()
-  ]);
-
-  // A new evidence is added but before the counter of evidences should be updated, otherwise the old one is going to be overwritten
-  request.numberOfEvidence = request.numberOfEvidence.plus(BigInt.fromI32(1));
-  request.save();
-
-  const itemID = request.item.split("@")[0].toString();
-  const kbRequestID = itemID + "-" + request.id.toString().split("-")[1];
+  const requestID = evidenceGroupIDToLRequest.request;
+  const itemID = requestID.split("@")[0].toString();
+  const kbRequestID = itemID + "-" + requestID.toString().split("-")[1];
   const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
 
   if (!klerosBadgeRequest) {
@@ -539,7 +520,9 @@ export function handleEvidence(event: EvidenceEvent): void {
   }
 
   const klerosBadgeEvidence = new KlerosBadgeEvidence(
-    klerosBadgeRequest.id + "-" + request.numberOfEvidence.toString()
+    klerosBadgeRequest.id +
+      "-" +
+      klerosBadgeRequest.numberOfEvidences.toString()
   );
   klerosBadgeEvidence.URI = event.params._evidence;
   klerosBadgeEvidence.timestamp = event.block.timestamp;
@@ -548,6 +531,9 @@ export function handleEvidence(event: EvidenceEvent): void {
   const auxEvidences = klerosBadgeRequest.evidences;
   auxEvidences.push(klerosBadgeEvidence.id);
   klerosBadgeRequest.evidences = auxEvidences;
+  klerosBadgeRequest.numberOfEvidences = klerosBadgeRequest.numberOfEvidences.plus(
+    BigInt.fromI32(1)
+  );
   klerosBadgeRequest.save();
 }
 
@@ -566,13 +552,14 @@ export function handleRuling(event: Ruling): void {
 
   let requestID =
     item.id + "-" + item.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-  let request = LRequest.load(requestID);
-  if (!request) {
-    log.error(`LRequest {} not found.`, [requestID]);
+
+  const klerosBadgeRequest = KlerosBadgeRequest.load(requestID);
+
+  if (!klerosBadgeRequest) {
+    log.error("KlerosBadgeRequest {} not found.", [requestID]);
     return;
   }
 
-  request.finalRuling = event.params._ruling;
-  request.resolutionTime = event.block.timestamp;
-  request.save();
+  klerosBadgeRequest.resolutionTime = event.block.timestamp;
+  klerosBadgeRequest.save();
 }

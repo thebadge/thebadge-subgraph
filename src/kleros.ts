@@ -24,7 +24,7 @@ import {
   STATUS_REGISTERED,
   STATUS_REGISTRATION_REQUESTED,
   getArbitrationParamsIndex,
-  getTCRRequestIndex
+  getTCRRequestIndex, NONE
 } from "./utils";
 import { Dispute } from "../generated/KlerosController/LightGeneralizedTCR";
 
@@ -78,6 +78,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
     _badgeModelKlerosMetaData.challengePeriodDuration
   );
+  badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(0);
   badgeKlerosMetaData.save();
 
   // KlerosBadgeIdToBadgeId
@@ -102,6 +103,11 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.requestIndex = requestIndex;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
   request.requester = klerosController.klerosBadge(badgeIdBigInt).getCallee();
+  request.numberOfEvidences = BigInt.fromI32(1);
+  request.disputed = false;
+  request.disputeOutcome = NONE;
+  request.resolved = false;
+  request.resolutionTime = BigInt.fromI32(0);
 
   // todo remove
   // Both request.disputeId and request.challenger are left null as this is the first time when the badge is created.

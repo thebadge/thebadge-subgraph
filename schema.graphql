@@ -55,12 +55,15 @@ type Badge @entity {
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
+## Equivalent to Kleros LItem
 type BadgeKlerosMetaData @entity {
   id: ID! # the same as ID as the BADGE
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
   # requests: [KlerosBadgeRequest!]!
+  "The total number of requests for this item."
+  numberOfRequests: BigInt!
   requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
 }
 
@@ -78,6 +81,7 @@ type KlerosBadgeEvidence @entity {
   timestamp: BigInt!
 }
 
+## Equivalent to Kleros LRequest
 type KlerosBadgeRequest @entity {
   id: ID!
   type: KlerosRequestType!
@@ -85,10 +89,22 @@ type KlerosBadgeRequest @entity {
   badgeKlerosMetaData: BadgeKlerosMetaData!
   requestIndex: BigInt!
   arbitrationParamsIndex: BigInt!
-  disputeId: BigInt
+  disputeID: BigInt
   requester: Bytes
   challenger: Bytes
   evidences: [KlerosBadgeEvidence!]!
+  "Number of evidences."
+  numberOfEvidences: BigInt!
+  "The time the request was resolved."
+  resolutionTime: BigInt!
+  "Whether the item is currently disputed."
+  disputed: Boolean!
+  "True if the request was executed and/or any raised disputes were resolved."
+  resolved: Boolean!
+  "The hash of the transaction that solved this request."
+  resolutionTx: Bytes
+  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
+  disputeOutcome: Ruling!
 }
 
 ## - USER
@@ -222,45 +238,4 @@ type ItemProp @entity {
   item: LItem!
 }
 
-type LRequest @entity {
-  "The item ID (which is the keccak256 hash of its data)."
-  id: ID!
-  "True if a dispute was raised."
-  disputed: Boolean!
-  "ID of the dispute, if any."
-  disputeID: BigInt!
-  "Time when the request was made. Used to track when the challenge period ends."
-  submissionTime: BigInt!
-  "True if the request was executed and/or any raised disputes were resolved."
-  resolved: Boolean!
-  "The address of the party that made a request"
-  requester: Bytes!
-  "The address of the party that challenged the request"
-  challenger: Bytes!
-  "The arbitrator trusted to solve disputes for this request."
-  arbitrator: Bytes!
-  "The extra data for the trusted arbitrator of this request."
-  arbitratorExtraData: Bytes!
-  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
-  disputeOutcome: Ruling!
-  "The ID of the evidence group for this request."
-  evidenceGroupID: BigInt!
-  "The total number of rounds on this request."
-  numberOfRounds: BigInt!
-  "Whether it was requested to add or remove the item to/from the list."
-  requestType: Status!
-  "Number of evidences."
-  numberOfEvidence: BigInt!
-  "The item this request belongs to."
-  item: LItem!
-  "The registry where this request was submitted."
-  registry: LRegistry!
-  "The time the request was resolved."
-  resolutionTime: BigInt!
-  "Only set if the request was settled by a dispute. Used by the twitter bot"
-  finalRuling: BigInt
-  "The hash of the transaction that created this request."
-  creationTx: Bytes!
-  "The hash of the transaction that solved this request."
-  resolutionTx: Bytes
-}
+
