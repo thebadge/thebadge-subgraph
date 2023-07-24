@@ -155,8 +155,6 @@ type LRegistry @entity {
   metaEvidenceCount: BigInt!
   "The items submitted to this list"
   items: [LItem!]! @derivedFrom(field: "registry")
-  "The requests submitted to this list"
-  requests: [LRequest!]! @derivedFrom(field: "registry")
   "The total number of items in absent state."
   numberOfAbsent: BigInt!
   "The total number of items in registered state."
@@ -170,11 +168,11 @@ type LRegistry @entity {
   numberOfChallengedClearing: BigInt!
 }
 
-type EvidenceGroupIDToLRequest @entity {
+type EvidenceGroupIDToKlerosBadgeRequest @entity {
   "<EvidenceGroupID>@<contract address>"
   id: ID!
-  "LRequest ID"
-  request: LRequest!
+  "KlerosBadgeRequest ID"
+  request: KlerosBadgeRequest!
 }
 
 type LItem @entity {
@@ -202,8 +200,6 @@ type LItem @entity {
   mintTxHash: Bytes!
   "The current status of the item."
   status: Status!
-  "List of status change requests made for the item in the form requests[requestID]."
-  requests: [LRequest!]! @derivedFrom(field: "item")
   "The total number of requests for this item."
   numberOfRequests: BigInt!
   "The registry where this item was submitted."
@@ -237,5 +233,3 @@ type ItemProp @entity {
   value: String
   item: LItem!
 }
-
-

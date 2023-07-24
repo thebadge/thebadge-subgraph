@@ -20,7 +20,7 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeKlerosMetaData,
-  EvidenceGroupIDToLRequest,
+  EvidenceGroupIDToKlerosBadgeRequest,
   KlerosBadgeEvidence,
   KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
@@ -347,7 +347,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     updateCounters(previousStatus, newStatus, event.address);
   }
 
-  let evidenceGroupIDToLRequest = new EvidenceGroupIDToLRequest(
+  let evidenceGroupIDToLRequest = new EvidenceGroupIDToKlerosBadgeRequest(
     event.params._evidenceGroupID.toString() + "@" + event.address.toHexString()
   );
   evidenceGroupIDToLRequest.request = requestID;
@@ -498,7 +498,7 @@ export function handleMetaEvidence(event: MetaEvidenceEvent): void {
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
-  let evidenceGroupIDToLRequest = EvidenceGroupIDToLRequest.load(
+  let evidenceGroupIDToLRequest = EvidenceGroupIDToKlerosBadgeRequest.load(
     event.params._evidenceGroupID.toString() + "@" + event.address.toHexString()
   );
   if (!evidenceGroupIDToLRequest) {
