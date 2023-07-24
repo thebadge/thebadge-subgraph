@@ -62,9 +62,6 @@ type BadgeKlerosMetaData @entity {
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  # requests: [KlerosBadgeRequest!]!
-  "The total number of requests for this item."
-  numberOfRequests: BigInt!
   requests: Request @derivedFrom(field: "badgeKlerosMetaData")
 }
 

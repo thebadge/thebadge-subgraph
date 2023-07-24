@@ -51,70 +51,68 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
 export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   const klerosController = KlerosController.bind(event.address);
   const theBadge = TheBadge.bind(klerosController.theBadge());
-  const badgeIdBigInt = event.params.badgeId;
-  const badgeId = badgeIdBigInt.toString();
+  const badgeId = event.params.badgeId;
 
   const badgeModelId = theBadge
-    .badge(badgeIdBigInt)
+    .badge(badgeId)
     .getBadgeModelId()
     .toString();
 
   const _badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(badgeModelId);
 
   if (!_badgeModelKlerosMetaData) {
-    log.error("BadgeModel not found. badgeId {} badgeModelId {}", [
-      badgeId,
-      badgeModelId
-    ]);
+    log.error(
+      "handleMintKlerosBadge - BadgeModel not found. badgeId {} badgeModelId {}",
+      [badgeId.toString(), badgeModelId]
+    );
     return;
   }
 
-  // BadgeKlerosMetaData
-  const itemId = klerosController.klerosBadge(badgeIdBigInt).getItemID();
-
-  const badgeKlerosMetaData = new BadgeKlerosMetaData(badgeId);
-  badgeKlerosMetaData.badge = badgeId;
-  badgeKlerosMetaData.itemID = itemId;
-  badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
-    _badgeModelKlerosMetaData.challengePeriodDuration
-  );
-  badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(0);
-  badgeKlerosMetaData.save();
-
-  // KlerosBadgeIdToBadgeId
-  const klerosBadgeIdToBadgeId = new KlerosBadgeIdToBadgeId(
-    itemId.toHexString()
-  );
-  klerosBadgeIdToBadgeId.badgeId = badgeId;
-  klerosBadgeIdToBadgeId.save();
+  const itemId = klerosController.klerosBadge(badgeId).getItemID();
 
   // request
   const requestIndex = getTCRRequestIndex(
     Address.fromBytes(_badgeModelKlerosMetaData.tcrList),
-    badgeKlerosMetaData.itemID
+    itemId
   );
-
   const requestId = itemId.toHexString() + "-" + requestIndex.toString();
-  const request = new Request(requestId);
-  const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
-  request.type = "Registration";
-  request.createdAt = event.block.timestamp;
-  request.badgeKlerosMetaData = badgeId;
-  request.requestIndex = requestIndex;
-  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
-  request.requester = klerosController.klerosBadge(badgeIdBigInt).getCallee();
-  request.numberOfEvidences = BigInt.fromI32(1);
-  request.disputed = false;
-  request.disputeOutcome = NONE;
-  request.resolved = false;
-  request.resolutionTime = BigInt.fromI32(0);
 
   let evidence = new Evidence(requestId + "-" + "0");
   evidence.URI = event.params.evidence;
   evidence.timestamp = event.block.timestamp;
   evidence.save();
+
+  const request = new Request(requestId);
+  const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
+  request.type = "Registration";
+  request.createdAt = event.block.timestamp;
+  request.badgeKlerosMetaData = badgeId.toString();
+  request.requestIndex = requestIndex;
+  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
+  request.requester = klerosController.klerosBadge(badgeId).getCallee();
+  request.numberOfEvidences = BigInt.fromI32(1);
+  request.disputed = false;
+  request.disputeOutcome = NONE;
+  request.resolved = false;
+  request.resolutionTime = BigInt.fromI32(0);
   request.evidences = [evidence.id];
   request.save();
+
+  // KlerosBadgeIdToBadgeId
+  const klerosBadgeIdToBadgeId = new KlerosBadgeIdToBadgeId(
+    itemId.toHexString()
+  );
+  klerosBadgeIdToBadgeId.badgeId = badgeId.toString();
+  klerosBadgeIdToBadgeId.save();
+
+  // BadgeKlerosMetaData
+  const badgeKlerosMetaData = new BadgeKlerosMetaData(badgeId.toString());
+  badgeKlerosMetaData.badge = badgeId.toString();
+  badgeKlerosMetaData.itemID = itemId;
+  badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
+      _badgeModelKlerosMetaData.challengePeriodDuration
+  );
+  badgeKlerosMetaData.save();
 }
 
 // event ItemStatusChange(bytes32 indexed _itemID, bool _updatedDirectly);

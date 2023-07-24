@@ -20,7 +20,7 @@ import {
 import {
   CLEARING_REQUESTED_CODE,
   getFinalRuling,
-  REGISTRATION_REQUESTED_CODE,
+  REGISTRATION_REQUESTED_CODE
 } from "./utils";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -130,9 +130,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  let requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
-    BigInt.fromI32(1)
-  );
+  let requestIndex = BigInt.fromI32(0)
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
   const kbRequestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
@@ -218,11 +216,7 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  let requestID =
-    badgeKlerosMetadata.id +
-    "-" +
-    badgeKlerosMetadata.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-
+  let requestID = badgeKlerosMetadata.id + "-" + "0";
   const genericRequest = Request.load(requestID);
 
   if (!genericRequest) {
