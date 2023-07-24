@@ -1,9 +1,9 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
   BadgeModelCreated,
-  TransferSingle,
+  TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
 import { BadgeModel, Badge } from "../generated/schema";
@@ -35,7 +35,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.paused = false;
   badgeModel.creator = _badgeModel.getCreator().toHexString();
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
-  badgeModel.createdAt = event.block.timestamp
+  badgeModel.createdAt = event.block.timestamp;
   badgeModel.save();
 
   // user
@@ -49,17 +49,40 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 // event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
-  const _badge = theBadge.badge(event.params.id);
-  const _badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+  const badgeID = event.params.id;
+  const _badge = theBadge.badge(badgeID);
+  const badgeModelID = _badge.getBadgeModelId().toString();
+  // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+
+  // Badge model
+  log.error("badge id: {}, model: {}", [
+    event.params.id.toString(),
+    badgeModelID.toString()
+  ]);
+  const badgeModel = BadgeModel.load(badgeModelID);
+
+  if (!badgeModel) {
+    log.error("handleMint - BadgeModel not found. badgeId {} badgeModelId {}", [
+      badgeID.toString(),
+      badgeModelID
+    ]);
+    return;
+  }
+
+  badgeModel.badgesMintedAmount = badgeModel.badgesMintedAmount.plus(
+    BigInt.fromI32(1)
+  );
+  badgeModel.save();
 
   // badge
   const badgeId = event.params.id.toString();
   const badge = new Badge(badgeId);
-  badge.badgeModel = _badge.getBadgeModelId().toString();
+  badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
   badge.status = "Requested";
-  badge.validFor = _badge.getDueDate();
+  badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
+  badge.createdTxHash = event.transaction.hash;
 
   badge.uri = theBadge.uri(event.params.id);
   badge.save();
