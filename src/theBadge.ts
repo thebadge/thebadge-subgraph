@@ -7,7 +7,7 @@ import {
 } from "../generated/TheBadge/TheBadge";
 
 import { BadgeModel, Badge } from "../generated/schema";
-import { loadUserOrGetDefault } from "./utils/utils";
+import { loadUserOrGetDefault } from "./utils";
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {
