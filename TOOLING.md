@@ -18,7 +18,7 @@ log.debug('[Test Log] arbitrary argument {}', [123]);
 
 which will show up in the Logs tab of Subgraph Studio:
 
-![Debug Logs](images/errors/logs.png "Debug Logs")
+![logs.png](assets%2Fimages%2Flogs.png)
 
 You also have an option of `Error`, `Warning`, `Info`, `Debug` as the log level. I like to use `Warning` so that I can quickly filter for it. The way to filter for logs of a specific level is to click (uncheck) the log levels circled in red above.
 
