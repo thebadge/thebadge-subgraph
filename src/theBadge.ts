@@ -50,7 +50,6 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
   const _badge = theBadge.badge(event.params.id);
-  const _badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
 
   // badge
   const badgeId = event.params.id.toString();

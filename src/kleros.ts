@@ -9,7 +9,7 @@ import {
   Badge,
   BadgeKlerosMetaData,
   KlerosBadgeIdToBadgeId,
-  Request,
+  KlerosBadgeRequest,
   Evidence
 } from "../generated/schema";
 import {
@@ -95,7 +95,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   );
 
   const requestId = itemId.toHexString() + "-" + requestIndex.toString();
-  const request = new Request(requestId);
+  const request = new KlerosBadgeRequest(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   request.type = "Registration";
   request.createdAt = event.block.timestamp;
@@ -109,8 +109,8 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.resolved = false;
   request.resolutionTime = BigInt.fromI32(0);
 
-  let evidence = new Evidence(requestId + "-" + "0");
-  evidence.URI = event.params.evidence;
+  const evidence = new Evidence(requestId + "-" + "0");
+  evidence.uri = event.params.evidence;
   evidence.timestamp = event.block.timestamp;
   evidence.save();
   request.evidences = [evidence.id];

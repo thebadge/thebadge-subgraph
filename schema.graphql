@@ -64,7 +64,7 @@ type BadgeKlerosMetaData @entity {
   # requests: [KlerosBadgeRequest!]!
   "The total number of requests for this item."
   numberOfRequests: BigInt!
-  requests: Request @derivedFrom(field: "badgeKlerosMetaData")
+  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
 }
 
 type KlerosBadgeIdToBadgeId @entity {
@@ -108,13 +108,15 @@ type Evidence @entity {
   "<Request.id>-<evidence number>"
   id: ID!
   "The URI of the evidence file."
-  URI: String!
+  uri: String!
   "When was this evidence posted"
   timestamp: BigInt!
+  "Who has send the evidence"
+  sender: Bytes!
 }
 
 ## Equivalent to Kleros LRequest
-type Request @entity {
+type KlerosBadgeRequest @entity {
   id: ID!
   type: KlerosRequestType!
   createdAt: BigInt!
