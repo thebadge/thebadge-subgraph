@@ -95,6 +95,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   evidence.uri = event.params.evidence;
   evidence.timestamp = event.block.timestamp;
   evidence.request = request.id;
+  evidence.sender = event.transaction.from;
   evidence.save();
 
   // KlerosBadgeIdToBadgeId
@@ -111,6 +112,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
     _badgeModelKlerosMetaData.challengePeriodDuration
   );
+  badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(1);
   badgeKlerosMetaData.save();
 }
 

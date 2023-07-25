@@ -3,3 +3,4 @@ build/
 generated/
 .env
 subgraph.yaml
+.idea
