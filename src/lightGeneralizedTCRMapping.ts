@@ -1,5 +1,3 @@
-/* eslint-disable prefer-const */
-
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
@@ -14,8 +12,7 @@ import {
   BadgeKlerosMetaData,
   _EvidenceGroupIDToRequestIDToItemID,
   Evidence,
-  _KlerosBadgeIdToBadgeId,
-  Request
+  _KlerosBadgeIdToBadgeId, KlerosBadgeRequest
 } from "../generated/schema";
 import {
   CLEARING_REQUESTED_CODE,
@@ -58,7 +55,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
   // Note that this even runs before mintKlerosBadge() so we are storing here request ids
   // That belongs to our badges but also ids that belongs to kleros, this mean that on the mintKlerosBadge() event (which occurs after), ids that are not TB ids, should be removed
-  let evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
+  const evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
     event.params._evidenceGroupID.toString()
   );
   evidenceGroupIDToLRequest.itemID = itemID;
@@ -77,7 +74,7 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  const genericRequest = Request.load(evidence.request.toString());
+  const genericRequest = KlerosBadgeRequest.load(evidence.request.toString());
 
   if (!genericRequest) {
     log.error("handleRequestSubmitted - Request {} not found.", [
@@ -95,9 +92,9 @@ export function handleRequestChallenged(event: Dispute): void {
 export function handleStatusUpdated(event: ItemStatusChange): void {
   // This handler is used to handle transactions to item statuses 0 and 1.
   // All other status updates are handled elsewhere.
-  let tcr = LightGeneralizedTCR.bind(event.address);
+  const tcr = LightGeneralizedTCR.bind(event.address);
   const itemID = event.params._itemID;
-  let itemInfo = tcr.getItemInfo(itemID);
+  const itemInfo = tcr.getItemInfo(itemID);
   if (
     itemInfo.value0 == REGISTRATION_REQUESTED_CODE ||
     itemInfo.value0 == CLEARING_REQUESTED_CODE
@@ -130,11 +127,11 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  let requestIndex = BigInt.fromI32(0);
+  const requestIndex = BigInt.fromI32(0);
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
   const kbRequestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
-  const genericRequest = Request.load(kbRequestID);
+  const genericRequest = KlerosBadgeRequest.load(kbRequestID);
 
   if (!genericRequest) {
     log.error("handleStatusUpdated - Request: {} not found.", [kbRequestID]);
@@ -149,7 +146,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
-  let evidenceGroupIDToRequestID = _EvidenceGroupIDToRequestIDToItemID.load(
+  const evidenceGroupIDToRequestID = _EvidenceGroupIDToRequestIDToItemID.load(
     event.params._evidenceGroupID.toString()
   );
   if (!evidenceGroupIDToRequestID) {
@@ -160,7 +157,7 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
-  const genericRequest = Request.load(evidenceGroupIDToRequestID.request);
+  const genericRequest = KlerosBadgeRequest.load(evidenceGroupIDToRequestID.request);
   if (!genericRequest) {
     log.error("handleEvidence - Request {} not found.", [
       evidenceGroupIDToRequestID.request
@@ -169,9 +166,10 @@ export function handleEvidence(event: EvidenceEvent): void {
   }
 
   const evidenceID =
-    genericRequest.id + "-" + genericRequest.numberOfEvidences.toString();
+      genericRequest.id + "-" + genericRequest.numberOfEvidences.toString();
   const evidence = new Evidence(evidenceID);
-  evidence.URI = event.params._evidence;
+  evidence.uri = event.params._evidence;
+  evidence.sender = event.transaction.from;
   evidence.timestamp = event.block.timestamp;
   evidence.request = genericRequest.id;
   genericRequest.numberOfEvidences = genericRequest.numberOfEvidences.plus(
@@ -182,8 +180,8 @@ export function handleEvidence(event: EvidenceEvent): void {
 }
 
 export function handleRuling(event: Ruling): void {
-  let tcr = LightGeneralizedTCR.bind(event.address);
-  let itemID = tcr.arbitratorDisputeIDToItemID(
+  const tcr = LightGeneralizedTCR.bind(event.address);
+  const itemID = tcr.arbitratorDisputeIDToItemID(
     event.address,
     event.params._disputeID
   );
@@ -210,8 +208,8 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  let requestID = badgeKlerosMetadata.id + "-" + "0";
-  const genericRequest = Request.load(requestID);
+  const requestID = badgeKlerosMetadata.id + "-" + "0";
+  const genericRequest = KlerosBadgeRequest.load(requestID);
 
   if (!genericRequest) {
     log.error("handleRuling - Request {} not found.", [requestID]);

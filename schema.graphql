@@ -62,7 +62,9 @@ type BadgeKlerosMetaData @entity {
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  requests: Request @derivedFrom(field: "badgeKlerosMetaData")
+  "The total number of requests for this item."
+  numberOfRequests: BigInt!
+  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
 }
 
 type _KlerosBadgeIdToBadgeId @entity {
@@ -106,15 +108,17 @@ type Evidence @entity {
   "<Request.id>-<evidence number>"
   id: ID!
   "The URI of the evidence file."
-  URI: String!
+  uri: String!
   "When was this evidence posted"
   timestamp: BigInt!
+  "Who has send the evidence"
+  sender: Bytes!
   "The latest request when this evidence was submitted."
-  request: Request
+  request: KlerosBadgeRequest
 }
 
 ## Equivalent to Kleros LRequest
-type Request @entity {
+type KlerosBadgeRequest @entity {
   id: ID!
   type: KlerosRequestType!
   createdAt: BigInt!
