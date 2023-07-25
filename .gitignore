@@ -4,3 +4,4 @@ generated/
 .env
 subgraph.yaml
 .idea
+.vscode
