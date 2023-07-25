@@ -12,9 +12,9 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeKlerosMetaData,
-  EvidenceGroupIDToRequestIDToItemID,
+  _EvidenceGroupIDToRequestIDToItemID,
   Evidence,
-  KlerosBadgeIdToBadgeId,
+  _KlerosBadgeIdToBadgeId,
   Request
 } from "../generated/schema";
 import {
@@ -58,7 +58,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
   // Note that this even runs before mintKlerosBadge() so we are storing here request ids
   // That belongs to our badges but also ids that belongs to kleros, this mean that on the mintKlerosBadge() event (which occurs after), ids that are not TB ids, should be removed
-  let evidenceGroupIDToLRequest = new EvidenceGroupIDToRequestIDToItemID(
+  let evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
     event.params._evidenceGroupID.toString()
   );
   evidenceGroupIDToLRequest.itemID = itemID;
@@ -68,7 +68,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
 
 export function handleRequestChallenged(event: Dispute): void {
   const evidenceGroupID = event.params._evidenceGroupID.toString();
-  const evidence = EvidenceGroupIDToRequestIDToItemID.load(evidenceGroupID);
+  const evidence = _EvidenceGroupIDToRequestIDToItemID.load(evidenceGroupID);
 
   if (!evidence) {
     log.error("handleRequestSubmitted - Evidence not found for id {}", [
@@ -107,7 +107,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()
   );
 
@@ -130,7 +130,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  let requestIndex = BigInt.fromI32(0)
+  let requestIndex = BigInt.fromI32(0);
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
   const kbRequestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
@@ -149,7 +149,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
-  let evidenceGroupIDToRequestID = EvidenceGroupIDToRequestIDToItemID.load(
+  let evidenceGroupIDToRequestID = _EvidenceGroupIDToRequestIDToItemID.load(
     event.params._evidenceGroupID.toString()
   );
   if (!evidenceGroupIDToRequestID) {
@@ -194,7 +194,7 @@ export function handleRuling(event: Ruling): void {
     event.params._disputeID
   );
 
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()
   );
 

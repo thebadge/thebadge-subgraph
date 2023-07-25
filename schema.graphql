@@ -65,12 +65,12 @@ type BadgeKlerosMetaData @entity {
   requests: Request @derivedFrom(field: "badgeKlerosMetaData")
 }
 
-type KlerosBadgeIdToBadgeId @entity {
+type _KlerosBadgeIdToBadgeId @entity {
   id: ID! # itemID from kleros.
   badgeId: String! # badge id.
 }
 
-type EvidenceGroupIDToRequestIDToItemID @entity {
+type _EvidenceGroupIDToRequestIDToItemID @entity {
   id: ID!
   "Item submission ID, it can be a TCR random item or a badge submission request"
   request: String!

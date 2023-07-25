@@ -8,7 +8,7 @@ import {
   BadgeModelKlerosMetaData,
   Badge,
   BadgeKlerosMetaData,
-  KlerosBadgeIdToBadgeId,
+  _KlerosBadgeIdToBadgeId,
   Request,
   Evidence
 } from "../generated/schema";
@@ -99,7 +99,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.save();
 
   // KlerosBadgeIdToBadgeId
-  const klerosBadgeIdToBadgeId = new KlerosBadgeIdToBadgeId(
+  const klerosBadgeIdToBadgeId = new _KlerosBadgeIdToBadgeId(
     itemId.toHexString()
   );
   klerosBadgeIdToBadgeId.badgeId = badgeId.toString();
@@ -117,7 +117,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
 
 // event ItemStatusChange(bytes32 indexed _itemID, bool _updatedDirectly);
 export function handleItemStatusChange(event: ItemStatusChange): void {
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     event.params._itemID.toHexString()
   );
 
