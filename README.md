@@ -5,7 +5,6 @@
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/thebadge/thebadge-relayer/issues)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/thebadge/thebadge-relayer/blob/main/LICENSE)
 
-
 # Setup
 
 This document describes how to setup your local working environment in order to develop Messari subgraphs.
@@ -63,3 +62,7 @@ $ yarn codegen
 $ yarn build
 $ yarn deploy:dev
 ```
+
+## Want to learn more?
+
+You can learn more reading [docs](docs)

@@ -50,8 +50,9 @@ type Badge @entity {
   uri: String!
   account: User! # The receiver of the badge
   status: BadgeStatus!
-  validFor: BigInt!
+  validUntil: BigInt!
   createdAt: BigInt!
+  createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
@@ -61,18 +62,17 @@ type BadgeKlerosMetaData @entity {
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  # requests: [KlerosBadgeRequest!]!
   "The total number of requests for this item."
   numberOfRequests: BigInt!
   requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
 }
 
-type KlerosBadgeIdToBadgeId @entity {
+type _KlerosBadgeIdToBadgeId @entity {
   id: ID! # itemID from kleros.
   badgeId: String! # badge id.
 }
 
-type EvidenceGroupIDToRequestIDToItemID @entity {
+type _EvidenceGroupIDToRequestIDToItemID @entity {
   id: ID!
   "Item submission ID, it can be a TCR random item or a badge submission request"
   request: String!
@@ -113,6 +113,8 @@ type Evidence @entity {
   timestamp: BigInt!
   "Who has send the evidence"
   sender: Bytes!
+  "The latest request when this evidence was submitted."
+  request: KlerosBadgeRequest
 }
 
 ## Equivalent to Kleros LRequest
@@ -126,7 +128,8 @@ type KlerosBadgeRequest @entity {
   disputeID: BigInt
   requester: Bytes
   challenger: Bytes
-  evidences: [Evidence!]
+  "Evidence provided regarding this request (matching evidenceGroupID)."
+  evidences: [Evidence!]! @derivedFrom(field: "request")
   "Number of evidences."
   numberOfEvidences: BigInt!
   "The time the request was resolved."

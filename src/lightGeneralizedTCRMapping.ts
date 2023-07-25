@@ -10,14 +10,14 @@ import {
 } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeKlerosMetaData,
-  EvidenceGroupIDToRequestIDToItemID,
+  _EvidenceGroupIDToRequestIDToItemID,
   Evidence,
-  KlerosBadgeIdToBadgeId, KlerosBadgeRequest
+  _KlerosBadgeIdToBadgeId, KlerosBadgeRequest
 } from "../generated/schema";
 import {
   CLEARING_REQUESTED_CODE,
   getFinalRuling,
-  REGISTRATION_REQUESTED_CODE,
+  REGISTRATION_REQUESTED_CODE
 } from "./utils";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -55,7 +55,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
   // Note that this even runs before mintKlerosBadge() so we are storing here request ids
   // That belongs to our badges but also ids that belongs to kleros, this mean that on the mintKlerosBadge() event (which occurs after), ids that are not TB ids, should be removed
-  const evidenceGroupIDToLRequest = new EvidenceGroupIDToRequestIDToItemID(
+  const evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
     event.params._evidenceGroupID.toString()
   );
   evidenceGroupIDToLRequest.itemID = itemID;
@@ -65,7 +65,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
 
 export function handleRequestChallenged(event: Dispute): void {
   const evidenceGroupID = event.params._evidenceGroupID.toString();
-  const evidence = EvidenceGroupIDToRequestIDToItemID.load(evidenceGroupID);
+  const evidence = _EvidenceGroupIDToRequestIDToItemID.load(evidenceGroupID);
 
   if (!evidence) {
     log.error("handleRequestSubmitted - Evidence not found for id {}", [
@@ -90,7 +90,7 @@ export function handleRequestChallenged(event: Dispute): void {
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
-  // This handler is used to handle transations to item statuses 0 and 1.
+  // This handler is used to handle transactions to item statuses 0 and 1.
   // All other status updates are handled elsewhere.
   const tcr = LightGeneralizedTCR.bind(event.address);
   const itemID = event.params._itemID;
@@ -104,7 +104,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()
   );
 
@@ -127,9 +127,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  const requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
-    BigInt.fromI32(1)
-  );
+  const requestIndex = BigInt.fromI32(0);
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
   const kbRequestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
@@ -148,7 +146,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
-  const evidenceGroupIDToRequestID = EvidenceGroupIDToRequestIDToItemID.load(
+  const evidenceGroupIDToRequestID = _EvidenceGroupIDToRequestIDToItemID.load(
     event.params._evidenceGroupID.toString()
   );
   if (!evidenceGroupIDToRequestID) {
@@ -167,24 +165,18 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
-  const evidence = new Evidence(
-    genericRequest.id + "-" + genericRequest.numberOfEvidences.toString()
-  );
+  const evidenceID =
+      genericRequest.id + "-" + genericRequest.numberOfEvidences.toString();
+  const evidence = new Evidence(evidenceID);
   evidence.uri = event.params._evidence;
   evidence.sender = event.transaction.from;
   evidence.timestamp = event.block.timestamp;
-  evidence.save();
-
-  let auxEvidences = genericRequest.evidences;
-  if (!auxEvidences) {
-    auxEvidences = [];
-  }
-  auxEvidences.push(genericRequest.id);
-  genericRequest.evidences = auxEvidences;
+  evidence.request = genericRequest.id;
   genericRequest.numberOfEvidences = genericRequest.numberOfEvidences.plus(
     BigInt.fromI32(1)
   );
   genericRequest.save();
+  evidence.save();
 }
 
 export function handleRuling(event: Ruling): void {
@@ -194,7 +186,7 @@ export function handleRuling(event: Ruling): void {
     event.params._disputeID
   );
 
-  const klerosBadgeIdToBadgeId = KlerosBadgeIdToBadgeId.load(
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()
   );
 
@@ -216,11 +208,7 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  const requestID =
-    badgeKlerosMetadata.id +
-    "-" +
-    badgeKlerosMetadata.numberOfRequests.minus(BigInt.fromI32(1)).toString();
-
+  const requestID = badgeKlerosMetadata.id + "-" + "0";
   const genericRequest = KlerosBadgeRequest.load(requestID);
 
   if (!genericRequest) {

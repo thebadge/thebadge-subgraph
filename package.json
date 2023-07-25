@@ -1,10 +1,14 @@
 {
-  "name": "thebadge",
-  "license": "UNLICENSED",
+  "name": "thebadge-subgraph",
+  "license": "MIT",
+  "description": "Subgraph for TheBadge smart contracts",
+  "version": "1.0.0",
   "scripts": {
+    "codegen:dev": "node codegen/render-templates.js goerli && graph codegen",
+    "build:dev": "yarn codegen:dev && graph build",
+    "deploy:dev": "yarn build:dev && graph deploy --product hosted-service thebadgeadmin/dev-testing",
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy:dev": "yarn build && graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ thebadgeadmin/dev-testing",
     "deploy:studio": "graph deploy --studio thebadge",
     "auth": "graph auth --product hosted-service eval $(grep THE_GRAPH_DEV_TESTING_AUTH_TOKEN .env | cut -d '=' -f2)",
     "create-local": "graph create --node http://localhost:8020/ thebadgeadmin/dev-testing",
@@ -16,6 +20,7 @@
     "@graphprotocol/graph-ts": "0.30.0"
   },
   "devDependencies": {
+    "mustache": "^4.0.1",
     "@typescript-eslint/parser": "^5.38.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "eslint": "^8.23.1",
