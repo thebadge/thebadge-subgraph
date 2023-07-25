@@ -93,7 +93,7 @@ export function handleRequestChallenged(event: Dispute): void {
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
-  // This handler is used to handle transations to item statuses 0 and 1.
+  // This handler is used to handle transactions to item statuses 0 and 1.
   // All other status updates are handled elsewhere.
   let tcr = LightGeneralizedTCR.bind(event.address);
   const itemID = event.params._itemID;

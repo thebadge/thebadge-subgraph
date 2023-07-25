@@ -13,9 +13,9 @@ dataSources:
     source:
       address: "0x641dDCeDe396fA1C2B1AF323523508D2f8fd6825" # goerli
       # Block to speed-up the development, it should be commented on prod
-      # startBlock: 9348882
+      startBlock: 9348882
       # Trqnsaction creation startBlock
-      startBlock: 8970619
+      #startBlock: 8970619
       # address: "" # gnosis
       # startBlock:  # gnosis
       abi: TheBadge
@@ -45,9 +45,9 @@ dataSources:
     source:
       address: "0x6269Ae4D1Afae6bC88FF6Fbf09137deecB6799c7" # goerli
       # Block to speed-up the development, it should be commented on prod
-      # startBlock: 9348882
+      startBlock: 9348882
       # Trqnsaction creation startBlock
-      startBlock: 8970619
+      #startBlock: 8970619
       # address: "" # gnosis
       # startBlock:  # gnosis
       abi: KlerosController
@@ -85,6 +85,8 @@ templates:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
+        - EvidenceGroupIDToRequestIDToItemID
+        - Evidence
         - LItem
       abis:
         - name: LightGeneralizedTCR
