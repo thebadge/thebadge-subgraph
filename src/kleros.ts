@@ -77,11 +77,6 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   );
   const requestId = itemId.toHexString() + "-" + requestIndex.toString();
 
-  let evidence = new Evidence(requestId + "-" + "0");
-  evidence.URI = event.params.evidence;
-  evidence.timestamp = event.block.timestamp;
-  evidence.save();
-
   const request = new Request(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   request.type = "Registration";
@@ -95,8 +90,13 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.disputeOutcome = NONE;
   request.resolved = false;
   request.resolutionTime = BigInt.fromI32(0);
-  request.evidences = [evidence.id];
   request.save();
+
+  let evidence = new Evidence(requestId + "-" + "0");
+  evidence.URI = event.params.evidence;
+  evidence.timestamp = event.block.timestamp;
+  evidence.request = request.id;
+  evidence.save();
 
   // KlerosBadgeIdToBadgeId
   const klerosBadgeIdToBadgeId = new _KlerosBadgeIdToBadgeId(
@@ -110,7 +110,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   badgeKlerosMetaData.badge = badgeId.toString();
   badgeKlerosMetaData.itemID = itemId;
   badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
-      _badgeModelKlerosMetaData.challengePeriodDuration
+    _badgeModelKlerosMetaData.challengePeriodDuration
   );
   badgeKlerosMetaData.save();
 }

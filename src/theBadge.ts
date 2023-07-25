@@ -55,10 +55,6 @@ export function handleMint(event: TransferSingle): void {
   // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
 
   // Badge model
-  log.error("badge id: {}, model: {}", [
-    event.params.id.toString(),
-    badgeModelID.toString()
-  ]);
   const badgeModel = BadgeModel.load(badgeModelID);
 
   if (!badgeModel) {

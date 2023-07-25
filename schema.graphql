@@ -109,6 +109,8 @@ type Evidence @entity {
   URI: String!
   "When was this evidence posted"
   timestamp: BigInt!
+  "The latest request when this evidence was submitted."
+  request: Request
 }
 
 ## Equivalent to Kleros LRequest
@@ -122,7 +124,8 @@ type Request @entity {
   disputeID: BigInt
   requester: Bytes
   challenger: Bytes
-  evidences: [Evidence!]
+  "Evidence provided regarding this request (matching evidenceGroupID)."
+  evidences: [Evidence!]! @derivedFrom(field: "request")
   "Number of evidences."
   numberOfEvidences: BigInt!
   "The time the request was resolved."

@@ -107,6 +107,45 @@ templates:
       file: ./src/lightGeneralizedTCRMapping.ts
 
   - kind: ethereum/contract
+    name: LIArbitrator
+    network: goerli
+    source:
+      abi: IArbitrator
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Arbitrator
+      abis:
+        - name: IArbitrator
+          file: ./abis/IArbitrator.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+      eventHandlers:
+        - event: AppealPossible(indexed uint256,indexed address)
+          handler: handleAppealPossible
+        - event: AppealDecision(indexed uint256,indexed address)
+          handler: handleAppealDecision
+      file: ./src/lightGeneralizedTCRMapping.ts
+
+  - kind: ethereum/contract
+    name: IArbitrator
+    network: goerli
+    source:
+      abi: IArbitrator
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Arbitrator
+      abis:
+        - name: IArbitrator
+          file: ./abis/IArbitrator.json
+      file: ./src/lightGeneralizedTCRMapping.ts
+
+  - kind: ethereum/contract
     name: TBLightGeneralizedTCR
     network: goerli
     source:

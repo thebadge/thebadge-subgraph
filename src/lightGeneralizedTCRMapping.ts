@@ -168,23 +168,17 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
-  const evidence = new Evidence(
-    genericRequest.id + "-" + genericRequest.numberOfEvidences.toString()
-  );
+  const evidenceID =
+    genericRequest.id + "-" + genericRequest.numberOfEvidences.toString();
+  const evidence = new Evidence(evidenceID);
   evidence.URI = event.params._evidence;
   evidence.timestamp = event.block.timestamp;
-  evidence.save();
-
-  let auxEvidences = genericRequest.evidences;
-  if (!auxEvidences) {
-    auxEvidences = [];
-  }
-  auxEvidences.push(genericRequest.id);
-  genericRequest.evidences = auxEvidences;
+  evidence.request = genericRequest.id;
   genericRequest.numberOfEvidences = genericRequest.numberOfEvidences.plus(
     BigInt.fromI32(1)
   );
   genericRequest.save();
+  evidence.save();
 }
 
 export function handleRuling(event: Ruling): void {
