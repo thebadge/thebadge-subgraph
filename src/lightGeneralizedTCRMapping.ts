@@ -22,7 +22,8 @@ import {
   getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
-  getTCRRequestIndex, getTCRRequestInfo,
+  getTCRRequestIndex,
+  getTCRRequestInfo,
   TheBadgeBadgeStatus_Challenged
 } from "./utils";
 import { KlerosController } from "../generated/KlerosController/KlerosController";
@@ -64,7 +65,7 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
 
   //  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
 
-  log.error('handleRequestSubmitted - init: {}', [itemID.toHexString()])
+  log.error("handleRequestSubmitted - init: {}", [itemID.toHexString()]);
   const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toString()
   );
@@ -108,12 +109,18 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     return;
   }
 
-  log.error("handleRequestSubmitted - Badge Model FOUND ID: {}", [badgeModelId]);
+  log.error("handleRequestSubmitted - Badge Model FOUND ID: {}", [
+    badgeModelId
+  ]);
   // Creates an historic request and saves it into the BadgeKlerosMetaData
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   const requestIndex = getTCRRequestIndex(tcrListAddress, itemID);
   const requestID = itemID.toHexString() + "-" + requestIndex.toString();
-  const requestInfo = getTCRRequestInfo(tcrListAddress, itemID, BigInt.fromString(requestID))
+  const requestInfo = getTCRRequestInfo(
+    tcrListAddress,
+    itemID,
+    BigInt.fromString(requestID)
+  );
   const request = new KlerosBadgeRequest(requestID);
   // todo get the badge data from the contract
   // TODO update the type
@@ -127,17 +134,12 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   request.disputed = requestInfo.getDisputed();
   request.disputeOutcome = getFinalRuling(requestInfo.getRuling());
   request.resolved = requestInfo.getResolved();
-  if(requestInfo.getResolved()) {
+  if (requestInfo.getResolved()) {
     request.resolutionTime = event.block.timestamp;
   } else {
     request.resolutionTime = BigInt.fromI32(0);
   }
   request.save();
-
-  const auxHistoricalRequests = badgeKlerosMetadata.historicalRequests
-  auxHistoricalRequests.push(request.id)
-  badgeKlerosMetadata.historicalRequests = auxHistoricalRequests
-  badgeKlerosMetadata.save()
 
   // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
   // Note that this even runs before mintKlerosBadge() so we are storing here request ids
