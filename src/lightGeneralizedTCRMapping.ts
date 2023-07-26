@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   Dispute,
@@ -14,13 +14,19 @@ import {
   Evidence,
   _KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
-  Badge
+  Badge,
+  BadgeModelKlerosMetaData
 } from "../generated/schema";
 import {
+  DISPUTE_OUTCOME_NONE,
+  getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
+  getTCRRequestIndex, getTCRRequestInfo,
   TheBadgeBadgeStatus_Challenged
 } from "./utils";
+import { KlerosController } from "../generated/KlerosController/KlerosController";
+import { TheBadge } from "../generated/TheBadge/TheBadge";
 
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.
@@ -52,7 +58,86 @@ import {
 
 export function handleRequestSubmitted(event: RequestSubmitted): void {
   const itemID = event.params._itemID;
-  const requestID = itemID.toHexString() + "-" + "0";
+  //const requestID = itemID.toHexString() + "-" + "0";
+  // The index of this request will be taken from the array of requests of the given item
+  // It will always be the length of the requests array - 1
+
+  //  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
+
+  log.error('handleRequestSubmitted - init: {}', [itemID.toHexString()])
+  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
+    itemID.toString()
+  );
+  if (!klerosBadgeIdToBadgeId) {
+    log.error("handleRequestSubmitted - Item not found for ID: {}", [
+      itemID.toHexString()
+    ]);
+    return;
+  }
+  const badgeId = klerosBadgeIdToBadgeId.badgeId;
+  const badgeIdBigInt = BigInt.fromString(badgeId);
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeId);
+  if (!badgeKlerosMetadata) {
+    log.error(
+      "handleRequestSubmitted - badgeKlerosMetadata not found for id {}",
+      [badgeId]
+    );
+    return;
+  }
+  const badge = Badge.load(badgeId);
+  if (!badge) {
+    log.error("handleRequestSubmitted - Badge not found for ID: {}", [badgeId]);
+    return;
+  }
+
+  log.error("handleRequestSubmitted - Badge FOUND ID: {}", [badgeId]);
+  const klerosController = KlerosController.bind(event.address);
+  const theBadge = TheBadge.bind(klerosController.theBadge());
+  const badgeModelId = theBadge
+    .badge(badgeIdBigInt)
+    .getBadgeModelId()
+    .toString();
+
+  const _badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(badgeModelId);
+  log.error("handleRequestSubmitted - Badge Model ID: {}", [badgeModelId]);
+  if (!_badgeModelKlerosMetaData) {
+    log.error(
+      "handleRequestSubmitted - BadgeModel not found. badgeId {} badgeModelId {}",
+      [badgeId.toString(), badgeModelId]
+    );
+    return;
+  }
+
+  log.error("handleRequestSubmitted - Badge Model FOUND ID: {}", [badgeModelId]);
+  // Creates an historic request and saves it into the BadgeKlerosMetaData
+  const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
+  const requestIndex = getTCRRequestIndex(tcrListAddress, itemID);
+  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
+  const requestInfo = getTCRRequestInfo(tcrListAddress, itemID, BigInt.fromString(requestID))
+  const request = new KlerosBadgeRequest(requestID);
+  // todo get the badge data from the contract
+  // TODO update the type
+  request.type = "Registration";
+  request.createdAt = event.block.timestamp;
+  request.badgeKlerosMetaData = badgeKlerosMetadata.id;
+  request.requestIndex = requestIndex;
+  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
+  request.requester = klerosController.klerosBadge(badgeIdBigInt).getCallee();
+  request.numberOfEvidences = BigInt.fromI32(1);
+  request.disputed = requestInfo.getDisputed();
+  request.disputeOutcome = getFinalRuling(requestInfo.getRuling());
+  request.resolved = requestInfo.getResolved();
+  if(requestInfo.getResolved()) {
+    request.resolutionTime = event.block.timestamp;
+  } else {
+    request.resolutionTime = BigInt.fromI32(0);
+  }
+  request.save();
+
+  const auxHistoricalRequests = badgeKlerosMetadata.historicalRequests
+  auxHistoricalRequests.push(request.id)
+  badgeKlerosMetadata.historicalRequests = auxHistoricalRequests
+  badgeKlerosMetadata.save()
 
   // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
   // Note that this even runs before mintKlerosBadge() so we are storing here request ids
@@ -66,22 +151,6 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
 
   // Updates the badgeStatus in case that it was a removeItem() o addItem() request
   // In case of addItemDirectly() or removeItemDirectly() the status will be updated in the ItemStatusChange() event
-  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
-    itemID.toHexString()
-  );
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("handleRequestSubmitted - Item not found for ID: {}", [
-      itemID.toHexString()
-    ]);
-    return;
-  }
-  const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
-  if (!badge) {
-    log.error("handleRequestSubmitted - Badge not found for ID: {}", [
-      klerosBadgeIdToBadgeId.badgeId
-    ]);
-    return;
-  }
   const tcr = LightGeneralizedTCR.bind(event.address);
   const itemInfo = tcr.getItemInfo(itemID);
   badge.status = getTBStatus(itemInfo.value0);
@@ -93,7 +162,7 @@ export function handleRequestChallenged(event: Dispute): void {
   const evidence = _EvidenceGroupIDToRequestIDToItemID.load(evidenceGroupID);
 
   if (!evidence) {
-    log.error("handleRequestSubmitted - Evidence not found for id {}", [
+    log.error("handleRequestChallenged - Evidence not found for id {}", [
       evidenceGroupID
     ]);
     return;
@@ -101,7 +170,7 @@ export function handleRequestChallenged(event: Dispute): void {
 
   const genericRequest = KlerosBadgeRequest.load(evidence.request.toString());
   if (!genericRequest) {
-    log.error("handleRequestSubmitted - Request {} not found.", [
+    log.error("handleRequestChallenged - Request {} not found.", [
       evidence.request.toString()
     ]);
     return;

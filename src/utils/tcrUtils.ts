@@ -1,5 +1,8 @@
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts";
-import { LightGeneralizedTCR } from "../../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+import {
+  LightGeneralizedTCR,
+  LightGeneralizedTCR__getRequestInfoResult
+} from "../../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 
 // DisputeOutcome "enum" (we cannot use enums in assemblyScript :@!)
 export const DISPUTE_OUTCOME_NONE = "None";
@@ -55,4 +58,13 @@ export function getTBStatus(status: number): string {
     return TheBadgeBadgeStatus_RemovalRequested;
   }
   return "Error";
+}
+
+export function getTCRRequestInfo(
+  tcrAddress: Address,
+  itemId: Bytes,
+  requestID: BigInt
+): LightGeneralizedTCR__getRequestInfoResult {
+  const tcrList = LightGeneralizedTCR.bind(tcrAddress);
+  return tcrList.getRequestInfo(itemId, requestID);
 }
