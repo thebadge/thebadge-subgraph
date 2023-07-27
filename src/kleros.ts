@@ -7,7 +7,8 @@ import {
   _KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
   Evidence,
-  BadgeModel
+  BadgeModel,
+  _ItemIDToEvidenceGroupIDToBadgeID
 } from "../generated/schema";
 import {
   KlerosController,
@@ -72,16 +73,17 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
     return;
   }
 
-  const itemId = klerosController.klerosBadge(badgeId).getItemID();
+  const itemID = klerosController.klerosBadge(badgeId).getItemID();
 
   // request
   const requestIndex = getTCRRequestIndex(
     Address.fromBytes(_badgeModelKlerosMetaData.tcrList),
-    itemId
+    itemID
   );
-  const requestId = itemId.toHexString() + "-" + requestIndex.toString();
+  const requestId = itemID.toHexString() + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
+  const tcr = LightGeneralizedTCR.bind(event.address);
   request.type = "Registration";
   request.createdAt = event.block.timestamp;
   request.badgeKlerosMetaData = badgeId.toString();
@@ -93,6 +95,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.disputeOutcome = DISPUTE_OUTCOME_NONE;
   request.resolved = false;
   request.resolutionTime = BigInt.fromI32(0);
+  request.arbitrator = tcr.arbitrator();
   request.save();
 
   const evidence = new Evidence(requestId + "-" + "0");
@@ -104,7 +107,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
 
   // KlerosBadgeIdToBadgeId
   const klerosBadgeIdToBadgeId = new _KlerosBadgeIdToBadgeId(
-    itemId.toHexString()
+    itemID.toHexString()
   );
   klerosBadgeIdToBadgeId.badgeId = badgeId.toString();
   klerosBadgeIdToBadgeId.save();
@@ -112,10 +115,23 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   // BadgeKlerosMetaData
   const badgeKlerosMetaData = new BadgeKlerosMetaData(badgeId.toString());
   badgeKlerosMetaData.badge = badgeId.toString();
-  badgeKlerosMetaData.itemID = itemId;
+  badgeKlerosMetaData.itemID = itemID;
   badgeKlerosMetaData.reviewDueDate = event.block.timestamp.plus(
     _badgeModelKlerosMetaData.challengePeriodDuration
   );
   badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(1);
   badgeKlerosMetaData.save();
+
+  const itemIDToEvidenceGroupIDToBadgeID = _ItemIDToEvidenceGroupIDToBadgeID.load(
+    itemID.toHexString()
+  );
+
+  if (!itemIDToEvidenceGroupIDToBadgeID) {
+    log.error("handleMintKlerosBadge - ItemIDEvidenceGroupID not found!!: {}", [
+      itemID.toHexString()
+    ]);
+    return;
+  }
+  itemIDToEvidenceGroupIDToBadgeID.badgeID = badgeId.toString();
+  itemIDToEvidenceGroupIDToBadgeID.save();
 }

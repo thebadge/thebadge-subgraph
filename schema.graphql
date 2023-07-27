@@ -71,12 +71,17 @@ type _KlerosBadgeIdToBadgeId @entity {
   badgeId: String! # badge id.
 }
 
-type _EvidenceGroupIDToRequestIDToItemID @entity {
+type _EvidenceGroupIDItemID @entity {
   id: ID!
   "Item submission ID, it can be a TCR random item or a badge submission request"
-  request: String!
-  requestIndex: String!
   itemID: String!
+}
+
+type _ItemIDToEvidenceGroupIDToBadgeID @entity {
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  id: ID!
+  evidenceGroupID: String!
+  badgeID: String
 }
 
 ## - USER
@@ -142,6 +147,8 @@ type KlerosBadgeRequest @entity {
   resolutionTx: Bytes
   "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
   disputeOutcome: Ruling!
+  "The arbitrator's address."
+  arbitrator: Bytes!
 }
 
 type LRequest @entity {
