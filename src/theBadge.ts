@@ -25,6 +25,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const theBadge = TheBadge.bind(event.address);
   const _badgeModel = theBadge.badgeModel(badgeModelId);
   // Badge model
+  // todo add badge contract address
   const badgeModel = new BadgeModel(badgeModelId.toString());
   badgeModel.uri = event.params.metadata;
   badgeModel.controllerType = _badgeModel.getControllerName();
@@ -69,15 +70,15 @@ export function handleMint(event: TransferSingle): void {
   badgeModel.save();
 
   // badge
-  const badgeId = event.params.id.toString();
-  const badge = new Badge(badgeId);
+  const badgeId = event.params.id;
+  const badge = new Badge(badgeId.toString());
   badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
   badge.status = "Requested";
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
-  badge.uri = theBadge.uri(event.params.id);
+  badge.uri = theBadge.uri(badgeId);
   badge.save();
 
   // user
