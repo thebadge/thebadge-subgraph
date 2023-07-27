@@ -77,7 +77,10 @@ templates:
       entities:
         - _EvidenceGroupIDToRequestIDToItemID
         - Evidence
+        - BadgeModelKlerosMetaData
       abis:
+        - name: KlerosController
+          file: ./abis/KlerosController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
       eventHandlers:
