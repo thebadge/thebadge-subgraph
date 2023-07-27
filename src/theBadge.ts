@@ -22,10 +22,8 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
-
   const theBadge = TheBadge.bind(event.address);
   const _badgeModel = theBadge.badgeModel(badgeModelId);
-
   // Badge model
   const badgeModel = new BadgeModel(badgeModelId.toString());
   badgeModel.uri = event.params.metadata;
@@ -79,7 +77,6 @@ export function handleMint(event: TransferSingle): void {
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
-
   badge.uri = theBadge.uri(event.params.id);
   badge.save();
 
