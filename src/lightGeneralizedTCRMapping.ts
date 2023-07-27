@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import {
   Dispute,
@@ -15,19 +15,14 @@ import {
   _KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
   Badge,
-  BadgeModelKlerosMetaData
+  LRequest
 } from "../generated/schema";
 import {
-  DISPUTE_OUTCOME_NONE,
-  getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
   getTCRRequestIndex,
-  getTCRRequestInfo,
   TheBadgeBadgeStatus_Challenged
 } from "./utils";
-import { KlerosController } from "../generated/KlerosController/KlerosController";
-import { TheBadge } from "../generated/TheBadge/TheBadge";
 
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.
@@ -56,107 +51,36 @@ import { TheBadge } from "../generated/TheBadge/TheBadge";
 // looking at where that event is emitted in the contract. Remember that
 // the order in which events are emitted define the order in which
 // handlers are run.
-
 export function handleRequestSubmitted(event: RequestSubmitted): void {
   const itemID = event.params._itemID;
-  //const requestID = itemID.toHexString() + "-" + "0";
-  // The index of this request will be taken from the array of requests of the given item
-  // It will always be the length of the requests array - 1
+  const evidenceGroupId = event.params._evidenceGroupID;
 
-  //  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
+  const graphItemID =
+    event.params._itemID.toHexString() + "@" + event.address.toHexString();
 
-  log.error("handleRequestSubmitted - init: {}", [itemID.toHexString()]);
-  const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
-    itemID.toString()
-  );
-  if (!klerosBadgeIdToBadgeId) {
-    log.error("handleRequestSubmitted - Item not found for ID: {}", [
-      itemID.toHexString()
-    ]);
-    return;
-  }
-  const badgeId = klerosBadgeIdToBadgeId.badgeId;
-  const badgeIdBigInt = BigInt.fromString(badgeId);
-  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeId);
-  if (!badgeKlerosMetadata) {
-    log.error(
-      "handleRequestSubmitted - badgeKlerosMetadata not found for id {}",
-      [badgeId]
-    );
-    return;
-  }
-  const badge = Badge.load(badgeId);
-  if (!badge) {
-    log.error("handleRequestSubmitted - Badge not found for ID: {}", [badgeId]);
-    return;
-  }
-
-  log.error("handleRequestSubmitted - Badge FOUND ID: {}", [badgeId]);
-  const klerosController = KlerosController.bind(event.address);
-  const theBadge = TheBadge.bind(klerosController.theBadge());
-  const badgeModelId = theBadge
-    .badge(badgeIdBigInt)
-    .getBadgeModelId()
-    .toString();
-
-  const _badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(badgeModelId);
-  log.error("handleRequestSubmitted - Badge Model ID: {}", [badgeModelId]);
-  if (!_badgeModelKlerosMetaData) {
-    log.error(
-      "handleRequestSubmitted - BadgeModel not found. badgeId {} badgeModelId {}",
-      [badgeId.toString(), badgeModelId]
-    );
-    return;
-  }
-
-  log.error("handleRequestSubmitted - Badge Model FOUND ID: {}", [
-    badgeModelId
-  ]);
-  // Creates an historic request and saves it into the BadgeKlerosMetaData
-  const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
-  const requestIndex = getTCRRequestIndex(tcrListAddress, itemID);
-  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
-  const requestInfo = getTCRRequestInfo(
-    tcrListAddress,
-    itemID,
-    BigInt.fromString(requestID)
-  );
-  const request = new KlerosBadgeRequest(requestID);
-  // todo get the badge data from the contract
-  // TODO update the type
-  request.type = "Registration";
-  request.createdAt = event.block.timestamp;
-  request.badgeKlerosMetaData = badgeKlerosMetadata.id;
-  request.requestIndex = requestIndex;
-  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
-  request.requester = klerosController.klerosBadge(badgeIdBigInt).getCallee();
-  request.numberOfEvidences = BigInt.fromI32(1);
-  request.disputed = requestInfo.getDisputed();
-  request.disputeOutcome = getFinalRuling(requestInfo.getRuling());
-  request.resolved = requestInfo.getResolved();
-  if (requestInfo.getResolved()) {
-    request.resolutionTime = event.block.timestamp;
-  } else {
-    request.resolutionTime = BigInt.fromI32(0);
-  }
-  request.save();
-
-  // Creates the mapper of evidenceGroupId <=> klerosBadgeRequest
-  // Note that this even runs before mintKlerosBadge() so we are storing here request ids
-  // That belongs to our badges but also ids that belongs to kleros, this mean that on the mintKlerosBadge() event (which occurs after), ids that are not TB ids, should be removed
-  const evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
-    event.params._evidenceGroupID.toString()
-  );
-  evidenceGroupIDToLRequest.itemID = itemID.toHexString();
-  evidenceGroupIDToLRequest.request = requestID;
-  evidenceGroupIDToLRequest.save();
-
-  // Updates the badgeStatus in case that it was a removeItem() o addItem() request
-  // In case of addItemDirectly() or removeItemDirectly() the status will be updated in the ItemStatusChange() event
   const tcr = LightGeneralizedTCR.bind(event.address);
-  const itemInfo = tcr.getItemInfo(itemID);
-  badge.status = getTBStatus(itemInfo.value0);
-  badge.save();
+  const requestIndex = getTCRRequestIndex(tcr._address, itemID);
+  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
+
+  const request = new LRequest(requestID);
+  request.disputed = false;
+  request.challenger = Bytes.fromHexString("0x");
+  request.requester = event.transaction.from;
+  request.numberOfEvidences = BigInt.fromI32(0);
+  request.resolved = false;
+  request.disputeID = BigInt.fromI32(0);
+  request.submissionTime = event.block.timestamp;
+
+  const evidenceGroupIDToLRequest = new _EvidenceGroupIDToRequestIDToItemID(
+    evidenceGroupId.toString()
+  );
+
+  evidenceGroupIDToLRequest.request = requestID;
+  evidenceGroupIDToLRequest.requestIndex =
+    graphItemID + "-" + requestIndex.toString();
+  evidenceGroupIDToLRequest.itemID = itemID.toHexString();
+  evidenceGroupIDToLRequest.save();
+  request.save();
 }
 
 export function handleRequestChallenged(event: Dispute): void {
@@ -170,7 +94,7 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  const genericRequest = KlerosBadgeRequest.load(evidence.request.toString());
+  const genericRequest = LRequest.load(evidence.request.toString());
   if (!genericRequest) {
     log.error("handleRequestChallenged - Request {} not found.", [
       evidence.request.toString()
@@ -181,6 +105,14 @@ export function handleRequestChallenged(event: Dispute): void {
   genericRequest.disputeID = event.params._disputeID;
   genericRequest.disputed = true;
   genericRequest.save();
+
+  const klerosRequest = KlerosBadgeRequest.load(evidence.request);
+  if (klerosRequest) {
+    klerosRequest.challenger = genericRequest.challenger;
+    klerosRequest.disputeID = genericRequest.disputeID;
+    klerosRequest.disputed = genericRequest.disputed;
+    klerosRequest.save();
+  }
 
   const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(evidence.itemID);
   if (!klerosBadgeIdToBadgeId) {
@@ -202,12 +134,8 @@ export function handleRequestChallenged(event: Dispute): void {
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
-  log.error("handleItemStatusChange - TCR: {}", [
-    event.params._itemID.toHexString()
-  ]);
   const tcr = LightGeneralizedTCR.bind(event.address);
   const itemID = event.params._itemID;
-  const item = tcr.items(itemID);
   const itemInfo = tcr.getItemInfo(itemID);
 
   // If the itemID does not match with one of ours badges, its not an itemID of TheBadge but Kleros instead
@@ -221,14 +149,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     ]);
     return;
   }
-  log.error(
-    "handleItemStatusChange - Item found for ID: {}, badgeID: {}, status: {}",
-    [
-      itemID.toHexString(),
-      klerosBadgeIdToBadgeId.badgeId,
-      itemInfo.value0.toString()
-    ]
-  );
+
   const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
   if (!badge) {
     log.error("handleItemStatusChange - Badge not found for ID: {}", [
@@ -237,9 +158,6 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
-  log.error("handleItemStatusChange - Item status for ID: {}", [
-    item.getStatus().toString()
-  ]);
   // Updates the badge status
   badge.status = getTBStatus(itemInfo.value0);
   badge.save();
@@ -249,7 +167,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
   const kbRequestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
-  const genericRequest = KlerosBadgeRequest.load(kbRequestID);
+  const genericRequest = LRequest.load(kbRequestID);
   if (!genericRequest) {
     log.error("handleStatusUpdated - Request: {} not found.", [kbRequestID]);
     return;
@@ -259,6 +177,21 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   genericRequest.resolutionTx = event.transaction.hash;
   genericRequest.disputeOutcome = getFinalRuling(requestInfo.value6);
   genericRequest.save();
+
+  const klerosBadgeRequest = KlerosBadgeRequest.load(kbRequestID);
+  if (!klerosBadgeRequest) {
+    log.error("handleStatusUpdated - klerosBadgeRequest: {} not found.", [
+      kbRequestID
+    ]);
+    return;
+  }
+
+  // todo directly asign id klerosBadgeRequest = request
+  klerosBadgeRequest.resolved = genericRequest.resolved;
+  klerosBadgeRequest.resolutionTime = genericRequest.resolutionTime;
+  klerosBadgeRequest.resolutionTx = genericRequest.resolutionTx;
+  klerosBadgeRequest.disputeOutcome = genericRequest.disputeOutcome;
+  klerosBadgeRequest.save();
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
@@ -273,9 +206,7 @@ export function handleEvidence(event: EvidenceEvent): void {
     return;
   }
 
-  const genericRequest = KlerosBadgeRequest.load(
-    evidenceGroupIDToRequestID.request
-  );
+  const genericRequest = LRequest.load(evidenceGroupIDToRequestID.request);
   if (!genericRequest) {
     log.error("handleEvidence - Request {} not found.", [
       evidenceGroupIDToRequestID.request
