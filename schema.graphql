@@ -26,8 +26,7 @@ type BadgeModel @entity {
   creator: User!
   badgesMintedAmount: BigInt!
   createdAt: BigInt!
-
-  badgeModelKleros: BadgeModelKlerosMetaData @derivedFrom(field: "badgeModelId")
+  badgeModelKleros: BadgeModelKlerosMetaData
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
@@ -76,6 +75,7 @@ type _EvidenceGroupIDToRequestIDToItemID @entity {
   id: ID!
   "Item submission ID, it can be a TCR random item or a badge submission request"
   request: String!
+  requestIndex: String!
   itemID: String!
 }
 
@@ -142,4 +142,23 @@ type KlerosBadgeRequest @entity {
   resolutionTx: Bytes
   "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
   disputeOutcome: Ruling!
+}
+
+type LRequest @entity {
+  "The item ID (which is the keccak256 hash of its data)."
+  id: ID!
+  "True if a dispute was raised."
+  disputed: Boolean!
+  "ID of the dispute, if any."
+  disputeID: BigInt!
+  "Time when the request was made. Used to track when the challenge period ends."
+  submissionTime: BigInt!
+  "True if the request was executed and/or any raised disputes were resolved."
+  resolved: Boolean!
+  "The address of the party that made a request"
+  requester: Bytes!
+  "The address of the party that challenged the request"
+  challenger: Bytes!
+  "Number of evidences."
+  numberOfEvidences: BigInt!
 }

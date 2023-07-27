@@ -6,7 +6,8 @@ import {
   BadgeKlerosMetaData,
   _KlerosBadgeIdToBadgeId,
   KlerosBadgeRequest,
-  Evidence
+  Evidence,
+  BadgeModel
 } from "../generated/schema";
 import {
   KlerosController,
@@ -23,6 +24,14 @@ import {
 // event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   const badgeModelId = event.params.badgeModelId;
+  const badgeModel = BadgeModel.load(badgeModelId.toString());
+  if (!badgeModel) {
+    log.error(
+      "handleNewKlerosBadgeModel - BadgeModel not found. badgeModelID: {}",
+      [badgeModelId.toString()]
+    );
+    return;
+  }
 
   LightGeneralizedTCRTemplate.create(event.params.tcrAddress);
   const tcrList = LightGeneralizedTCR.bind(event.params.tcrAddress);
@@ -37,6 +46,9 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   badgeModelKlerosMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelKlerosMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
   badgeModelKlerosMetaData.save();
+
+  badgeModel.badgeModelKleros = badgeModelKlerosMetaData.id;
+  badgeModel.save();
 }
 
 // event MintKlerosBadge(uint256 indexed badgeId, string evidence);
