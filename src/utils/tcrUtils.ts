@@ -22,7 +22,7 @@ const TheBadgeBadgeStatus_RemovalRequested = "RemovalRequested";
 const TCRItemStatusCode_ABSENT_CODE = 0;
 const TCRItemStatusCode_REGISTERED_CODE = 1;
 const TCRItemStatusCode_REGISTRATION_REQUESTED_CODE = 2;
-const TCRItemStatusCode_CLEARING_REQUESTED_CODE = 3;
+export const TCRItemStatusCode_CLEARING_REQUESTED_CODE = 3;
 //
 
 export function getTCRRequestIndex(tcrAddress: Address, itemId: Bytes): BigInt {
