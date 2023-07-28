@@ -6,7 +6,7 @@
   "scripts": {
     "codegen:dev": "node codegen/render-templates.js goerli && graph codegen",
     "build:dev": "yarn codegen:dev && graph build",
-    "deploy:dev": "yarn build:dev && graph deploy --product hosted-service thebadgeadmin/dev-testing",
+    "deploy:dev": "yarn build:dev && graph deploy --product hosted-service thebadgeadmin/thebadge-development",
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy:studio": "graph deploy --studio thebadge",

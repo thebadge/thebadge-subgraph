@@ -164,8 +164,7 @@ export function handleRequestChallenged(event: Dispute): void {
   //   tcrList as Address,
   //   Bytes.fromHexString(itemID)
   // );
-  // todo calculate dinamically using the badgeKlerosMetadata.numberOfRequests
-  const requestIndex = "3";
+  const requestIndex = badgeKlerosMetadata.numberOfRequests.toString();
   const requestID = itemID + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestID);
   request.type = "Clearing";
@@ -188,11 +187,13 @@ export function handleRequestChallenged(event: Dispute): void {
   //   .klerosBadge(BigInt.fromString(badge.id))
   //   .getCallee();
   // todo review
-  request.requester = event.transaction.from
+  request.requester = event.transaction.from;
   request.save();
 
-  badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus( BigInt.fromI32(1))
-  badgeKlerosMetadata.save()
+  badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus(
+    BigInt.fromI32(1)
+  );
+  badgeKlerosMetadata.save();
   // todo in handleEvidence we need to load this request and add the evidence to it
 }
 
@@ -221,12 +222,34 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
 
+  if (!badge.badgeKlerosMetaData) {
+    log.warning(
+      "handleItemStatusChange - Badge: {} does not have BadgeKlerosMetadata!",
+      [klerosBadgeIdToBadgeId.badgeId]
+    );
+    return;
+  }
+
+  // Loads the BadgeKlerosMetaData
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(
+    badge.badgeKlerosMetaData as string
+  );
+
+  if (!badgeKlerosMetadata) {
+    log.error(
+      "handleStatusUpdated - not badgeKlerosMetadata found for with ID: {}",
+      [badge.id]
+    );
+    return;
+  }
+
   // Updates the badge status
   badge.status = getTBStatus(itemInfo.value0);
   badge.save();
 
-  // todo calculate dinamically using the badgeKlerosMetadata.numberOfRequests
-  const requestIndex = BigInt.fromI32(0);
+  const requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
+    BigInt.fromI32(1)
+  );
   const requestID =
     event.params._itemID.toHexString() + "-" + requestIndex.toString();
   const request = KlerosBadgeRequest.load(requestID);
