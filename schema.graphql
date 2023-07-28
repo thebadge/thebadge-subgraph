@@ -15,8 +15,7 @@ enum Controller {
   kleros
 }
 
-## - BADGE TYPE
-
+## - BADGE Model
 type BadgeModel @entity {
   id: ID! # BadgeType id
   uri: String!
@@ -26,8 +25,9 @@ type BadgeModel @entity {
   paused: Boolean!
   creator: User!
   badgesMintedAmount: BigInt!
-
-  badgeModelKleros: BadgeModelKlerosMetaData @derivedFrom(field: "badgeModelId")
+  createdAt: BigInt!
+  badgeModelKleros: BadgeModelKlerosMetaData
+  contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
@@ -42,10 +42,6 @@ type BadgeModelKlerosMetaData @entity {
   #TODO: set governor, arbitrator, etc
 }
 
-# type KlerosBadgeModelArbitrationParams @entity {
-#   id: ID! # badgeModel-index
-# }
-
 ## - BADGE
 
 type Badge @entity {
@@ -54,37 +50,39 @@ type Badge @entity {
   uri: String!
   account: User! # The receiver of the badge
   status: BadgeStatus!
-  validFor: BigInt!
-
+  validUntil: BigInt!
+  createdAt: BigInt!
+  createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
 
+## Equivalent to Kleros LItem
 type BadgeKlerosMetaData @entity {
   id: ID! # the same as ID as the BADGE
   badge: Badge!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  # requests: [KlerosBadgeRequest!]!
-  requests: KlerosBadgeRequest @derivedFrom(field: "badgeKlerosMetaData")
+  "The total number of requests for this item."
+  numberOfRequests: BigInt!
+  requests: [KlerosBadgeRequest!]! @derivedFrom(field: "badgeKlerosMetaData")
 }
 
-type KlerosBadgeIdToBadgeId @entity {
+type _KlerosBadgeIdToBadgeId @entity {
   id: ID! # itemID from kleros.
   badgeId: String! # badge id.
 }
 
-type KlerosBadgeRequest @entity {
+type _EvidenceGroupIDItemID @entity {
   id: ID!
-  badgeKlerosMetaData: BadgeKlerosMetaData!
-  requestIndex: BigInt!
-  submissionTime: BigInt!
-  arbitrationParamsIndex: BigInt!
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  itemID: String!
+}
 
-  type: KlerosRequestType!
-  requestBadgeEvidenceUri: String
-  removeOrChallengeEvidenceUri: String
-  extraEvidenceUris: [String!]!
-  challenger: Bytes
+type _ItemIDToEvidenceGroupIDToBadgeID @entity {
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  id: ID!
+  evidenceGroupID: String!
+  badgeID: String
 }
 
 ## - USER
@@ -100,3 +98,57 @@ type User @entity {
   creatorUri: String
   createdBadgesModelAmount: BigInt!
 }
+
+## Kleros Entities, source: https://github.com/kleros/gtcr-subgraph/blob/master/schema.graphql
+
+enum Ruling {
+  "The arbitrator did not rule or refused to rule."
+  None
+  "The arbitrator ruled in favor of the requester."
+  Accept
+  "The arbitrator in favor of the challenger."
+  Reject
+}
+
+type Evidence @entity {
+  "<Request.id>-<evidence number>"
+  id: ID!
+  "The URI of the evidence file."
+  uri: String!
+  "When was this evidence posted"
+  timestamp: BigInt!
+  "Who has send the evidence"
+  sender: Bytes!
+  "The latest request when this evidence was submitted."
+  request: KlerosBadgeRequest
+}
+
+## Equivalent to Kleros LRequest
+type KlerosBadgeRequest @entity {
+  id: ID!
+  type: KlerosRequestType!
+  createdAt: BigInt!
+  badgeKlerosMetaData: BadgeKlerosMetaData
+  requestIndex: BigInt
+  arbitrationParamsIndex: BigInt
+  disputeID: BigInt
+  requester: Bytes
+  challenger: Bytes
+  "Evidence provided regarding this request (matching evidenceGroupID)."
+  evidences: [Evidence!]! @derivedFrom(field: "request")
+  "Number of evidences."
+  numberOfEvidences: BigInt!
+  "The time the request was resolved."
+  resolutionTime: BigInt!
+  "Whether the item is currently disputed."
+  disputed: Boolean!
+  "True if the request was executed and/or any raised disputes were resolved."
+  resolved: Boolean!
+  "The hash of the transaction that solved this request."
+  resolutionTx: Bytes
+  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
+  disputeOutcome: Ruling!
+  "The arbitrator's address."
+  arbitrator: Bytes!
+}
+

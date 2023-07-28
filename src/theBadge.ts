@@ -1,13 +1,11 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
-  BadgeRequested,
   BadgeModelCreated,
-  TransferSingle,
+  TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
-// import { Arbitror } from "../generated/TheBadge/Arbitror";
 import { BadgeModel, Badge } from "../generated/schema";
 import { loadUserOrGetDefault } from "./utils";
 
@@ -24,7 +22,6 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
-
   const theBadge = TheBadge.bind(event.address);
   const _badgeModel = theBadge.badgeModel(badgeModelId);
 
@@ -37,6 +34,8 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.paused = false;
   badgeModel.creator = _badgeModel.getCreator().toHexString();
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
+  badgeModel.createdAt = event.block.timestamp;
+  badgeModel.contractAddress = event.address;
   badgeModel.save();
 
   // user
@@ -50,17 +49,37 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 // event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
-  const _badge = theBadge.badge(event.params.id);
-  const _badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+  const badgeID = event.params.id;
+  const _badge = theBadge.badge(badgeID);
+  const badgeModelID = _badge.getBadgeModelId().toString();
+  // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+
+  // Badge model
+  const badgeModel = BadgeModel.load(badgeModelID);
+
+  if (!badgeModel) {
+    log.error("handleMint - BadgeModel not found. badgeId {} badgeModelId {}", [
+      badgeID.toString(),
+      badgeModelID
+    ]);
+    return;
+  }
+
+  badgeModel.badgesMintedAmount = badgeModel.badgesMintedAmount.plus(
+    BigInt.fromI32(1)
+  );
+  badgeModel.save();
 
   // badge
-  const badgeId = event.params.id.toString();
-  const badge = new Badge(badgeId);
-  badge.badgeModel = _badge.getBadgeModelId().toString();
+  const badgeId = event.params.id;
+  const badge = new Badge(badgeId.toString());
+  badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
-  badge.validFor = _badge.getDueDate();
   badge.status = "Requested";
-  badge.uri = theBadge.uri(event.params.id);
+  badge.validUntil = _badge.getDueDate();
+  badge.createdAt = event.block.timestamp;
+  badge.createdTxHash = event.transaction.hash;
+  badge.uri = theBadge.uri(badgeId);
   badge.save();
 
   // user
