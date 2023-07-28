@@ -23,6 +23,7 @@ import {
   getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
+  TCRItemStatusCode_CLEARING_REQUESTED_CODE,
   TheBadgeBadgeStatus_Challenged
 } from "./utils";
 
@@ -54,26 +55,105 @@ import {
 // the order in which events are emitted define the order in which
 // handlers are run.
 export function handleRequestSubmitted(event: RequestSubmitted): void {
-  const itemID = event.params._itemID;
-  const evidenceGroupId = event.params._evidenceGroupID;
+  const itemID = event.params._itemID.toHexString();
+  const evidenceGroupId = event.params._evidenceGroupID.toHexString();
 
-  const itemIDToEvidenceGroupID = new _ItemIDToEvidenceGroupIDToBadgeID(
-    itemID.toHexString()
-  );
-  itemIDToEvidenceGroupID.evidenceGroupID = evidenceGroupId.toString();
-  itemIDToEvidenceGroupID.save();
+  const evidenceGroupCreated = _EvidenceGroupIDItemID.load(evidenceGroupId);
+  if (!evidenceGroupCreated) {
+    const evidenceGroupIDItemID = new _EvidenceGroupIDItemID(evidenceGroupId);
+    evidenceGroupIDItemID.itemID = itemID;
+    evidenceGroupIDItemID.save();
+  }
 
-  const evidenceGroupIDItemID = new _EvidenceGroupIDItemID(
-    evidenceGroupId.toHexString()
+  const badgeCreatedFound = _ItemIDToEvidenceGroupIDToBadgeID.load(itemID);
+  if (!badgeCreatedFound) {
+    const itemIDToEvidenceGroupID = new _ItemIDToEvidenceGroupIDToBadgeID(
+      itemID
+    );
+    itemIDToEvidenceGroupID.evidenceGroupID = evidenceGroupId;
+    itemIDToEvidenceGroupID.save();
+    return;
+  }
+
+  // Loads the Badge
+  const badgeID = badgeCreatedFound.badgeID as string;
+  const badge = Badge.load(badgeID);
+
+  if (!badge) {
+    log.error("handleRequestSubmitted - not badge found for with ID: {}", [
+      badgeID.toString()
+    ]);
+    return;
+  }
+
+  // If it's not a registration request, creates a remove request and assigns it to the list of requests
+  // Checks the status of the item
+  const tcr = LightGeneralizedTCR.bind(event.address);
+  const itemInfo = tcr.getItemInfo(event.params._itemID);
+  const status = itemInfo.getStatus();
+
+  if (status !== TCRItemStatusCode_CLEARING_REQUESTED_CODE) {
+    log.warning(
+      "handleRequestSubmitted - The item: {} is not in CLEARING status, no request has been assigned. Item status: {}",
+      [itemID, status.toString()]
+    );
+    return;
+  }
+
+  // Loads the BadgeModelKlerosMetaData
+  const badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(
+    badge.badgeModel
   );
-  evidenceGroupIDItemID.itemID = itemID.toHexString();
-  evidenceGroupIDItemID.save();
+
+  if (!badgeModelKlerosMetaData) {
+    log.error(
+      "handleRequestSubmitted - not badgeModelKlerosMetaData found for with ID: {}",
+      [badge.badgeModel.toString()]
+    );
+    return;
+  }
+
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeID);
+
+  if (!badgeKlerosMetadata) {
+    log.error(
+      `handleRequestSubmitted - not badgeKlerosMetadata found for with ID: {}`,
+      [badgeID.toString()]
+    );
+    return;
+  }
+
+  // Creates a new request
+  const tcrList = Address.fromBytes(badgeModelKlerosMetaData.tcrList);
+  const requestIndex = badgeKlerosMetadata.numberOfRequests.toString();
+  const requestID = itemID + "-" + requestIndex.toString();
+
+  const request = new KlerosBadgeRequest(requestID);
+  request.type = "Clearing";
+  request.createdAt = event.block.timestamp;
+  request.badgeKlerosMetaData = badgeKlerosMetadata.id;
+  request.requestIndex = BigInt.fromString(requestIndex);
+  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrList);
+  request.numberOfEvidences = BigInt.fromI32(1);
+  request.disputed = false;
+  request.disputeID = BigInt.fromI32(0);
+  request.challenger = event.transaction.from;
+  request.disputeOutcome = DISPUTE_OUTCOME_NONE;
+  request.resolved = false;
+  request.resolutionTime = BigInt.fromI32(0);
+  request.arbitrator = tcr.arbitrator();
+  request.requester = event.transaction.from;
+  request.save();
+
+  badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus(
+    BigInt.fromI32(1)
+  );
+  badgeKlerosMetadata.save();
 }
 
 export function handleRequestChallenged(event: Dispute): void {
   const evidenceGroupID = event.params._evidenceGroupID.toHexString();
-  const disputeID = event.params._disputeID.toString();
-  const tcr = LightGeneralizedTCR.bind(event.address);
+  const disputeID = event.params._disputeID;
 
   // Loads BadgeKlerosMetaData
   // Loads the request related
@@ -105,19 +185,8 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  // Loads BadgeKlerosMetaData
-  const badgeID = itemIDToEvidenceGroupIDToBadgeID.badgeID as string;
-  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeID);
-
-  if (!badgeKlerosMetadata) {
-    log.error(
-      `handleRequestChallenged - not badgeKlerosMetadata found for with ID: {}`,
-      [badgeID.toString()]
-    );
-    return;
-  }
-
   // Loads the Badge
+  const badgeID = itemIDToEvidenceGroupIDToBadgeID.badgeID as string;
   const badge = Badge.load(badgeID);
 
   if (!badge) {
@@ -131,6 +200,7 @@ export function handleRequestChallenged(event: Dispute): void {
   badge.status = TheBadgeBadgeStatus_Challenged;
   badge.save();
 
+  // Adds the disputeID to the request
   // Loads the BadgeModelKlerosMetaData
   const badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(
     badge.badgeModel
@@ -144,33 +214,32 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  // Creates a new request
-  const tcrList = Address.fromBytes(badgeModelKlerosMetaData.tcrList);
-  const requestIndex = badgeKlerosMetadata.numberOfRequests.toString();
-  const requestID = itemID + "-" + requestIndex.toString();
-  // todo move to handleRequestSubmitted
-  const request = new KlerosBadgeRequest(requestID);
-  request.type = "Registration";
-  request.createdAt = event.block.timestamp;
-  request.badgeKlerosMetaData = badgeKlerosMetadata.id;
-  request.requestIndex = BigInt.fromString(requestIndex);
-  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrList);
-  request.numberOfEvidences = BigInt.fromI32(1);
-  request.disputed = true;
-  request.disputeID = BigInt.fromString(disputeID);
-  request.challenger = event.transaction.from;
-  request.disputeOutcome = DISPUTE_OUTCOME_NONE;
-  request.resolved = false;
-  request.resolutionTime = BigInt.fromI32(0);
-  request.arbitrator = tcr.arbitrator();
-  request.requester = event.transaction.from;
-  request.save();
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badge.id);
 
-  badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus(
+  if (!badgeKlerosMetadata) {
+    log.error(
+      `handleRequestChallenged - badgeKlerosMetadata not found for id {}`,
+      [badge.id]
+    );
+    return;
+  }
+
+  // Creates a new request
+  const requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
     BigInt.fromI32(1)
   );
-  badgeKlerosMetadata.save();
-  // todo in handleEvidence we need to load this request and add the evidence to it
+  const requestID = itemID + "-" + requestIndex.toString();
+  const request = KlerosBadgeRequest.load(requestID);
+
+  if (!request) {
+    log.error("handleRequestChallenged - Request: {} not found.", [requestID]);
+    return;
+  }
+
+  request.challenger = event.transaction.from;
+  request.disputeID = disputeID;
+  request.disputed = true;
+  request.save();
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
@@ -242,8 +311,8 @@ export function handleEvidence(event: EvidenceEvent): void {
   );
   if (!evidenceGroupIDItemID) {
     log.warning(
-      `handleEvidence - not evidenceGroupIDItemID found for evidenceGroupID: {}`,
-      [evidenceGroupID.toString()]
+      `handleEvidence - not evidenceGroupIDItemID found for evidenceGroupID: {}, TX HASH: {}`,
+      [evidenceGroupID.toHexString(), event.transaction.hash.toHexString()]
     );
     return;
   }
@@ -255,14 +324,14 @@ export function handleEvidence(event: EvidenceEvent): void {
   if (!itemIDToEvidenceGroupIDToBadgeID) {
     log.error(
       `handleEvidence- not itemIDToEvidenceGroupIDToBadgeID found for evidenceGroupID: {} and itemID: {}`,
-      [evidenceGroupID.toString(), itemID.toString()]
+      [evidenceGroupID.toHexString(), itemID.toString()]
     );
     return;
   }
   if (!itemIDToEvidenceGroupIDToBadgeID.badgeID) {
     log.warning(
       `handleEvidence - not itemIDToEvidenceGroupIDToBadgeID badgeID found for evidenceGroupID: {} and itemID: {}, item not TheBadge, ignoring..`,
-      [evidenceGroupID.toString(), itemID.toString()]
+      [evidenceGroupID.toHexString(), itemID.toString()]
     );
     return;
   }
@@ -339,7 +408,7 @@ export function handleRuling(event: Ruling): void {
 
   // Takes always the last request which is the one that's on dispute
   const requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
-      BigInt.fromI32(1)
+    BigInt.fromI32(1)
   );
   const requestID = badgeKlerosMetadata.id + "-" + requestIndex.toString();
   const genericRequest = KlerosBadgeRequest.load(requestID);
