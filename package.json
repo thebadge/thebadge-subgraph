@@ -1,18 +1,32 @@
 {
-  "name": "thebadge",
-  "license": "UNLICENSED",
+  "name": "thebadge-subgraph",
+  "license": "MIT",
+  "description": "Subgraph for TheBadge smart contracts",
+  "version": "1.0.0",
   "scripts": {
+    "codegen:dev": "node codegen/render-templates.js goerli && graph codegen",
+    "build:dev": "yarn codegen:dev && graph build",
+    "deploy:dev": "yarn build:dev && graph deploy --product hosted-service thebadgeadmin/thebadge-development",
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy:goerli": "graph deploy --product hosted-service nicosampler/thebadge-goerli",
-    "deploy:gnosis": "graph deploy --product hosted-service nicosampler/thebadge-gnosis",
     "deploy:studio": "graph deploy --studio thebadge",
-    "create-local": "graph create --node http://localhost:8020/ thebadge",
-    "remove-local": "graph remove --node http://localhost:8020/ thebadge",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 thebadge"
+    "auth": "graph auth --product hosted-service eval $(grep THE_GRAPH_DEV_TESTING_AUTH_TOKEN .env | cut -d '=' -f2)",
+    "create-local": "graph create --node http://localhost:8020/ thebadgeadmin/dev-testing",
+    "remove-local": "graph remove --node http://localhost:8020/ thebadgeadmin/dev-testing",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 thebadgeadmin/dev-testing"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.32.0",
-    "@graphprotocol/graph-ts": "0.27.0"
+    "@graphprotocol/graph-cli": "^0.49.0",
+    "@graphprotocol/graph-ts": "0.30.0"
+  },
+  "devDependencies": {
+    "mustache": "^4.0.1",
+    "@typescript-eslint/parser": "^5.38.0",
+    "@typescript-eslint/eslint-plugin": "^5.39.0",
+    "eslint": "^8.23.1",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-rulesdir": "^0.2.1",
+    "eslint-config-prettier": "^8.5.0",
+    "typescript": "^4.8.3"
   }
 }

@@ -1,3 +1,7 @@
 node_modules/
 build/
 generated/
+.env
+subgraph.yaml
+.idea
+.vscode

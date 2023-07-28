@@ -1,64 +1,154 @@
 enum BadgeStatus {
-  InReview
+  Absent
+  Requested
   Approved
-  Rejected
-  Revoked
+  Challenged
+  RequestRemoval
 }
 
-type BadgeType @entity {
+enum KlerosRequestType {
+  Registration # Identifies a request to register an item to the registry.
+  Clearing # Identifies a request to remove an item from the registry.
+}
+
+enum Controller {
+  kleros
+}
+
+## - BADGE Model
+type BadgeModel @entity {
   id: ID! # BadgeType id
-  metadataURL: String!
-  controllerName: String!
-  mintCost: BigInt!
+  uri: String!
+  controllerType: String!
   validFor: BigInt!
+  creatorFee: BigInt!
   paused: Boolean!
   creator: User!
-
-  klerosBadge: KlerosBadgeType @derivedFrom(field: "badgeType")
-  mintedBadges: [Badge!]! @derivedFrom(field: "badgeType")
   badgesMintedAmount: BigInt!
+  createdAt: BigInt!
+  badgeModelKleros: BadgeModelKlerosMetaData
+  contractAddress: Bytes!
+  mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
-type KlerosBadgeType @entity {
-  id: ID! # BadgeType id
-  badgeType: BadgeType!
-  klerosMetadataURL: String!
-  klerosTCRList: Bytes!
-  submissionBaseDeposit: BigInt!
-  # badgesMintedAmount: BigInt!
-  # validFor: BigInt!
-  challengePeriodDuration: BigInt!
-}
-
-type KlerosChallenge @entity {
+type BadgeModelKlerosMetaData @entity {
   id: ID!
-  tcr: String!
-  arbitrator: String!
-  rules: Boolean!
-  evidences: [String!]!
+  badgeModelId: BadgeModel!
+  registrationUri: String!
+  removalUri: String!
+  tcrList: Bytes!
+  submissionBaseDeposit: BigInt!
+  challengePeriodDuration: BigInt!
+  #TODO: set governor, arbitrator, etc
 }
+
+## - BADGE
 
 type Badge @entity {
   id: ID!
-  externalId: Bytes
-  badgeType: BadgeType!
-  evidenceMetadataUrl: String
-  isChallenged: Boolean!
+  badgeModel: BadgeModel!
+  uri: String!
+  account: User! # The receiver of the badge
   status: BadgeStatus!
-  receiver: User! # The receiver of the badge
-  requestedBy: Bytes! # The address who initiated the request.
-  reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
-  # challengeEvidences: String[!]
+  validUntil: BigInt!
+  createdAt: BigInt!
+  createdTxHash: Bytes!
+  badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
 }
+
+## Equivalent to Kleros LItem
+type BadgeKlerosMetaData @entity {
+  id: ID! # the same as ID as the BADGE
+  badge: Badge!
+  itemID: Bytes!
+  reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
+  "The total number of requests for this item."
+  numberOfRequests: BigInt!
+  requests: [KlerosBadgeRequest!]! @derivedFrom(field: "badgeKlerosMetaData")
+}
+
+type _KlerosBadgeIdToBadgeId @entity {
+  id: ID! # itemID from kleros.
+  badgeId: String! # badge id.
+}
+
+type _EvidenceGroupIDItemID @entity {
+  id: ID!
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  itemID: String!
+}
+
+type _ItemIDToEvidenceGroupIDToBadgeID @entity {
+  "Item submission ID, it can be a TCR random item or a badge submission request"
+  id: ID!
+  evidenceGroupID: String!
+  badgeID: String
+}
+
+## - USER
 
 type User @entity {
   id: ID!
-  badges: [Badge!] @derivedFrom(field: "receiver")
+  badges: [Badge!] @derivedFrom(field: "account") # TODO: check how to handle different types of badges
   mintedBadgesAmount: BigInt!
   # creator
   isCreator: Boolean!
   isVerified: Boolean!
-  createdBadgeTypes: [BadgeType!] @derivedFrom(field: "creator")
-  creatorMetadata: String
-  createdBadgesTypesAmount: BigInt!
+  createdBadgeModels: [BadgeModel!] @derivedFrom(field: "creator")
+  creatorUri: String
+  createdBadgesModelAmount: BigInt!
 }
+
+## Kleros Entities, source: https://github.com/kleros/gtcr-subgraph/blob/master/schema.graphql
+
+enum Ruling {
+  "The arbitrator did not rule or refused to rule."
+  None
+  "The arbitrator ruled in favor of the requester."
+  Accept
+  "The arbitrator in favor of the challenger."
+  Reject
+}
+
+type Evidence @entity {
+  "<Request.id>-<evidence number>"
+  id: ID!
+  "The URI of the evidence file."
+  uri: String!
+  "When was this evidence posted"
+  timestamp: BigInt!
+  "Who has send the evidence"
+  sender: Bytes!
+  "The latest request when this evidence was submitted."
+  request: KlerosBadgeRequest
+}
+
+## Equivalent to Kleros LRequest
+type KlerosBadgeRequest @entity {
+  id: ID!
+  type: KlerosRequestType!
+  createdAt: BigInt!
+  badgeKlerosMetaData: BadgeKlerosMetaData
+  requestIndex: BigInt
+  arbitrationParamsIndex: BigInt
+  disputeID: BigInt
+  requester: Bytes
+  challenger: Bytes
+  "Evidence provided regarding this request (matching evidenceGroupID)."
+  evidences: [Evidence!]! @derivedFrom(field: "request")
+  "Number of evidences."
+  numberOfEvidences: BigInt!
+  "The time the request was resolved."
+  resolutionTime: BigInt!
+  "Whether the item is currently disputed."
+  disputed: Boolean!
+  "True if the request was executed and/or any raised disputes were resolved."
+  resolved: Boolean!
+  "The hash of the transaction that solved this request."
+  resolutionTx: Bytes
+  "The outcome of the dispute, if any. Note that unsuccessful appeal fundings can invert the arbitrator ruling (so this may differ from the ruling given by the arbitrator)."
+  disputeOutcome: Ruling!
+  "The arbitrator's address."
+  arbitrator: Bytes!
+}
+

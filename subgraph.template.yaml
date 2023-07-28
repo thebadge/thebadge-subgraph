@@ -1,0 +1,97 @@
+specVersion: 0.0.4
+features:
+  - ipfsOnEthereumContracts
+description: TB <=> Kleros Graph
+repository: https://github.com/thebadge/thebadge-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TheBadge
+    network: {{network}}
+    source:
+      address: "{{TheBadge.address}}"
+      # Block to speed-up the development, it should be commented on prod
+      # startBlock: 9348882
+      startBlock: {{TheBadge.startBlock}}
+      abi: TheBadge
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - User
+        - BadgeModel
+      abis:
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+      eventHandlers:
+        - event: CreatorRegistered(indexed address,string)
+          handler: handleCreatorRegistered
+        - event: BadgeModelCreated(indexed uint256,string)
+          handler: handleBadgeModelCreated
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleMint
+      file: ./src/theBadge.ts
+
+  - kind: ethereum/contract
+    name: KlerosController
+    network: {{network}}
+    source:
+      address: "{{KlerosController.address}}"
+      # Block to speed-up the development, it should be commented on prod
+      #startBlock: 9348882
+      startBlock: {{KlerosController.startBlock}}
+      abi: KlerosController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/kleros.ts
+      entities:
+        - BadgeModelKlerosMetaData
+        - BadgeKlerosMetaData
+      abis:
+        - name: KlerosController
+          file: ./abis/KlerosController.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+      eventHandlers:
+        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string)
+          handler: handleNewKlerosBadgeModel
+        - event: mintKlerosBadge(indexed uint256,string)
+          handler: handleMintKlerosBadge
+
+templates:
+  - kind: ethereum/contract
+    name: LightGeneralizedTCR
+    network: {{network}}
+    source:
+      abi: LightGeneralizedTCR
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - _EvidenceGroupIDToRequestIDToItemID
+        - Evidence
+        - BadgeModelKlerosMetaData
+      abis:
+        - name: KlerosController
+          file: ./abis/KlerosController.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+      eventHandlers:
+        - event: RequestSubmitted(indexed bytes32,uint256)
+          handler: handleRequestSubmitted
+        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
+          handler: handleRequestChallenged
+        - event: ItemStatusChange(indexed bytes32,bool)
+          handler: handleStatusUpdated
+        - event: Evidence(indexed address,indexed uint256,indexed address,string)
+          handler: handleEvidence
+        - event: Ruling(indexed address,indexed uint256,uint256)
+          handler: handleRuling
+      file: ./src/lightGeneralizedTCRMapping.ts
