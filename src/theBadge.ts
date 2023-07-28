@@ -24,8 +24,8 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadge = TheBadge.bind(event.address);
   const _badgeModel = theBadge.badgeModel(badgeModelId);
+
   // Badge model
-  // todo add badge contract address
   const badgeModel = new BadgeModel(badgeModelId.toString());
   badgeModel.uri = event.params.metadata;
   badgeModel.controllerType = _badgeModel.getControllerName();
@@ -35,6 +35,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.creator = _badgeModel.getCreator().toHexString();
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
   badgeModel.createdAt = event.block.timestamp;
+  badgeModel.contractAddress = event.address;
   badgeModel.save();
 
   // user

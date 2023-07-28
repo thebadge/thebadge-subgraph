@@ -27,6 +27,7 @@ type BadgeModel @entity {
   badgesMintedAmount: BigInt!
   createdAt: BigInt!
   badgeModelKleros: BadgeModelKlerosMetaData
+  contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
 }
 
