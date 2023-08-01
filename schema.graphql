@@ -90,15 +90,14 @@ type _ItemIDToEvidenceGroupIDToBadgeID @entity {
 type User @entity {
   id: ID!
   badges: [Badge!] @derivedFrom(field: "account") # TODO: check how to handle different types of badges
-  mintedBadgesAmount: BigInt!
+  createdBadgeModels: [BadgeModel!] @derivedFrom(field: "creator")
   # creator
   isCreator: Boolean!
   isCurator: Boolean!
   isVerified: Boolean!
-  createdBadgeModels: [BadgeModel!] @derivedFrom(field: "creator")
   creatorUri: String
-  createdBadgesModelAmount: BigInt!
-  challengedBadgesAmount: BigInt!
+  "User protocol statistics."
+  statistics: UserStatistic!
 }
 
 ## Kleros Entities, source: https://github.com/kleros/gtcr-subgraph/blob/master/schema.graphql
@@ -169,4 +168,32 @@ type ProtocolStatistic @entity {
   badgeCurators: [Bytes!]! #
   # Keep track of the users that registered as creators
   badgeCreators: [Bytes!]!
+}
+
+type UserStatistic @entity {
+  id: ID!
+  user: User!
+
+  # User statistics
+  mintedBadgesAmount: BigInt!
+  timeSinceLastChallengeReceived: BigInt!
+  challengesReceivedAmount: BigInt!
+  challengesReceivedLostAmount: BigInt!
+  challengesReceivedWonAmount: BigInt!
+
+  # Creator statistics
+  createdBadgesModelAmount: BigInt!
+  # Amount of BADGES created by this users MINTED by other users
+  createdBadgesMintedAmount: BigInt!
+  # Amount of different USERS that minted at least one of the badges of this creator
+  usersMintedBadgesAmount: BigInt!
+  # The ID of the badge created by this user which has the max amount of mints by others users
+  createdBadgeIDMostPopular: BigInt!
+  creatorRankingPosition: BigInt! # TODO implement in contract
+
+  # Curator statistics
+  challengesMadeAmount: BigInt!
+  challengesMadeLostAmount: BigInt!
+  challengesMadeWonAmount: BigInt!
+  curatorRankingPosition: BigInt! # TODO implement in contract
 }
