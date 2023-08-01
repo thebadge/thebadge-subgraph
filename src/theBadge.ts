@@ -1,4 +1,4 @@
-import {BigInt, Bytes, log} from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
@@ -6,7 +6,12 @@ import {
   TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
-import {BadgeModel, Badge, ProtocolStatistic} from "../generated/schema";
+import {
+  BadgeModel,
+  Badge,
+  ProtocolStatistic,
+  UserStatistic
+} from "../generated/schema";
 import { loadUserOrGetDefault } from "./utils";
 
 // event CreatorRegistered(address indexed creator, string metadata);
@@ -36,11 +41,13 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
     statistic.save();
   }
 
-  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(BigInt.fromI32(1));
-  const auxCreators = statistic.badgeCreators
-  auxCreators.push(Bytes.fromHexString(id))
-  statistic.badgeCreators = auxCreators
-  statistic.save()
+  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+    BigInt.fromI32(1)
+  );
+  const auxCreators = statistic.badgeCreators;
+  auxCreators.push(Bytes.fromHexString(id));
+  statistic.badgeCreators = auxCreators;
+  statistic.save();
 }
 
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
@@ -62,16 +69,25 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.contractAddress = event.address;
   badgeModel.save();
 
-  // user
-  const user = loadUserOrGetDefault(badgeModel.creator);
-  user.createdBadgesModelAmount = user.createdBadgesModelAmount.plus(
+  // Statistics update
+  const userStatistics = UserStatistic.load(badgeModel.creator);
+  if (!userStatistics) {
+    log.error("handleMint - userStatistics not found for user: {}", [
+      badgeModel.creator
+    ]);
+    return;
+  }
+
+  userStatistics.createdBadgesModelAmount = userStatistics.createdBadgesModelAmount.plus(
     BigInt.fromI32(1)
   );
-  user.save();
+  userStatistics.save();
 
   const statistic = ProtocolStatistic.load(event.address.toHexString());
   if (statistic) {
-    statistic.badgeModelsCreatedAmount = statistic.badgeModelsCreatedAmount.plus(BigInt.fromI32(1));
+    statistic.badgeModelsCreatedAmount = statistic.badgeModelsCreatedAmount.plus(
+      BigInt.fromI32(1)
+    );
     statistic.save();
   }
 }
@@ -114,17 +130,29 @@ export function handleMint(event: TransferSingle): void {
 
   // user
   const userId = event.params.to.toHexString();
-  const user = loadUserOrGetDefault(userId);
-  user.mintedBadgesAmount = user.mintedBadgesAmount.plus(BigInt.fromI32(1));
-  user.save();
+
+  const userStatistics = UserStatistic.load(userId);
+  if (!userStatistics) {
+    log.error("handleMint - userStatistics not found for user: {}", [userId]);
+    return;
+  }
+
+  userStatistics.mintedBadgesAmount = userStatistics.mintedBadgesAmount.plus(
+    BigInt.fromI32(1)
+  );
+  userStatistics.save();
 
   const statistic = ProtocolStatistic.load(event.address.toHexString());
   if (statistic) {
-    statistic.badgesMintedAmount = statistic.badgesMintedAmount.plus(BigInt.fromI32(1));
+    statistic.badgesMintedAmount = statistic.badgesMintedAmount.plus(
+      BigInt.fromI32(1)
+    );
 
     // First time the user mints a badge, is a new badge owner
-    if(user.mintedBadgesAmount.toString() == "1") {
-      statistic.badgesOwnersAmount = statistic.badgesOwnersAmount.plus(BigInt.fromI32(1))
+    if (userStatistics.mintedBadgesAmount.toString() == "1") {
+      statistic.badgesOwnersAmount = statistic.badgesOwnersAmount.plus(
+        BigInt.fromI32(1)
+      );
     }
     statistic.save();
   }

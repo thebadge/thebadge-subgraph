@@ -1,5 +1,5 @@
-import { User } from "../../generated/schema";
 import { BigInt } from "@graphprotocol/graph-ts";
+import { User, UserStatistic } from "../../generated/schema";
 
 export function loadUserOrGetDefault(id: string): User {
   let user = User.load(id);
@@ -8,12 +8,19 @@ export function loadUserOrGetDefault(id: string): User {
   }
 
   user = new User(id);
-  user.mintedBadgesAmount = BigInt.fromI32(0);
   user.isCreator = false;
   user.isCurator = false;
   user.isVerified = false;
   user.creatorUri = null;
-  user.createdBadgesModelAmount = BigInt.fromI32(0);
-  user.challengedBadgesAmount = BigInt.fromI32(0);
+
+  const userStatistics = new UserStatistic(id);
+  userStatistics.mintedBadgesAmount = BigInt.fromI32(0);
+  userStatistics.createdBadgesModelAmount = BigInt.fromI32(0);
+  userStatistics.challengedBadgesAmount = BigInt.fromI32(0);
+  userStatistics.user = user.id;
+  userStatistics.save();
+
+  user.statistics = userStatistics.id;
+  user.save();
   return user;
 }
