@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import {
   Dispute,
@@ -16,7 +16,10 @@ import {
   _EvidenceGroupIDItemID,
   _ItemIDToEvidenceGroupIDToBadgeID,
   BadgeKlerosMetaData,
-  _KlerosBadgeIdToBadgeId
+  _KlerosBadgeIdToBadgeId,
+  ProtocolStatistic,
+  User,
+  BadgeModel
 } from "../generated/schema";
 import {
   DISPUTE_OUTCOME_NONE,
@@ -200,22 +203,7 @@ export function handleRequestChallenged(event: Dispute): void {
   badge.status = TheBadgeBadgeStatus_Challenged;
   badge.save();
 
-  // Adds the disputeID to the request
-  // Loads the BadgeModelKlerosMetaData
-  const badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(
-    badge.badgeModel
-  );
-
-  if (!badgeModelKlerosMetaData) {
-    log.error(
-      "handleRequestChallenged - not badgeModelKlerosMetaData found for with ID: {}",
-      [badge.badgeModel.toString()]
-    );
-    return;
-  }
-
   const badgeKlerosMetadata = BadgeKlerosMetaData.load(badge.id);
-
   if (!badgeKlerosMetadata) {
     log.error(
       `handleRequestChallenged - badgeKlerosMetadata not found for id {}`,
@@ -236,10 +224,87 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
+  // Adds the disputeID to the request
   request.challenger = event.transaction.from;
   request.disputeID = disputeID;
   request.disputed = true;
   request.save();
+
+  // Marks the user as curator
+  const userAddress = event.transaction.from.toHexString();
+  const user = User.load(userAddress);
+
+  if (!user) {
+    log.error(`handleRequestChallenged - user with address: {} not found`, [
+      userAddress
+    ]);
+    return;
+  }
+
+  if (!user.isCurator) {
+    user.isCurator = true;
+    user.save();
+  }
+
+  const badgeModelKlerosMetaData = BadgeModelKlerosMetaData.load(
+    badge.badgeModel
+  );
+
+  if (!badgeModelKlerosMetaData) {
+    log.error(
+      "handleRequestChallenged - not badgeModelKlerosMetaData found for with ID: {}",
+      [badge.badgeModel.toString()]
+    );
+    return;
+  }
+
+  const badgeModel = BadgeModel.load(badgeModelKlerosMetaData.badgeModelId);
+  if (!badgeModel) {
+    log.error(
+      "handleRequestChallenged - not badgeModel found for with ID: {}",
+      [badgeModelKlerosMetaData.badgeModelId]
+    );
+    return;
+  }
+
+  // Updates the statistics
+  const statistic = ProtocolStatistic.load(
+    badgeModel.contractAddress.toHexString()
+  );
+  if (!statistic) {
+    log.error(
+      `handleRequestChallenged - statistic with address: {} not found`,
+      [badgeModel.contractAddress.toHexString()]
+    );
+    return;
+  }
+
+  statistic.badgesChallengedAmount = statistic.badgesChallengedAmount.plus(
+    BigInt.fromI32(1)
+  );
+
+  // FindIndex not supported in assemblyScript
+  let userCuratorFound = false;
+  for (let i = 0; i < statistic.badgeCurators.length; i++) {
+    if (
+      statistic.badgeCurators[i].toHexString().toLowerCase() ==
+      userAddress.toLowerCase()
+    ) {
+      userCuratorFound = true;
+      return;
+    }
+  }
+
+  if (!userCuratorFound) {
+    statistic.badgeCuratorsAmount = statistic.badgeCuratorsAmount.plus(
+      BigInt.fromI32(1)
+    );
+    const auxCurators = statistic.badgeCurators;
+    auxCurators.push(Bytes.fromHexString(user.id));
+    statistic.badgeCurators = auxCurators;
+  }
+
+  statistic.save();
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {

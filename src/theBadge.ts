@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import {BigInt, Bytes, log} from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
@@ -6,17 +6,41 @@ import {
   TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
-import { BadgeModel, Badge } from "../generated/schema";
+import {BadgeModel, Badge, ProtocolStatistic} from "../generated/schema";
 import { loadUserOrGetDefault } from "./utils";
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {
+  const contractAddress = event.address.toHexString();
   const id = event.params.creator.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.isCreator = true;
   user.creatorUri = event.params.metadata;
   user.save();
+
+  // Register new statistic using the contractAddress
+  // TODO this should be moved to the genesis event (which does not exists at the moment on the contract)
+  let statistic = ProtocolStatistic.load(contractAddress);
+
+  if (!statistic) {
+    statistic = new ProtocolStatistic(contractAddress);
+    statistic.badgeModelsCreatedAmount = BigInt.fromI32(0);
+    statistic.badgesMintedAmount = BigInt.fromI32(0);
+    statistic.badgesChallengedAmount = BigInt.fromI32(0);
+    statistic.badgesOwnersAmount = BigInt.fromI32(0);
+    statistic.badgeCreatorsAmount = BigInt.fromI32(0);
+    statistic.badgeCuratorsAmount = BigInt.fromI32(0);
+    statistic.badgeCurators = [];
+    statistic.badgeCreators = [];
+    statistic.save();
+  }
+
+  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(BigInt.fromI32(1));
+  const auxCreators = statistic.badgeCreators
+  auxCreators.push(Bytes.fromHexString(id))
+  statistic.badgeCreators = auxCreators
+  statistic.save()
 }
 
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
@@ -44,6 +68,12 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
     BigInt.fromI32(1)
   );
   user.save();
+
+  const statistic = ProtocolStatistic.load(event.address.toHexString());
+  if (statistic) {
+    statistic.badgeModelsCreatedAmount = statistic.badgeModelsCreatedAmount.plus(BigInt.fromI32(1));
+    statistic.save();
+  }
 }
 
 // event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
@@ -87,4 +117,15 @@ export function handleMint(event: TransferSingle): void {
   const user = loadUserOrGetDefault(userId);
   user.mintedBadgesAmount = user.mintedBadgesAmount.plus(BigInt.fromI32(1));
   user.save();
+
+  const statistic = ProtocolStatistic.load(event.address.toHexString());
+  if (statistic) {
+    statistic.badgesMintedAmount = statistic.badgesMintedAmount.plus(BigInt.fromI32(1));
+
+    // First time the user mints a badge, is a new badge owner
+    if(user.mintedBadgesAmount.toString() == "1") {
+      statistic.badgesOwnersAmount = statistic.badgesOwnersAmount.plus(BigInt.fromI32(1))
+    }
+    statistic.save();
+  }
 }
