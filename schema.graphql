@@ -179,8 +179,9 @@ type UserStatistic @entity {
   mintedBadgesAmount: BigInt! # Amount of badges minted by this user
   timeOfLastChallengeReceived: BigInt!
   challengesReceivedAmount: BigInt!
-  challengesReceivedLostAmount: BigInt!
-  challengesReceivedWonAmount: BigInt!
+  challengesReceivedLostAmount: BigInt! # Challenges received LOST as badge user
+  challengesReceivedWonAmount: BigInt! # Challenges received WON as badge user
+  challengesReceivedRejectedAmount: BigInt! # Challenges received rejected to arbitrate as badge user
 
   # Creator statistics
   creatorStatistic: CreatorStatistic @derivedFrom(field: "userStatistic")
@@ -211,4 +212,5 @@ type CuratorStatistic @entity {
   challengesMadeAmount: BigInt! # Challenges made as curator
   challengesMadeLostAmount: BigInt! # Challenges made LOST as curator
   challengesMadeWonAmount: BigInt! # Challenges made WON as curator
+  challengesMadeRejectedAmount: BigInt! # Challenges made rejected to arbitrate as curator
 }

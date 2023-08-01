@@ -7,6 +7,12 @@ import {
   User,
   UserStatistic
 } from "../../generated/schema";
+import {
+  DISPUTE_OUTCOME_ACCEPT,
+  DISPUTE_OUTCOME_NONE,
+  DISPUTE_OUTCOME_REJECT,
+  getFinalRuling
+} from "./tcrUtils";
 
 export function loadUserOrGetDefault(id: string): User {
   let user = User.load(id);
@@ -37,6 +43,7 @@ export function loadUserStatisticsOrGetDefault(
     userStatistics.challengesReceivedAmount = BigInt.fromI32(0);
     userStatistics.challengesReceivedLostAmount = BigInt.fromI32(0);
     userStatistics.challengesReceivedWonAmount = BigInt.fromI32(0);
+    userStatistics.challengesReceivedRejectedAmount = BigInt.fromI32(0);
     userStatistics.mintedBadgesAmount = BigInt.fromI32(0);
 
     userStatistics.user = userAddress;
@@ -99,10 +106,63 @@ export function loadUserCuratorStatisticsOrGetDefault(
     curatorStatistics.challengesMadeAmount = BigInt.fromI32(0);
     curatorStatistics.challengesMadeLostAmount = BigInt.fromI32(0);
     curatorStatistics.challengesMadeWonAmount = BigInt.fromI32(0);
+    curatorStatistics.challengesMadeRejectedAmount = BigInt.fromI32(0);
     curatorStatistics.save();
   }
 
   return curatorStatistics;
+}
+
+export function updateUsersChallengesStatistics(
+  userAddress: string,
+  challengerAddress: string | null,
+  ruling: number
+): void {
+  const disputeOutcome = getFinalRuling(ruling);
+  const userStatistics = loadUserStatisticsOrGetDefault(userAddress);
+  if (disputeOutcome == DISPUTE_OUTCOME_ACCEPT) {
+    userStatistics.challengesReceivedLostAmount = userStatistics.challengesReceivedLostAmount.plus(
+      BigInt.fromI32(1)
+    );
+    userStatistics.timeOfLastChallengeReceived = BigInt.fromI32(0);
+  }
+  if (disputeOutcome == DISPUTE_OUTCOME_REJECT) {
+    userStatistics.challengesReceivedWonAmount = userStatistics.challengesReceivedWonAmount.plus(
+      BigInt.fromI32(1)
+    );
+    userStatistics.timeOfLastChallengeReceived = BigInt.fromI32(0);
+  }
+  if (disputeOutcome == DISPUTE_OUTCOME_NONE) {
+    userStatistics.challengesReceivedRejectedAmount = userStatistics.challengesReceivedRejectedAmount.plus(
+      BigInt.fromI32(1)
+    );
+    userStatistics.timeOfLastChallengeReceived = BigInt.fromI32(0);
+  }
+  userStatistics.save();
+
+  // Updates curator statistics
+  if(!challengerAddress) {
+    return
+  }
+  const curatorStatistics = loadUserCuratorStatisticsOrGetDefault(
+    challengerAddress as string
+  );
+  if (disputeOutcome == DISPUTE_OUTCOME_ACCEPT) {
+    curatorStatistics.challengesMadeWonAmount = curatorStatistics.challengesMadeWonAmount.plus(
+      BigInt.fromI32(1)
+    );
+  }
+  if (disputeOutcome == DISPUTE_OUTCOME_REJECT) {
+    curatorStatistics.challengesMadeLostAmount = curatorStatistics.challengesMadeLostAmount.plus(
+      BigInt.fromI32(1)
+    );
+  }
+  if (disputeOutcome == DISPUTE_OUTCOME_NONE) {
+    curatorStatistics.challengesMadeRejectedAmount = curatorStatistics.challengesMadeRejectedAmount.plus(
+      BigInt.fromI32(1)
+    );
+  }
+  curatorStatistics.save();
 }
 
 export function findAddressInArray(array: Bytes[], address: string): boolean {
