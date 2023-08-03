@@ -17,7 +17,7 @@ enum Controller {
 
 ## - BADGE Model
 type BadgeModel @entity {
-  id: ID! # BadgeType id
+  id: ID!
   uri: String!
   controllerType: String!
   validFor: BigInt!
@@ -93,10 +93,12 @@ type User @entity {
   mintedBadgesAmount: BigInt!
   # creator
   isCreator: Boolean!
+  isCurator: Boolean!
   isVerified: Boolean!
   createdBadgeModels: [BadgeModel!] @derivedFrom(field: "creator")
   creatorUri: String
   createdBadgesModelAmount: BigInt!
+  challengedBadgesAmount: BigInt!
 }
 
 ## Kleros Entities, source: https://github.com/kleros/gtcr-subgraph/blob/master/schema.graphql
@@ -152,3 +154,19 @@ type KlerosBadgeRequest @entity {
   arbitrator: Bytes!
 }
 
+type ProtocolStatistic @entity {
+  # If the same as the contractAddress
+  id: ID!
+  badgeModelsCreatedAmount: BigInt!
+  badgesMintedAmount: BigInt!
+  badgesChallengedAmount: BigInt! #
+  # The amount of DIFFERENT users that owns at least one badge
+  badgesOwnersAmount: BigInt!
+  badgeCreatorsAmount: BigInt!
+  badgeCuratorsAmount: BigInt!
+
+  # Keep track of the users that made at least one curation
+  badgeCurators: [Bytes!]! #
+  # Keep track of the users that registered as creators
+  badgeCreators: [Bytes!]!
+}

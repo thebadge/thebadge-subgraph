@@ -10,9 +10,10 @@ export function loadUserOrGetDefault(id: string): User {
   user = new User(id);
   user.mintedBadgesAmount = BigInt.fromI32(0);
   user.isCreator = false;
+  user.isCurator = false;
   user.isVerified = false;
   user.creatorUri = null;
   user.createdBadgesModelAmount = BigInt.fromI32(0);
-
+  user.challengedBadgesAmount = BigInt.fromI32(0);
   return user;
 }
