@@ -78,7 +78,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
     badgeModel.creator
   );
 
-  creatorStatistics.createdBadgesModelAmount = creatorStatistics.createdBadgesModelAmount.plus(
+  creatorStatistics.createdBadgeModelsAmount = creatorStatistics.createdBadgeModelsAmount.plus(
     BigInt.fromI32(1)
   );
   creatorStatistics.save();

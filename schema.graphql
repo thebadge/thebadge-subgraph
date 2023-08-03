@@ -196,11 +196,11 @@ type CreatorStatistic @entity {
   userStatistic: UserStatistic!
 
   # Creator statistics
-  createdBadgesModelAmount: BigInt! # Amount of badges created by this user
-  createdBadgesMintedAmount: BigInt! # Amounts of MINTS of other users to badges created by this user
+  createdBadgeModelsAmount: BigInt! # Amount of badges created by this user
+  createdBadgeModelsMintedAmount: BigInt! # Amounts of MINTS of other users to badges created by this user
   allTimeBadgeMinters: [Bytes!]! # Keep track of the users that made at least one mint
   allTimeBadgeMintersAmount: BigInt! # Amount of different USERS that minted at least one of the badges of this creator
-  createdBadgeIdMostPopular: BigInt! # The ID of the badge created by this user which has the max amount of mints by others users
+  mostPopularCreatedBadge: BigInt! # The ID of the badge created by this user which has the max amount of mints by others users
 }
 
 type CuratorStatistic @entity {

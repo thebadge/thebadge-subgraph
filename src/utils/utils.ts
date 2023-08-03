@@ -85,11 +85,11 @@ export function loadUserCreatorStatisticsOrGetDefault(
   creatorStatistics = new CreatorStatistic(userAddress);
   // Creator statistics
   creatorStatistics.userStatistic = userAddress;
-  creatorStatistics.createdBadgesModelAmount = BigInt.fromI32(0);
-  creatorStatistics.createdBadgesMintedAmount = BigInt.fromI32(0);
+  creatorStatistics.createdBadgeModelsAmount = BigInt.fromI32(0);
+  creatorStatistics.createdBadgeModelsMintedAmount = BigInt.fromI32(0);
   creatorStatistics.allTimeBadgeMinters = [];
   creatorStatistics.allTimeBadgeMintersAmount = BigInt.fromI32(0);
-  creatorStatistics.createdBadgeIdMostPopular = BigInt.fromI32(0);
+  creatorStatistics.mostPopularCreatedBadge = BigInt.fromI32(0);
 
   creatorStatistics.save();
   return creatorStatistics;
@@ -274,7 +274,7 @@ export function handleMintStatisticsUpdate(
     );
     return;
   }
-  creatorStatistics.createdBadgesMintedAmount = creatorStatistics.createdBadgesMintedAmount.plus(
+  creatorStatistics.createdBadgeModelsMintedAmount = creatorStatistics.createdBadgeModelsMintedAmount.plus(
     BigInt.fromI32(1)
   );
 
@@ -293,7 +293,7 @@ export function handleMintStatisticsUpdate(
 
   const mostPopularBadgeModel = findMostPopularCreatedBadgeId(creatorId);
   if (mostPopularBadgeModel) {
-    creatorStatistics.createdBadgeIdMostPopular = mostPopularBadgeModel;
+    creatorStatistics.mostPopularCreatedBadge = mostPopularBadgeModel;
   }
 
   creatorStatistics.save();
