@@ -23,11 +23,15 @@ import {
 } from "../generated/schema";
 import {
   DISPUTE_OUTCOME_NONE,
+  findAddressInArray,
   getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
+  loadUserCuratorStatisticsOrGetDefault,
+  loadUserStatisticsOrGetDefault,
   TCRItemStatusCode_CLEARING_REQUESTED_CODE,
-  TheBadgeBadgeStatus_Challenged
+  TheBadgeBadgeStatus_Challenged,
+  updateUsersChallengesStatistics
 } from "./utils";
 
 // Items on a TCR can be in 1 of 4 states:
@@ -267,7 +271,7 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  // Updates the statistics
+  // Updates the protocol statistics
   const statistic = ProtocolStatistic.load(
     badgeModel.contractAddress.toHexString()
   );
@@ -283,17 +287,10 @@ export function handleRequestChallenged(event: Dispute): void {
     BigInt.fromI32(1)
   );
 
-  // FindIndex not supported in assemblyScript
-  let userCuratorFound = false;
-  for (let i = 0; i < statistic.badgeCurators.length; i++) {
-    if (
-      statistic.badgeCurators[i].toHexString().toLowerCase() ==
-      userAddress.toLowerCase()
-    ) {
-      userCuratorFound = true;
-      return;
-    }
-  }
+  const userCuratorFound = findAddressInArray(
+    statistic.badgeCurators,
+    userAddress
+  );
 
   if (!userCuratorFound) {
     statistic.badgeCuratorsAmount = statistic.badgeCuratorsAmount.plus(
@@ -305,12 +302,30 @@ export function handleRequestChallenged(event: Dispute): void {
   }
 
   statistic.save();
+
+  // Updates the curator statistics
+  const curatorStatistics = loadUserCuratorStatisticsOrGetDefault(user.id);
+  curatorStatistics.challengesMadeAmount = curatorStatistics.challengesMadeAmount.plus(
+    BigInt.fromI32(1)
+  );
+  curatorStatistics.save();
+
+  // Updates user statistics
+  const userStatistics = loadUserStatisticsOrGetDefault(badge.account);
+  userStatistics.challengesReceivedAmount = userStatistics.challengesReceivedAmount.plus(
+    BigInt.fromI32(1)
+  );
+  userStatistics.timeOfLastChallengeReceived = event.block.timestamp;
+  userStatistics.save();
 }
 
 export function handleStatusUpdated(event: ItemStatusChange): void {
   const tcr = LightGeneralizedTCR.bind(event.address);
   const itemID = event.params._itemID;
   const itemInfo = tcr.getItemInfo(itemID);
+  // If false, its a requests coming from either executeRequest or rule
+  // If true it has been added or removed using addItemDirectly or removeItemDirectly
+  const updatedDirectly = event.params._updatedDirectly;
 
   // If the itemID does not match with one of ours badges, its not an itemID of TheBadge but Kleros instead
   // We just ignore it
@@ -359,11 +374,24 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     return;
   }
   const requestInfo = tcr.getRequestInfo(itemID, requestIndex);
+  const ruling = requestInfo.getRuling();
   request.resolved = true;
   request.resolutionTime = event.block.timestamp;
   request.resolutionTx = event.transaction.hash;
-  request.disputeOutcome = getFinalRuling(requestInfo.getRuling());
+  request.disputeOutcome = getFinalRuling(ruling);
   request.save();
+
+  // Updates statistics
+  let challengerAddress: string | null = null;
+  if (request.challenger) {
+    challengerAddress = (request.challenger as Bytes).toHexString();
+  }
+  // Only takes into account the requests that are coming either from executeRequest or rule
+  // If it was added or removed directly, that means that the request is still open
+  // If the request has no disputeID, that means that's not a dispute open
+  if (!updatedDirectly && request.disputeID) {
+    updateUsersChallengesStatistics(badge.account, challengerAddress, ruling);
+  }
 }
 
 export function handleEvidence(event: EvidenceEvent): void {
@@ -443,6 +471,7 @@ export function handleRuling(event: Ruling): void {
     event.address,
     event.params._disputeID
   );
+  const ruling = event.params._ruling.toI32()
 
   const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()
@@ -466,11 +495,6 @@ export function handleRuling(event: Ruling): void {
     return;
   }
 
-  if (!badgeKlerosMetadata) {
-    log.error(`handleRuling - not badgeKlerosMetadata found!`, []);
-    return;
-  }
-
   // Takes always the last request which is the one that's on dispute
   const requestIndex = badgeKlerosMetadata.numberOfRequests.minus(
     BigInt.fromI32(1)
@@ -485,4 +509,20 @@ export function handleRuling(event: Ruling): void {
 
   genericRequest.resolutionTime = event.block.timestamp;
   genericRequest.save();
+
+  // Updates user statistics
+  const badge = Badge.load(klerosBadgeIdToBadgeId.badgeId);
+
+  if (!badge) {
+    log.error(`handleRuling - badge not found for id {}`, [
+      klerosBadgeIdToBadgeId.badgeId
+    ]);
+    return;
+  }
+
+  let challengerAddress: string | null = null;
+  if (genericRequest.challenger) {
+    challengerAddress = (genericRequest.challenger as Bytes).toHexString();
+  }
+  updateUsersChallengesStatistics(badge.account, challengerAddress, ruling);
 }

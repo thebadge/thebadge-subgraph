@@ -1,4 +1,4 @@
-import {BigInt, Bytes, log} from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   CreatorRegistered,
@@ -6,8 +6,13 @@ import {
   TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
-import {BadgeModel, Badge, ProtocolStatistic} from "../generated/schema";
-import { loadUserOrGetDefault } from "./utils";
+import { BadgeModel, Badge, ProtocolStatistic } from "../generated/schema";
+import {
+  handleMintStatisticsUpdate,
+  loadProtocolStatisticsOrGetDefault,
+  loadUserCreatorStatisticsOrGetDefault,
+  loadUserOrGetDefault
+} from "./utils";
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {
@@ -20,27 +25,21 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
   user.save();
 
   // Register new statistic using the contractAddress
-  // TODO this should be moved to the genesis event (which does not exists at the moment on the contract)
-  let statistic = ProtocolStatistic.load(contractAddress);
+  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
 
-  if (!statistic) {
-    statistic = new ProtocolStatistic(contractAddress);
-    statistic.badgeModelsCreatedAmount = BigInt.fromI32(0);
-    statistic.badgesMintedAmount = BigInt.fromI32(0);
-    statistic.badgesChallengedAmount = BigInt.fromI32(0);
-    statistic.badgesOwnersAmount = BigInt.fromI32(0);
-    statistic.badgeCreatorsAmount = BigInt.fromI32(0);
-    statistic.badgeCuratorsAmount = BigInt.fromI32(0);
-    statistic.badgeCurators = [];
-    statistic.badgeCreators = [];
-    statistic.save();
-  }
+  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+    BigInt.fromI32(1)
+  );
+  const auxCreators = statistic.badgeCreators;
+  auxCreators.push(Bytes.fromHexString(id));
+  statistic.badgeCreators = auxCreators;
+  statistic.save();
 
-  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(BigInt.fromI32(1));
-  const auxCreators = statistic.badgeCreators
-  auxCreators.push(Bytes.fromHexString(id))
-  statistic.badgeCreators = auxCreators
-  statistic.save()
+  // Create stats for new creator
+  const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
+    contractAddress
+  );
+  creatorStatistic.save();
 }
 
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
@@ -48,6 +47,12 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadge = TheBadge.bind(event.address);
   const _badgeModel = theBadge.badgeModel(badgeModelId);
+  const creatorAddress = _badgeModel.getCreator().toHexString();
+
+  // Note: ideally the user should be already created and we should throw an exception here it's not found
+  // But on the smart contract there is no restriction about registered users, so it could happen that an user that was not registered
+  // Emits the BadgeModelCreated before the CreatorRegistered, therefore we need to create the user entity here
+  const user = loadUserOrGetDefault(creatorAddress);
 
   // Badge model
   const badgeModel = new BadgeModel(badgeModelId.toString());
@@ -56,23 +61,36 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
   badgeModel.paused = false;
-  badgeModel.creator = _badgeModel.getCreator().toHexString();
+  badgeModel.creator = user.id;
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
   badgeModel.save();
 
-  // user
-  const user = loadUserOrGetDefault(badgeModel.creator);
-  user.createdBadgesModelAmount = user.createdBadgesModelAmount.plus(
-    BigInt.fromI32(1)
-  );
+  // Updates the user with the new created badge
+  const auxCreatedBadges = user.createdBadgeModels;
+  auxCreatedBadges.push(badgeModel.id);
+  user.createdBadgeModels = auxCreatedBadges;
   user.save();
 
-  const statistic = ProtocolStatistic.load(event.address.toHexString());
-  if (statistic) {
-    statistic.badgeModelsCreatedAmount = statistic.badgeModelsCreatedAmount.plus(BigInt.fromI32(1));
-    statistic.save();
+  // Statistics update
+  const creatorStatistics = loadUserCreatorStatisticsOrGetDefault(
+    badgeModel.creator
+  );
+
+  creatorStatistics.createdBadgeModelsAmount = creatorStatistics.createdBadgeModelsAmount.plus(
+    BigInt.fromI32(1)
+  );
+  creatorStatistics.save();
+
+  const protocolStatistics = ProtocolStatistic.load(
+    event.address.toHexString()
+  );
+  if (protocolStatistics) {
+    protocolStatistics.badgeModelsCreatedAmount = protocolStatistics.badgeModelsCreatedAmount.plus(
+      BigInt.fromI32(1)
+    );
+    protocolStatistics.save();
   }
 }
 
@@ -112,20 +130,14 @@ export function handleMint(event: TransferSingle): void {
   badge.uri = theBadge.uri(badgeId);
   badge.save();
 
-  // user
-  const userId = event.params.to.toHexString();
-  const user = loadUserOrGetDefault(userId);
-  user.mintedBadgesAmount = user.mintedBadgesAmount.plus(BigInt.fromI32(1));
-  user.save();
+  // Loads or creates an user if does not exists
+  const user = loadUserOrGetDefault(event.params.to.toHexString());
 
-  const statistic = ProtocolStatistic.load(event.address.toHexString());
-  if (statistic) {
-    statistic.badgesMintedAmount = statistic.badgesMintedAmount.plus(BigInt.fromI32(1));
-
-    // First time the user mints a badge, is a new badge owner
-    if(user.mintedBadgesAmount.toString() == "1") {
-      statistic.badgesOwnersAmount = statistic.badgesOwnersAmount.plus(BigInt.fromI32(1))
-    }
-    statistic.save();
-  }
+  // Updates statistics
+  handleMintStatisticsUpdate(
+    user.id,
+    badgeModel.creator,
+    badgeModel.id,
+    badgeModel.contractAddress.toHexString()
+  );
 }
