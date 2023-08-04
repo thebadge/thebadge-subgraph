@@ -3,7 +3,8 @@ const mustache = require("mustache");
 
 const chainNameToChainId = {
   goerli: 5,
-  xdai: 100
+  xdai: 100,
+  gnosis: 100, // Added to avoid bugs
 };
 
 async function main() {
