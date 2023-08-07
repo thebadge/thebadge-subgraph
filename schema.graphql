@@ -22,7 +22,7 @@ type BadgeModel @entity {
   controllerType: String!
   validFor: BigInt!
   creatorFee: BigInt!
-  protocolFee: BigInt!
+  protocolFeeInBps: BigInt!
   paused: Boolean!
   creator: User!
   badgesMintedAmount: BigInt!
@@ -166,6 +166,9 @@ type ProtocolStatistic @entity {
   badgeCreatorsAmount: BigInt!
   badgeCuratorsAmount: BigInt!
 
+  ## Fees statistics
+  protocolEarnedFees: BigInt!
+
   # Keep track of the users that made at least one curation
   badgeCurators: [Bytes!]! #
   # Keep track of the users that registered as creators
@@ -202,6 +205,8 @@ type CreatorStatistic @entity {
   allTimeBadgeMinters: [Bytes!]! # Keep track of the users that made at least one mint
   allTimeBadgeMintersAmount: BigInt! # Amount of different USERS that minted at least one of the badges of this creator
   mostPopularCreatedBadge: BigInt! # The ID of the badge created by this user which has the max amount of mints by others users
+
+  # TODO: Fees earned
 }
 
 type CuratorStatistic @entity {

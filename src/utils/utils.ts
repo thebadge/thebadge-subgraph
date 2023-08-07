@@ -66,6 +66,7 @@ export function loadProtocolStatisticsOrGetDefault(
     statistic.badgesOwnersAmount = BigInt.fromI32(0);
     statistic.badgeCreatorsAmount = BigInt.fromI32(0);
     statistic.badgeCuratorsAmount = BigInt.fromI32(0);
+    statistic.protocolEarnedFees = BigInt.fromI32(0);
     statistic.badgeCurators = [];
     statistic.badgeCreators = [];
     statistic.save();

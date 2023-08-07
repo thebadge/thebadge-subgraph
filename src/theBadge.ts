@@ -3,7 +3,8 @@ import {
   TheBadge,
   CreatorRegistered,
   BadgeModelCreated,
-  TransferSingle
+  TransferSingle,
+  BadgeModelUpdated
 } from "../generated/TheBadge/TheBadge";
 
 import { BadgeModel, Badge, ProtocolStatistic } from "../generated/schema";
@@ -60,7 +61,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.controllerType = _badgeModel.getControllerName();
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
-  badgeModel.protocolFee = _badgeModel.getMintProtocolFee();
+  badgeModel.protocolFeeInBps = _badgeModel.getMintProtocolFee();
   badgeModel.paused = false;
   badgeModel.creator = user.id;
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
@@ -141,4 +142,26 @@ export function handleMint(event: TransferSingle): void {
     badgeModel.id,
     badgeModel.contractAddress.toHexString()
   );
+}
+
+// BadgeModelProtocolFeeUpdated(uint256 indexed badgeModelID, uint256 indexed newAmountInBps);
+export function handleBadgeModelProtocolFeeUpdated(
+  event: BadgeModelUpdated
+): void {
+  const badgeModelID = event.params.badgeModelId.toHexString();
+  const newAmountInBps = new BigInt(0); // TODO
+
+  // Badge model
+  const badgeModel = BadgeModel.load(badgeModelID);
+
+  if (!badgeModel) {
+    log.error(
+      "handleBadgeModelProtocolFeeUpdated - BadgeModel not found. badgeModelId:  {}",
+      [badgeModelID]
+    );
+    return;
+  }
+
+  badgeModel.protocolFeeInBps = newAmountInBps;
+  badgeModel.save();
 }
