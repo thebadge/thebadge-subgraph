@@ -32,17 +32,19 @@ dataSources:
           handler: handleBadgeModelCreated
         - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleMint
+        - event: BadgeModelProtocolFeeUpdated(indexed uint256,indexed uint256)
+          handler: handleBadgeModelProtocolFeeUpdated
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
-    name: KlerosController
+    name: KlerosBadgeModelController
     network: {{network}}
     source:
-      address: "{{KlerosController.address}}"
+      address: "{{KlerosBadgeModelController.address}}"
       # Block to speed-up the development, it should be commented on prod
       #startBlock: 9348882
-      startBlock: {{KlerosController.startBlock}}
-      abi: KlerosController
+      startBlock: {{KlerosBadgeModelController.startBlock}}
+      abi: KlerosBadgeModelController
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -52,8 +54,8 @@ dataSources:
         - BadgeModelKlerosMetaData
         - BadgeKlerosMetaData
       abis:
-        - name: KlerosController
-          file: ./abis/KlerosController.json
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadge
@@ -79,8 +81,8 @@ templates:
         - Evidence
         - BadgeModelKlerosMetaData
       abis:
-        - name: KlerosController
-          file: ./abis/KlerosController.json
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
       eventHandlers:

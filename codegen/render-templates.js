@@ -16,9 +16,9 @@ async function main() {
     startBlock: theBadgeContractAddStartBlock
   } = deployments["TheBadge"][chainId];
   const {
-    address: klerosControllerAdd,
-    startBlock: klerosControllerStartBlock
-  } = deployments["KlerosController"][chainId];
+    address: KlerosBadgeModelControllerAdd,
+    startBlock: KlerosBadgeModelControllerStartBlock
+  } = deployments["KlerosBadgeModelController"][chainId];
   const templateData = {
     network: networkName
   };
@@ -27,10 +27,10 @@ async function main() {
     addressLowerCase: theBadgeContractAdd.toLowerCase(),
     startBlock: theBadgeContractAddStartBlock
   };
-  templateData["KlerosController"] = {
-    address: klerosControllerAdd,
-    addressLowerCase: klerosControllerAdd.toLowerCase(),
-    startBlock: klerosControllerStartBlock
+  templateData["KlerosBadgeModelController"] = {
+    address: KlerosBadgeModelControllerAdd,
+    addressLowerCase: KlerosBadgeModelControllerAdd.toLowerCase(),
+    startBlock: KlerosBadgeModelControllerStartBlock
   };
 
   for (const templatedFileDesc of [["subgraph", "yaml"]]) {
