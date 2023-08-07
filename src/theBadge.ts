@@ -60,6 +60,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.controllerType = _badgeModel.getControllerName();
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
+  badgeModel.protocolFee = _badgeModel.getMintProtocolFee();
   badgeModel.paused = false;
   badgeModel.creator = user.id;
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);

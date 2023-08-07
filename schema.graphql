@@ -22,6 +22,7 @@ type BadgeModel @entity {
   controllerType: String!
   validFor: BigInt!
   creatorFee: BigInt!
+  protocolFee: BigInt!
   paused: Boolean!
   creator: User!
   badgesMintedAmount: BigInt!
