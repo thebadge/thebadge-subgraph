@@ -41,6 +41,7 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.minterAddress = minter;
+  protocolConfigs.feeCollector = theBadge.feeCollector();
   protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
