@@ -13,7 +13,7 @@ import {
 import {
   KlerosBadgeModelController,
   NewKlerosBadgeModel,
-  mintKlerosBadge
+  MintKlerosBadge
 } from "../generated/KlerosBadgeModelController/KlerosBadgeModelController";
 import { TheBadge } from "../generated/TheBadge/TheBadge";
 import {
@@ -53,7 +53,7 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
 }
 
 // event MintKlerosBadge(uint256 indexed badgeId, string evidence);
-export function handleMintKlerosBadge(event: mintKlerosBadge): void {
+export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const klerosBadgeModelController = KlerosBadgeModelController.bind(
     event.address
   );

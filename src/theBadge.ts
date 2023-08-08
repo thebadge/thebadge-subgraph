@@ -4,17 +4,48 @@ import {
   CreatorRegistered,
   BadgeModelCreated,
   TransferSingle,
-  BadgeModelUpdated,
-  BadgeModelProtocolFeeUpdated
+  BadgeModelProtocolFeeUpdated,
+  PaymentMade,
+  Initialize,
+  ProtocolSettingsUpdated
 } from "../generated/TheBadge/TheBadge";
 
-import { BadgeModel, Badge, ProtocolStatistic } from "../generated/schema";
+import {
+  BadgeModel,
+  Badge,
+  ProtocolStatistic,
+  ProtocolConfigs
+} from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
   loadProtocolStatisticsOrGetDefault,
   loadUserCreatorStatisticsOrGetDefault,
-  loadUserOrGetDefault
+  loadUserOrGetDefault,
+  PaymentType_CreatorFee,
+  PaymentType_ProtocolFee
 } from "./utils";
+
+// event Initialize(address indexed admin, address indexed minter);
+export function handleContractInitialized(event: Initialize): void {
+  const contractAddress = event.address.toHexString();
+  const theBadge = TheBadge.bind(event.address);
+  const admin = event.params.admin;
+  const minter = event.params.minter;
+
+  const protocolConfigs = new ProtocolConfigs(contractAddress);
+
+  // Register new statistic using the contractAddress
+  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+  statistic.save();
+
+  protocolConfigs.protocolStatistics = statistic.id;
+  protocolConfigs.contractAdmin = admin;
+  protocolConfigs.minterAddress = minter;
+  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.save();
+}
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {
@@ -63,6 +94,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
   badgeModel.protocolFeeInBps = _badgeModel.getMintProtocolFee();
+  badgeModel.totalFeesGenerated = BigInt.fromI32(0);
   badgeModel.paused = false;
   badgeModel.creator = user.id;
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
@@ -149,7 +181,7 @@ export function handleMint(event: TransferSingle): void {
 export function handleBadgeModelProtocolFeeUpdated(
   event: BadgeModelProtocolFeeUpdated
 ): void {
-  const badgeModelID = event.params.badgeModelID.toString();
+  const badgeModelID = event.params.badgeModelId.toString();
   const newAmountInBps = event.params.newAmountInBps;
 
   // Badge model
@@ -164,5 +196,78 @@ export function handleBadgeModelProtocolFeeUpdated(
   }
 
   badgeModel.protocolFeeInBps = newAmountInBps;
+  badgeModel.save();
+}
+
+// ProtocolSettingsUpdated();
+export function handleProtocolSettingsUpdated(
+  event: ProtocolSettingsUpdated
+): void {
+  const theBadge = TheBadge.bind(event.address);
+
+  const protocolConfigs = ProtocolConfigs.load(event.address.toHexString());
+
+  if (!protocolConfigs) {
+    log.error(
+      "handleProtocolSettingsUpdated - protocol settings not found!, ID: {}",
+      [event.address.toHexString()]
+    );
+    return;
+  }
+
+  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.save();
+}
+
+// PaymentMade(address indexed recipient, uint256 indexed amount, PaymentType indexed paymentType);
+export function handlePaymentMade(event: PaymentMade): void {
+  const badgeModelId = event.params.badgeModelId.toString();
+  const paidAmount = event.params.amount;
+  const paymentType = event.params.paymentType;
+  const recipient = event.params.recipient.toHexString();
+
+  const statistic = ProtocolStatistic.load(event.address.toHexString());
+  if (!statistic) {
+    log.error(
+      "handlePaymentMade - ProtocolStatistics not found. protocolStatisticsId:  {}",
+      [event.address.toHexString()]
+    );
+    return;
+  }
+
+  // Logic for update protocol fees
+  if (paymentType == PaymentType_ProtocolFee) {
+    statistic.protocolEarnedFees = statistic.protocolEarnedFees.plus(
+      paidAmount
+    );
+    statistic.save();
+    return;
+  }
+
+  // Logic for update creator fees
+  if (paymentType == PaymentType_CreatorFee) {
+    statistic.totalCreatorsFees = statistic.totalCreatorsFees.plus(paidAmount);
+    statistic.save();
+    const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(recipient);
+    creatorStatistic.totalFeesEarned = creatorStatistic.totalFeesEarned.plus(
+      paidAmount
+    );
+    return;
+  }
+
+  // Logic for update badge model fees
+  const badgeModel = BadgeModel.load(badgeModelId);
+
+  if (!badgeModel) {
+    log.error("handlePaymentMade - BadgeModel not found. badgeModelId:  {}", [
+      badgeModelId
+    ]);
+    return;
+  }
+  badgeModel.totalFeesGenerated = badgeModel.totalFeesGenerated.plus(
+    paidAmount
+  );
   badgeModel.save();
 }
