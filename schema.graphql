@@ -176,7 +176,7 @@ type ProtocolStatistic @entity {
   # Keep track of the users that registered as creators
   badgeCreators: [Bytes!]!
 
-  protocolConfigs: ProtocolConfigs! @derivedFrom(field: "protocolStatistics")
+  protocolConfig: ProtocolConfig! @derivedFrom(field: "protocolStatistics")
 }
 
 type UserStatistic @entity {
@@ -224,7 +224,7 @@ type CuratorStatistic @entity {
   challengesMadeRejectedAmount: BigInt! # Challenges made rejected to arbitrate as curator
 }
 
-type ProtocolConfigs @entity {
+type ProtocolConfig @entity {
   # Same as the contractAddress
   id: ID!
   protocolStatistics: ProtocolStatistic!

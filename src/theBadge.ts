@@ -14,7 +14,7 @@ import {
   BadgeModel,
   Badge,
   ProtocolStatistic,
-  ProtocolConfigs
+  ProtocolConfig
 } from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
@@ -32,7 +32,7 @@ export function handleContractInitialized(event: Initialize): void {
   const admin = event.params.admin;
   const minter = event.params.minter;
 
-  const protocolConfigs = new ProtocolConfigs(contractAddress);
+  const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
   const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
@@ -206,7 +206,7 @@ export function handleProtocolSettingsUpdated(
 ): void {
   const theBadge = TheBadge.bind(event.address);
 
-  const protocolConfigs = ProtocolConfigs.load(event.address.toHexString());
+  const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
 
   if (!protocolConfigs) {
     log.error(
