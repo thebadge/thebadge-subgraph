@@ -4,7 +4,8 @@ import {
   CreatorRegistered,
   BadgeModelCreated,
   TransferSingle,
-  BadgeModelUpdated
+  BadgeModelUpdated,
+  BadgeModelProtocolFeeUpdated
 } from "../generated/TheBadge/TheBadge";
 
 import { BadgeModel, Badge, ProtocolStatistic } from "../generated/schema";
@@ -146,10 +147,10 @@ export function handleMint(event: TransferSingle): void {
 
 // BadgeModelProtocolFeeUpdated(uint256 indexed badgeModelID, uint256 indexed newAmountInBps);
 export function handleBadgeModelProtocolFeeUpdated(
-  event: BadgeModelUpdated
+  event: BadgeModelProtocolFeeUpdated
 ): void {
-  const badgeModelID = event.params.badgeModelId.toHexString();
-  const newAmountInBps = new BigInt(0); // TODO
+  const badgeModelID = event.params.badgeModelID.toString();
+  const newAmountInBps = event.params.newAmountInBps;
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
