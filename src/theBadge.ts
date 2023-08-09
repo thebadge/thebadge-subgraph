@@ -244,18 +244,17 @@ export function handlePaymentMade(event: PaymentMade): void {
       paidAmount
     );
     statistic.save();
-    return;
   }
 
   // Logic for update creator fees
   if (paymentType == PaymentType_CreatorFee) {
     statistic.totalCreatorsFees = statistic.totalCreatorsFees.plus(paidAmount);
-    statistic.save();
     const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(recipient);
     creatorStatistic.totalFeesEarned = creatorStatistic.totalFeesEarned.plus(
       paidAmount
     );
-    return;
+    statistic.save();
+    creatorStatistic.save();
   }
 
   // Logic for update badge model fees
