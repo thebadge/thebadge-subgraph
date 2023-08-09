@@ -266,11 +266,11 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  const badgeModel = BadgeModel.load(badgeModelKlerosMetaData.badgeModelId);
+  const badgeModel = BadgeModel.load(badgeModelKlerosMetaData.badgeModel);
   if (!badgeModel) {
     log.error(
       "handleRequestChallenged - not badgeModel found for with ID: {}",
-      [badgeModelKlerosMetaData.badgeModelId]
+      [badgeModelKlerosMetaData.badgeModel]
     );
     return;
   }

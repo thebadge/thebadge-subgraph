@@ -35,7 +35,7 @@ type BadgeModel @entity {
 
 type BadgeModelKlerosMetaData @entity {
   id: ID!
-  badgeModelId: BadgeModel!
+  badgeModel: BadgeModel!
   registrationUri: String!
   removalUri: String!
   tcrList: Bytes!

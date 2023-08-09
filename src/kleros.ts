@@ -40,7 +40,7 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   const badgeModelKlerosMetaData = new BadgeModelKlerosMetaData(
     badgeModelId.toString()
   );
-  badgeModelKlerosMetaData.badgeModelId = badgeModelId.toString();
+  badgeModelKlerosMetaData.badgeModel = badgeModelId.toString();
   badgeModelKlerosMetaData.registrationUri = event.params.metadataUri;
   badgeModelKlerosMetaData.removalUri = "ipfs://TODO";
   badgeModelKlerosMetaData.tcrList = event.params.tcrAddress;
