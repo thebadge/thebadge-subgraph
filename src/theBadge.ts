@@ -80,7 +80,7 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadge = TheBadge.bind(event.address);
-  const _badgeModel = theBadge.badgeModel(badgeModelId);
+  const _badgeModel = theBadge.badgeModels(badgeModelId);
   const creatorAddress = _badgeModel.getCreator().toHexString();
 
   // Note: ideally the user should be already created and we should throw an exception here it's not found
@@ -134,7 +134,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
   const badgeID = event.params.id;
-  const _badge = theBadge.badge(badgeID);
+  const _badge = theBadge.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
   // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
 

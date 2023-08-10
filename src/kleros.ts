@@ -61,7 +61,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const badgeId = event.params.badgeId;
 
   const badgeModelId = theBadge
-    .badge(badgeId)
+    .badges(badgeId)
     .getBadgeModelId()
     .toString();
 
