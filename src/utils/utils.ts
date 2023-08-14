@@ -66,6 +66,8 @@ export function loadProtocolStatisticsOrGetDefault(
     statistic.badgesOwnersAmount = BigInt.fromI32(0);
     statistic.badgeCreatorsAmount = BigInt.fromI32(0);
     statistic.badgeCuratorsAmount = BigInt.fromI32(0);
+    statistic.protocolEarnedFees = BigInt.fromI32(0);
+    statistic.totalCreatorsFees = BigInt.fromI32(0);
     statistic.badgeCurators = [];
     statistic.badgeCreators = [];
     statistic.save();
@@ -90,6 +92,7 @@ export function loadUserCreatorStatisticsOrGetDefault(
   creatorStatistics.allTimeBadgeMinters = [];
   creatorStatistics.allTimeBadgeMintersAmount = BigInt.fromI32(0);
   creatorStatistics.mostPopularCreatedBadge = BigInt.fromI32(0);
+  creatorStatistics.totalFeesEarned = BigInt.fromI32(0);
 
   creatorStatistics.save();
   return creatorStatistics;
@@ -141,8 +144,8 @@ export function updateUsersChallengesStatistics(
   userStatistics.save();
 
   // Updates curator statistics
-  if(!challengerAddress) {
-    return
+  if (!challengerAddress) {
+    return;
   }
   const curatorStatistics = loadUserCuratorStatisticsOrGetDefault(
     challengerAddress as string

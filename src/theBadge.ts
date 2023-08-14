@@ -3,16 +3,50 @@ import {
   TheBadge,
   CreatorRegistered,
   BadgeModelCreated,
-  TransferSingle
+  TransferSingle,
+  BadgeModelProtocolFeeUpdated,
+  PaymentMade,
+  Initialize,
+  ProtocolSettingsUpdated
 } from "../generated/TheBadge/TheBadge";
 
-import { BadgeModel, Badge, ProtocolStatistic } from "../generated/schema";
+import {
+  BadgeModel,
+  Badge,
+  ProtocolStatistic,
+  ProtocolConfig
+} from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
   loadProtocolStatisticsOrGetDefault,
   loadUserCreatorStatisticsOrGetDefault,
-  loadUserOrGetDefault
+  loadUserOrGetDefault,
+  PaymentType_CreatorFee,
+  PaymentType_ProtocolFee
 } from "./utils";
+
+// event Initialize(address indexed admin, address indexed minter);
+export function handleContractInitialized(event: Initialize): void {
+  const contractAddress = event.address.toHexString();
+  const theBadge = TheBadge.bind(event.address);
+  const admin = event.params.admin;
+  const minter = event.params.minter;
+
+  const protocolConfigs = new ProtocolConfig(contractAddress);
+
+  // Register new statistic using the contractAddress
+  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+  statistic.save();
+
+  protocolConfigs.protocolStatistics = statistic.id;
+  protocolConfigs.contractAdmin = admin;
+  protocolConfigs.minterAddress = minter;
+  protocolConfigs.feeCollector = theBadge.feeCollector();
+  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.save();
+}
 
 // event CreatorRegistered(address indexed creator, string metadata);
 export function handleCreatorRegistered(event: CreatorRegistered): void {
@@ -46,7 +80,7 @@ export function handleCreatorRegistered(event: CreatorRegistered): void {
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadge = TheBadge.bind(event.address);
-  const _badgeModel = theBadge.badgeModel(badgeModelId);
+  const _badgeModel = theBadge.badgeModels(badgeModelId);
   const creatorAddress = _badgeModel.getCreator().toHexString();
 
   // Note: ideally the user should be already created and we should throw an exception here it's not found
@@ -60,6 +94,8 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.controllerType = _badgeModel.getControllerName();
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
+  badgeModel.protocolFeeInBps = _badgeModel.getMintProtocolFee();
+  badgeModel.totalFeesGenerated = BigInt.fromI32(0);
   badgeModel.paused = false;
   badgeModel.creator = user.id;
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
@@ -98,7 +134,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
   const badgeID = event.params.id;
-  const _badge = theBadge.badge(badgeID);
+  const _badge = theBadge.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
   // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
 
@@ -140,4 +176,98 @@ export function handleMint(event: TransferSingle): void {
     badgeModel.id,
     badgeModel.contractAddress.toHexString()
   );
+}
+
+// BadgeModelProtocolFeeUpdated(uint256 indexed badgeModelID, uint256 indexed newAmountInBps);
+export function handleBadgeModelProtocolFeeUpdated(
+  event: BadgeModelProtocolFeeUpdated
+): void {
+  const badgeModelID = event.params.badgeModelId.toString();
+  const newAmountInBps = event.params.newAmountInBps;
+
+  // Badge model
+  const badgeModel = BadgeModel.load(badgeModelID);
+
+  if (!badgeModel) {
+    log.error(
+      "handleBadgeModelProtocolFeeUpdated - BadgeModel not found. badgeModelId:  {}",
+      [badgeModelID]
+    );
+    return;
+  }
+
+  badgeModel.protocolFeeInBps = newAmountInBps;
+  badgeModel.save();
+}
+
+// ProtocolSettingsUpdated();
+export function handleProtocolSettingsUpdated(
+  event: ProtocolSettingsUpdated
+): void {
+  const theBadge = TheBadge.bind(event.address);
+
+  const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
+
+  if (!protocolConfigs) {
+    log.error(
+      "handleProtocolSettingsUpdated - protocol settings not found!, ID: {}",
+      [event.address.toHexString()]
+    );
+    return;
+  }
+
+  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.save();
+}
+
+// PaymentMade(address indexed recipient, uint256 indexed amount, PaymentType indexed paymentType);
+export function handlePaymentMade(event: PaymentMade): void {
+  const badgeModelId = event.params.badgeModelId.toString();
+  const paidAmount = event.params.amount;
+  const paymentType = event.params.paymentType;
+  const recipient = event.params.recipient.toHexString();
+
+  const statistic = ProtocolStatistic.load(event.address.toHexString());
+  if (!statistic) {
+    log.error(
+      "handlePaymentMade - ProtocolStatistics not found. protocolStatisticsId:  {}",
+      [event.address.toHexString()]
+    );
+    return;
+  }
+
+  // Logic for update protocol fees
+  if (paymentType == PaymentType_ProtocolFee) {
+    statistic.protocolEarnedFees = statistic.protocolEarnedFees.plus(
+      paidAmount
+    );
+    statistic.save();
+  }
+
+  // Logic for update creator fees
+  if (paymentType == PaymentType_CreatorFee) {
+    statistic.totalCreatorsFees = statistic.totalCreatorsFees.plus(paidAmount);
+    const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(recipient);
+    creatorStatistic.totalFeesEarned = creatorStatistic.totalFeesEarned.plus(
+      paidAmount
+    );
+    statistic.save();
+    creatorStatistic.save();
+  }
+
+  // Logic for update badge model fees
+  const badgeModel = BadgeModel.load(badgeModelId);
+
+  if (!badgeModel) {
+    log.error("handlePaymentMade - BadgeModel not found. badgeModelId:  {}", [
+      badgeModelId
+    ]);
+    return;
+  }
+  badgeModel.totalFeesGenerated = badgeModel.totalFeesGenerated.plus(
+    paidAmount
+  );
+  badgeModel.save();
 }
