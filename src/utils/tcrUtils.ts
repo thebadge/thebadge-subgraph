@@ -12,7 +12,7 @@ export const DISPUTE_OUTCOME_REJECT = "Reject";
 
 // DisputeOutcome "enum" (we cannot use enums in assemblyScript x2 :@!!)
 const TheBadgeBadgeStatus_Absent = "Absent";
-const TheBadgeBadgeStatus_Requested = "Requested";
+export const TheBadgeBadgeStatus_Requested = "Requested";
 const TheBadgeBadgeStatus_Approved = "Approved";
 export const TheBadgeBadgeStatus_Challenged = "Challenged";
 export const TheBadgeBadgeStatus_RemovalRequested = "RequestRemoval";
