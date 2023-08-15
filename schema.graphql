@@ -39,9 +39,11 @@ type BadgeModelKlerosMetaData @entity {
   registrationUri: String!
   removalUri: String!
   tcrList: Bytes!
+  governor: Bytes!
+  arbitrator: Bytes!
+  adminContract: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
-  #TODO: set governor, arbitrator, etc
 }
 
 ## - BADGE

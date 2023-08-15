@@ -22,9 +22,12 @@ import {
   DISPUTE_OUTCOME_NONE
 } from "./utils";
 
-// event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
+// event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string registrationMetaEvidence, string clearingMetaEvidence)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   const badgeModelId = event.params.badgeModelId;
+  const tcrAddress = event.params.tcrAddress;
+  const metadataUri = event.params.registrationMetaEvidence;
+  const removalUri = event.params.clearingMetaEvidence;
   const badgeModel = BadgeModel.load(badgeModelId.toString());
   if (!badgeModel) {
     log.error(
@@ -34,16 +37,19 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
     return;
   }
 
-  LightGeneralizedTCRTemplate.create(event.params.tcrAddress);
-  const tcrList = LightGeneralizedTCR.bind(event.params.tcrAddress);
+  LightGeneralizedTCRTemplate.create(tcrAddress);
+  const tcrList = LightGeneralizedTCR.bind(tcrAddress);
 
   const badgeModelKlerosMetaData = new BadgeModelKlerosMetaData(
     badgeModelId.toString()
   );
   badgeModelKlerosMetaData.badgeModel = badgeModelId.toString();
-  badgeModelKlerosMetaData.registrationUri = event.params.metadataUri;
-  badgeModelKlerosMetaData.removalUri = "ipfs://TODO";
-  badgeModelKlerosMetaData.tcrList = event.params.tcrAddress;
+  badgeModelKlerosMetaData.registrationUri = metadataUri;
+  badgeModelKlerosMetaData.removalUri = removalUri;
+  badgeModelKlerosMetaData.tcrList = tcrAddress;
+  badgeModelKlerosMetaData.governor = tcrList.governor();
+  badgeModelKlerosMetaData.arbitrator = tcrList.arbitrator();
+  badgeModelKlerosMetaData.adminContract = tcrList.relayerContract();
   badgeModelKlerosMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelKlerosMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
   badgeModelKlerosMetaData.save();
