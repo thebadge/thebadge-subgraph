@@ -31,6 +31,7 @@ type BadgeModel @entity {
   badgeModelKleros: BadgeModelKlerosMetaData
   contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
+  version: String!
 }
 
 type BadgeModelKlerosMetaData @entity {

@@ -22,7 +22,8 @@ import {
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
   PaymentType_CreatorFee,
-  PaymentType_ProtocolFee
+  PaymentType_ProtocolFee,
+  TheBadgeBadgeStatus_Requested
 } from "./utils";
 
 // event Initialize(address indexed admin, address indexed minter);
@@ -101,6 +102,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
+  badgeModel.version = _badgeModel.getVersion();
   badgeModel.save();
 
   // Updates the user with the new created badge
@@ -159,7 +161,7 @@ export function handleMint(event: TransferSingle): void {
   const badge = new Badge(badgeId.toString());
   badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
-  badge.status = "Requested";
+  badge.status = TheBadgeBadgeStatus_Requested;
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
