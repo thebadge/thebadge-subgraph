@@ -49,7 +49,7 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   badgeModelKlerosMetaData.tcrList = tcrAddress;
   badgeModelKlerosMetaData.governor = tcrList.governor();
   badgeModelKlerosMetaData.arbitrator = tcrList.arbitrator();
-  badgeModelKlerosMetaData.adminContract = tcrList.relayerContract();
+  badgeModelKlerosMetaData.admin = tcrList.relayerContract();
   badgeModelKlerosMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelKlerosMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
   badgeModelKlerosMetaData.save();

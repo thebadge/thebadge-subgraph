@@ -41,7 +41,7 @@ type BadgeModelKlerosMetaData @entity {
   tcrList: Bytes!
   governor: Bytes!
   arbitrator: Bytes!
-  adminContract: Bytes!
+  admin: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
 }
