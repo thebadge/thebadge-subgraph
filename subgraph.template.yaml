@@ -67,7 +67,7 @@ dataSources:
         - name: TheBadge
           file: ./abis/TheBadge.json
       eventHandlers:
-        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string)
+        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string,string)
           handler: handleNewKlerosBadgeModel
         - event: MintKlerosBadge(indexed uint256,string)
           handler: handleMintKlerosBadge
