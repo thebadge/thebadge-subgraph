@@ -23,7 +23,6 @@ export function loadUserOrGetDefault(id: string): User {
   user = new User(id);
   user.isCreator = false;
   user.isCurator = false;
-  user.isVerified = false;
   user.metadataUri = null;
   user.createdBadgeModels = [];
   user.save();

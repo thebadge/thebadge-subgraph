@@ -100,7 +100,6 @@ type User @entity {
   # creator
   isCreator: Boolean!
   isCurator: Boolean!
-  isVerified: Boolean!
   metadataUri: String
   "User protocol statistics."
   statistics: UserStatistic! @derivedFrom(field: "user")
