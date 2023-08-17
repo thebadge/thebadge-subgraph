@@ -24,7 +24,7 @@ export function loadUserOrGetDefault(id: string): User {
   user.isCreator = false;
   user.isCurator = false;
   user.isVerified = false;
-  user.creatorUri = null;
+  user.metadataUri = null;
   user.createdBadgeModels = [];
   user.save();
 
@@ -68,8 +68,10 @@ export function loadProtocolStatisticsOrGetDefault(
     statistic.badgeCuratorsAmount = BigInt.fromI32(0);
     statistic.protocolEarnedFees = BigInt.fromI32(0);
     statistic.totalCreatorsFees = BigInt.fromI32(0);
+    statistic.registeredUsersAmount = BigInt.fromI32(0);
     statistic.badgeCurators = [];
     statistic.badgeCreators = [];
+    statistic.registeredUsers = [];
     statistic.save();
   }
 

@@ -1,13 +1,13 @@
 import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
-  CreatorRegistered,
   BadgeModelCreated,
   TransferSingle,
   BadgeModelProtocolFeeUpdated,
   PaymentMade,
   Initialize,
-  ProtocolSettingsUpdated
+  ProtocolSettingsUpdated,
+  UserRegistered
 } from "../generated/TheBadge/TheBadge";
 
 import {
@@ -43,20 +43,41 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.minterAddress = minter;
   protocolConfigs.feeCollector = theBadge.feeCollector();
-  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
 }
 
-// event CreatorRegistered(address indexed creator, string metadata);
-export function handleCreatorRegistered(event: CreatorRegistered): void {
+// event UserRegistered(address indexed creator, string metadata);
+export function handleUserRegistered(event: UserRegistered): void {
+  const contractAddress = event.address.toHexString();
+  const id = event.params.creator.toHexString();
+
+  const user = loadUserOrGetDefault(id);
+  user.metadataUri = event.params.metadata;
+  user.isCreator = true; // TODO REMOVE
+  user.save();
+
+  // Register new statistic using the contractAddress
+  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+
+  statistic.registeredUsersAmount = statistic.registeredUsersAmount.plus(
+    BigInt.fromI32(1)
+  );
+  const auxUsers = statistic.registeredUsers;
+  auxUsers.push(Bytes.fromHexString(id));
+  statistic.registeredUsers = auxUsers;
+  statistic.save();
+}
+
+// event CreatorRegistered(address indexed creator);
+export function handleCreatorRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
   const id = event.params.creator.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.isCreator = true;
-  user.creatorUri = event.params.metadata;
   user.save();
 
   // Register new statistic using the contractAddress
@@ -218,7 +239,7 @@ export function handleProtocolSettingsUpdated(
     return;
   }
 
-  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
