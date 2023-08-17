@@ -1,7 +1,7 @@
 {
   "TheBadge": {
     "5": {
-      "address": "0x8C8176C5BaFF367e5F009bfE2e57A20824Df1417",
+      "address": "0xa86D1858D751A2f71231456fC136c4837aD76009",
       "startBlock": 9494215
     },
     "100": {
@@ -11,7 +11,7 @@
   },
   "KlerosBadgeModelController": {
     "5": {
-      "address": "0x43316F4416c8f0852d100A34Cb3BBdE0D6738E25",
+      "address": "0x05Ca615D389aE3B0f06e5B8BB04232e008Dd763d",
       "startBlock": 9494215
     },
     "100": {

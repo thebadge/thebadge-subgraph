@@ -40,7 +40,7 @@ dataSources:
           handler: handleBadgeModelProtocolFeeUpdated
         - event: ProtocolSettingsUpdated()
           handler: handleProtocolSettingsUpdated
-        - event: PaymentMade(indexed address,uint256,indexed uint8,indexed uint256)
+        - event: PaymentMade(indexed address,address,uint256,indexed uint8,indexed uint256,string)
           handler: handlePaymentMade
       file: ./src/theBadge.ts
 

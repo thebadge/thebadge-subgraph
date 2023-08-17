@@ -21,8 +21,10 @@ import {
   loadProtocolStatisticsOrGetDefault,
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
-  PaymentType_CreatorFee,
+  PaymentType_CreatorMintFee,
   PaymentType_ProtocolFee,
+  PaymentType_UserRegistrationFee,
+  PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
 
@@ -245,7 +247,7 @@ export function handleProtocolSettingsUpdated(
   protocolConfigs.save();
 }
 
-// PaymentMade(address indexed recipient, uint256 indexed amount, PaymentType indexed paymentType);
+// PaymentMade(address indexed recipient,address payer,uint256 amount, PaymentType indexed paymentType,uint256 indexed badgeModelId,string controllerName);
 export function handlePaymentMade(event: PaymentMade): void {
   const badgeModelId = event.params.badgeModelId.toString();
   const paidAmount = event.params.amount;
@@ -262,7 +264,11 @@ export function handlePaymentMade(event: PaymentMade): void {
   }
 
   // Logic for update protocol fees
-  if (paymentType == PaymentType_ProtocolFee) {
+  if (
+    paymentType == PaymentType_ProtocolFee ||
+    paymentType == PaymentType_UserRegistrationFee ||
+    paymentType == PaymentType_UserVerificationFee
+  ) {
     statistic.protocolEarnedFees = statistic.protocolEarnedFees.plus(
       paidAmount
     );
@@ -270,7 +276,7 @@ export function handlePaymentMade(event: PaymentMade): void {
   }
 
   // Logic for update creator fees
-  if (paymentType == PaymentType_CreatorFee) {
+  if (paymentType == PaymentType_CreatorMintFee) {
     statistic.totalCreatorsFees = statistic.totalCreatorsFees.plus(paidAmount);
     const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(recipient);
     creatorStatistic.totalFeesEarned = creatorStatistic.totalFeesEarned.plus(
