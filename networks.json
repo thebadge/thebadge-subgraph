@@ -2,7 +2,13 @@
   "TheBadge": {
     "5": {
       "address": "0xa86D1858D751A2f71231456fC136c4837aD76009",
-      "startBlock": 9494215
+      "transactionHash": "0x24853685a17b672b7a167983c3203c53262bd91113bfec453080a64a0bda826d",
+      "startBlock": 9534189
+    },
+    "11155111": {
+      "address": "0xec5b3e3E14D201D47fC7b7fE0F6Fc7833783A248",
+      "transactionHash": "0xd9a33a16231359ee2efdbed82f121677fa60eb7a17a7ff8e9b7bb15903ca52e8",
+      "startBlock": 4112062
     },
     "100": {
       "address": "0xE94f357416407c801e0de23228837377169d3D2A",
@@ -12,7 +18,13 @@
   "KlerosBadgeModelController": {
     "5": {
       "address": "0x05Ca615D389aE3B0f06e5B8BB04232e008Dd763d",
-      "startBlock": 9494215
+      "transactionHash": "0x9ce0c8046ea0c8fa0b15d2dc472b280c5dc61acf9bebe098fb0ef95747b41f6a",
+      "startBlock": 9534190
+    },
+    "11155111": {
+      "address": "0x22980e9C08e79C5b63aEbeEAF9Bc3292025BbE66",
+      "transactionHash": "0xcf75675a0d76e3c022d5ee11b95b8c46c20c5843f1dfae0483b1403f71e89c84",
+      "startBlock": 4112064
     },
     "100": {
       "address": "",
