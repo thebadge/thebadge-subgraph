@@ -1,13 +1,13 @@
 import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
-  CreatorRegistered,
   BadgeModelCreated,
   TransferSingle,
   BadgeModelProtocolFeeUpdated,
   PaymentMade,
   Initialize,
-  ProtocolSettingsUpdated
+  ProtocolSettingsUpdated,
+  UserRegistered
 } from "../generated/TheBadge/TheBadge";
 
 import {
@@ -21,8 +21,10 @@ import {
   loadProtocolStatisticsOrGetDefault,
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
-  PaymentType_CreatorFee,
+  PaymentType_CreatorMintFee,
   PaymentType_ProtocolFee,
+  PaymentType_UserRegistrationFee,
+  PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
 
@@ -43,20 +45,41 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.minterAddress = minter;
   protocolConfigs.feeCollector = theBadge.feeCollector();
-  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
 }
 
-// event CreatorRegistered(address indexed creator, string metadata);
-export function handleCreatorRegistered(event: CreatorRegistered): void {
+// event UserRegistered(address indexed creator, string metadata);
+export function handleUserRegistered(event: UserRegistered): void {
+  const contractAddress = event.address.toHexString();
+  const id = event.params.creator.toHexString();
+
+  const user = loadUserOrGetDefault(id);
+  user.metadataUri = event.params.metadata;
+  user.isCreator = true; // TODO REMOVE
+  user.save();
+
+  // Register new statistic using the contractAddress
+  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+
+  statistic.registeredUsersAmount = statistic.registeredUsersAmount.plus(
+    BigInt.fromI32(1)
+  );
+  const auxUsers = statistic.registeredUsers;
+  auxUsers.push(Bytes.fromHexString(id));
+  statistic.registeredUsers = auxUsers;
+  statistic.save();
+}
+
+// event CreatorRegistered(address indexed creator);
+export function handleCreatorRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
   const id = event.params.creator.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.isCreator = true;
-  user.creatorUri = event.params.metadata;
   user.save();
 
   // Register new statistic using the contractAddress
@@ -218,13 +241,13 @@ export function handleProtocolSettingsUpdated(
     return;
   }
 
-  protocolConfigs.registerCreatorProtocolFee = theBadge.registerCreatorProtocolFee();
+  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
 }
 
-// PaymentMade(address indexed recipient, uint256 indexed amount, PaymentType indexed paymentType);
+// PaymentMade(address indexed recipient,address payer,uint256 amount, PaymentType indexed paymentType,uint256 indexed badgeModelId,string controllerName);
 export function handlePaymentMade(event: PaymentMade): void {
   const badgeModelId = event.params.badgeModelId.toString();
   const paidAmount = event.params.amount;
@@ -241,7 +264,11 @@ export function handlePaymentMade(event: PaymentMade): void {
   }
 
   // Logic for update protocol fees
-  if (paymentType == PaymentType_ProtocolFee) {
+  if (
+    paymentType == PaymentType_ProtocolFee ||
+    paymentType == PaymentType_UserRegistrationFee ||
+    paymentType == PaymentType_UserVerificationFee
+  ) {
     statistic.protocolEarnedFees = statistic.protocolEarnedFees.plus(
       paidAmount
     );
@@ -249,7 +276,7 @@ export function handlePaymentMade(event: PaymentMade): void {
   }
 
   // Logic for update creator fees
-  if (paymentType == PaymentType_CreatorFee) {
+  if (paymentType == PaymentType_CreatorMintFee) {
     statistic.totalCreatorsFees = statistic.totalCreatorsFees.plus(paidAmount);
     const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(recipient);
     creatorStatistic.totalFeesEarned = creatorStatistic.totalFeesEarned.plus(

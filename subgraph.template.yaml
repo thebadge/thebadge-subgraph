@@ -28,7 +28,9 @@ dataSources:
       eventHandlers:
         - event: Initialize(indexed address,indexed address)
           handler: handleContractInitialized
-        - event: CreatorRegistered(indexed address,string)
+        - event: UserRegistered(indexed address,string)
+          handler: handleUserRegistered
+        - event: CreatorRegistered(indexed address)
           handler: handleCreatorRegistered
         - event: BadgeModelCreated(indexed uint256,string)
           handler: handleBadgeModelCreated
@@ -38,7 +40,7 @@ dataSources:
           handler: handleBadgeModelProtocolFeeUpdated
         - event: ProtocolSettingsUpdated()
           handler: handleProtocolSettingsUpdated
-        - event: PaymentMade(indexed address,uint256,indexed uint8,indexed uint256)
+        - event: PaymentMade(indexed address,address,uint256,indexed uint8,indexed uint256,string)
           handler: handlePaymentMade
       file: ./src/theBadge.ts
 
@@ -55,7 +57,7 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/kleros.ts
+      file: ./src/klerosBadgeModelController.ts
       entities:
         - BadgeModelKlerosMetaData
         - BadgeKlerosMetaData
@@ -67,6 +69,8 @@ dataSources:
         - name: TheBadge
           file: ./abis/TheBadge.json
       eventHandlers:
+        - event: Initialize(indexed address,indexed address)
+          handler: handleContractInitialized
         - event: NewKlerosBadgeModel(indexed uint256,indexed address,string,string)
           handler: handleNewKlerosBadgeModel
         - event: MintKlerosBadge(indexed uint256,string)

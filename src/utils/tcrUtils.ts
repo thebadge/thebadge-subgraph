@@ -27,7 +27,9 @@ export const TCRItemStatusCode_CLEARING_REQUESTED_CODE = 3;
 
 // Payment types
 export const PaymentType_ProtocolFee = 0;
-export const PaymentType_CreatorFee = 1;
+export const PaymentType_CreatorMintFee = 1;
+export const PaymentType_UserRegistrationFee = 2;
+export const PaymentType_UserVerificationFee = 3;
 
 export function getTCRRequestIndex(tcrAddress: Address, itemId: Bytes): BigInt {
   const tcrList = LightGeneralizedTCR.bind(tcrAddress);
