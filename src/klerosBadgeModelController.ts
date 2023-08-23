@@ -8,13 +8,15 @@ import {
   KlerosBadgeRequest,
   Evidence,
   BadgeModel,
-  _ItemIDToEvidenceGroupIDToBadgeID
+  _ItemIDToEvidenceGroupIDToBadgeID,
+  ControllerConfig
 } from "../generated/schema";
 import {
-  KlerosController,
+  KlerosBadgeModelController,
   NewKlerosBadgeModel,
-  mintKlerosBadge
-} from "../generated/KlerosController/KlerosController";
+  MintKlerosBadge,
+  Initialize
+} from "../generated/KlerosBadgeModelController/KlerosBadgeModelController";
 import { TheBadge } from "../generated/TheBadge/TheBadge";
 import {
   getArbitrationParamsIndex,
@@ -22,9 +24,33 @@ import {
   DISPUTE_OUTCOME_NONE
 } from "./utils";
 
-// event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string metadataUri)
+// event Initialize(address indexed admin,address tcrFactory);
+export function handleContractInitialized(event: Initialize): void {
+  const contractAddress = event.address.toHexString();
+  const klerosBadgeModelController = KlerosBadgeModelController.bind(
+    event.address
+  );
+  const admin = event.params.admin;
+  const tcrFactory = event.params.tcrFactory;
+
+  const controllerConfig = new ControllerConfig(contractAddress);
+  controllerConfig.verifyUserProtocolFee = klerosBadgeModelController.getVerifyUserProtocolFee();
+  controllerConfig.tcrFactory = tcrFactory;
+  controllerConfig.contractAdmin = admin;
+  controllerConfig.controllerName = "kleros";
+  controllerConfig.arbitrator = klerosBadgeModelController.arbitrator();
+  controllerConfig.generalProtocolConfig = klerosBadgeModelController
+    .theBadge()
+    .toHexString();
+  controllerConfig.save();
+}
+
+// event NewKlerosBadgeModel(uint256 indexed badgeModelId, address indexed tcrAddress, string registrationMetaEvidence, string clearingMetaEvidence)
 export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
   const badgeModelId = event.params.badgeModelId;
+  const tcrAddress = event.params.tcrAddress;
+  const metadataUri = event.params.registrationMetaEvidence;
+  const removalUri = event.params.clearingMetaEvidence;
   const badgeModel = BadgeModel.load(badgeModelId.toString());
   if (!badgeModel) {
     log.error(
@@ -34,16 +60,19 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
     return;
   }
 
-  LightGeneralizedTCRTemplate.create(event.params.tcrAddress);
-  const tcrList = LightGeneralizedTCR.bind(event.params.tcrAddress);
+  LightGeneralizedTCRTemplate.create(tcrAddress);
+  const tcrList = LightGeneralizedTCR.bind(tcrAddress);
 
   const badgeModelKlerosMetaData = new BadgeModelKlerosMetaData(
     badgeModelId.toString()
   );
-  badgeModelKlerosMetaData.badgeModelId = badgeModelId.toString();
-  badgeModelKlerosMetaData.registrationUri = event.params.metadataUri;
-  badgeModelKlerosMetaData.removalUri = "ipfs://TODO";
-  badgeModelKlerosMetaData.tcrList = event.params.tcrAddress;
+  badgeModelKlerosMetaData.badgeModel = badgeModelId.toString();
+  badgeModelKlerosMetaData.registrationUri = metadataUri;
+  badgeModelKlerosMetaData.removalUri = removalUri;
+  badgeModelKlerosMetaData.tcrList = tcrAddress;
+  badgeModelKlerosMetaData.governor = tcrList.governor();
+  badgeModelKlerosMetaData.arbitrator = tcrList.arbitrator();
+  badgeModelKlerosMetaData.admin = tcrList.relayerContract();
   badgeModelKlerosMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelKlerosMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
   badgeModelKlerosMetaData.save();
@@ -53,13 +82,15 @@ export function handleNewKlerosBadgeModel(event: NewKlerosBadgeModel): void {
 }
 
 // event MintKlerosBadge(uint256 indexed badgeId, string evidence);
-export function handleMintKlerosBadge(event: mintKlerosBadge): void {
-  const klerosController = KlerosController.bind(event.address);
-  const theBadge = TheBadge.bind(klerosController.theBadge());
+export function handleMintKlerosBadge(event: MintKlerosBadge): void {
+  const klerosBadgeModelController = KlerosBadgeModelController.bind(
+    event.address
+  );
+  const theBadge = TheBadge.bind(klerosBadgeModelController.theBadge());
   const badgeId = event.params.badgeId;
 
   const badgeModelId = theBadge
-    .badge(badgeId)
+    .badges(badgeId)
     .getBadgeModelId()
     .toString();
 
@@ -73,7 +104,7 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
     return;
   }
 
-  const itemID = klerosController.klerosBadge(badgeId).getItemID();
+  const itemID = klerosBadgeModelController.klerosBadges(badgeId).getItemID();
 
   // request
   const requestIndex = getTCRRequestIndex(
@@ -89,7 +120,9 @@ export function handleMintKlerosBadge(event: mintKlerosBadge): void {
   request.badgeKlerosMetaData = badgeId.toString();
   request.requestIndex = requestIndex;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
-  request.requester = klerosController.klerosBadge(badgeId).getCallee();
+  request.requester = klerosBadgeModelController
+    .klerosBadges(badgeId)
+    .getCallee();
   request.numberOfEvidences = BigInt.fromI32(1);
   request.disputed = false;
   request.disputeOutcome = DISPUTE_OUTCOME_NONE;

@@ -156,6 +156,10 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
     BigInt.fromI32(1)
   );
   badgeKlerosMetadata.save();
+
+  // Finally updates the badgeStatus
+  badge.status = getTBStatus(status);
+  badge.save();
 }
 
 export function handleRequestChallenged(event: Dispute): void {
@@ -262,11 +266,11 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  const badgeModel = BadgeModel.load(badgeModelKlerosMetaData.badgeModelId);
+  const badgeModel = BadgeModel.load(badgeModelKlerosMetaData.badgeModel);
   if (!badgeModel) {
     log.error(
       "handleRequestChallenged - not badgeModel found for with ID: {}",
-      [badgeModelKlerosMetaData.badgeModelId]
+      [badgeModelKlerosMetaData.badgeModel]
     );
     return;
   }
@@ -471,7 +475,7 @@ export function handleRuling(event: Ruling): void {
     event.address,
     event.params._disputeID
   );
-  const ruling = event.params._ruling.toI32()
+  const ruling = event.params._ruling.toI32();
 
   const klerosBadgeIdToBadgeId = _KlerosBadgeIdToBadgeId.load(
     itemID.toHexString()

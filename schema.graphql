@@ -22,6 +22,8 @@ type BadgeModel @entity {
   controllerType: String!
   validFor: BigInt!
   creatorFee: BigInt!
+  protocolFeeInBps: BigInt!
+  totalFeesGenerated: BigInt! ## The total amount of fees that users paid to mint this model
   paused: Boolean!
   creator: User!
   badgesMintedAmount: BigInt!
@@ -29,17 +31,20 @@ type BadgeModel @entity {
   badgeModelKleros: BadgeModelKlerosMetaData
   contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
+  version: String!
 }
 
 type BadgeModelKlerosMetaData @entity {
   id: ID!
-  badgeModelId: BadgeModel!
+  badgeModel: BadgeModel!
   registrationUri: String!
   removalUri: String!
   tcrList: Bytes!
+  governor: Bytes!
+  arbitrator: Bytes!
+  admin: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
-  #TODO: set governor, arbitrator, etc
 }
 
 ## - BADGE
@@ -95,8 +100,7 @@ type User @entity {
   # creator
   isCreator: Boolean!
   isCurator: Boolean!
-  isVerified: Boolean!
-  creatorUri: String
+  metadataUri: String
   "User protocol statistics."
   statistics: UserStatistic! @derivedFrom(field: "user")
 }
@@ -164,11 +168,19 @@ type ProtocolStatistic @entity {
   badgesOwnersAmount: BigInt!
   badgeCreatorsAmount: BigInt!
   badgeCuratorsAmount: BigInt!
+  registeredUsersAmount: BigInt!
 
+  ## Fees statistics
+  protocolEarnedFees: BigInt! # The total amount of fees earned by the protocol
+  totalCreatorsFees: BigInt! # The total amount of fees earned by all the creators in the protocol
   # Keep track of the users that made at least one curation
   badgeCurators: [Bytes!]! #
   # Keep track of the users that registered as creators
   badgeCreators: [Bytes!]!
+  # Keep track of the users that registered on the platform
+  registeredUsers: [Bytes!]!
+
+  protocolConfig: ProtocolConfig! @derivedFrom(field: "protocolStatistics")
 }
 
 type UserStatistic @entity {
@@ -182,7 +194,6 @@ type UserStatistic @entity {
   challengesReceivedLostAmount: BigInt! # Challenges received LOST as badge user
   challengesReceivedWonAmount: BigInt! # Challenges received WON as badge user
   challengesReceivedRejectedAmount: BigInt! # Challenges received rejected to arbitrate as badge user
-
   # Creator statistics
   creatorStatistic: CreatorStatistic @derivedFrom(field: "userStatistic")
 
@@ -201,6 +212,7 @@ type CreatorStatistic @entity {
   allTimeBadgeMinters: [Bytes!]! # Keep track of the users that made at least one mint
   allTimeBadgeMintersAmount: BigInt! # Amount of different USERS that minted at least one of the badges of this creator
   mostPopularCreatedBadge: BigInt! # The ID of the badge created by this user which has the max amount of mints by others users
+  totalFeesEarned: BigInt! # The total amount of fees earned by owned badge models
 }
 
 type CuratorStatistic @entity {
@@ -213,4 +225,35 @@ type CuratorStatistic @entity {
   challengesMadeLostAmount: BigInt! # Challenges made LOST as curator
   challengesMadeWonAmount: BigInt! # Challenges made WON as curator
   challengesMadeRejectedAmount: BigInt! # Challenges made rejected to arbitrate as curator
+}
+
+type ProtocolConfig @entity {
+  # Same as the TB contractAddress
+  id: ID!
+  protocolStatistics: ProtocolStatistic!
+
+  # Configured accounts
+  contractAdmin: Bytes! # Address of the contract deployer
+  minterAddress: Bytes! # Address of the account configured as minter TODO maybe we need to remove this from the SC
+  feeCollector: Bytes! # Address of the account configured to collect the protocol fees
+  # Configured fees
+  registerUserProtocolFee: BigInt! # Configured protocol fees to pay in order to register as creator
+  createBadgeModelProtocolFee: BigInt! # Configured protocol fees to pay in order to create a badge model
+  mintBadgeProtocolDefaultFeeInBps: BigInt! # Configured protocol fees in BPS to pay in order to mint a badge model (default value, this will be different in each model)
+  controllerConfigs: [ControllerConfig!]
+    @derivedFrom(field: "generalProtocolConfig") #
+}
+
+type ControllerConfig @entity {
+  # Same as the controller contractAddress
+  id: ID!
+  generalProtocolConfig: ProtocolConfig!
+  controllerName: String!
+
+  # Configured accounts
+  contractAdmin: Bytes! # Address of the contract deployer
+  arbitrator: Bytes # Address of the controller arbitrator (empty if not klerosController)
+  tcrFactory: Bytes # Address of the factory that instanciastes the TCR lists (empty if not klerosController)
+  # Configured fees
+  verifyUserProtocolFee: BigInt!
 }
