@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   BadgeModelCreated,
@@ -112,6 +112,9 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   // Emits the BadgeModelCreated before the CreatorRegistered, therefore we need to create the user entity here
   const user = loadUserOrGetDefault(creatorAddress);
 
+  const chainName = dataSource.network(); // returns network name
+
+
   // Badge model
   const badgeModel = new BadgeModel(badgeModelId.toString());
   badgeModel.uri = event.params.metadata;
@@ -126,6 +129,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
   badgeModel.version = _badgeModel.getVersion();
+  badgeModel.networkName = chainName;
   badgeModel.save();
 
   // Updates the user with the new created badge
