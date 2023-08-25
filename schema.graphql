@@ -60,6 +60,7 @@ type Badge @entity {
   createdAt: BigInt!
   createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
+  networkName: String! # The id of the network in which this badgeModel has been created
 }
 
 ## Equivalent to Kleros LItem

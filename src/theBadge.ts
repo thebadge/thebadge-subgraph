@@ -190,6 +190,7 @@ export function handleMint(event: TransferSingle): void {
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
   badge.uri = theBadge.uri(badgeId);
+  badgeModel.networkName = dataSource.network();
   badge.save();
 
   // Loads or creates an user if does not exists
