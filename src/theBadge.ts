@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   BadgeModelCreated,
@@ -126,6 +126,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
   badgeModel.version = _badgeModel.getVersion();
+  badgeModel.networkName = dataSource.network();
   badgeModel.save();
 
   // Updates the user with the new created badge
