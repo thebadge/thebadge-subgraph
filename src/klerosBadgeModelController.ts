@@ -23,6 +23,7 @@ import {
   getTCRRequestIndex,
   DISPUTE_OUTCOME_NONE
 } from "./utils";
+import { TheBadgeStore } from "../generated/LibTheBadge/TheBadgeStore";
 
 // event Initialize(address indexed admin,address tcrFactory);
 export function handleContractInitialized(event: Initialize): void {
@@ -87,9 +88,10 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
     event.address
   );
   const theBadge = TheBadge.bind(klerosBadgeModelController.theBadge());
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
   const badgeId = event.params.badgeId;
 
-  const badgeModelId = theBadge
+  const badgeModelId = theBadgeStore
     .badges(badgeId)
     .getBadgeModelId()
     .toString();
