@@ -236,7 +236,6 @@ type ProtocolConfig @entity {
 
   # Configured accounts
   contractAdmin: Bytes! # Address of the contract deployer
-  minterAddress: Bytes! # Address of the account configured as minter TODO maybe we need to remove this from the SC
   feeCollector: Bytes! # Address of the account configured to collect the protocol fees
   # Configured fees
   registerUserProtocolFee: BigInt! # Configured protocol fees to pay in order to register as creator

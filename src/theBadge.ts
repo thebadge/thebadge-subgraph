@@ -1,15 +1,11 @@
 import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
-import { TheBadge, TransferSingle } from "../generated/TheBadge/TheBadge";
 import {
-  BadgeModelCreated,
-  BadgeModelProtocolFeeUpdated
-} from "../generated/LibTheBadgeModels/LibTheBadgeModels";
-import { UserRegistered } from "../generated/LibTheBadgeUsers/LibTheBadgeUsers";
-import {
-  PaymentMade,
   Initialize,
-  ProtocolSettingsUpdated
-} from "../generated/LibTheBadge/LibTheBadge";
+  PaymentMade,
+  ProtocolSettingsUpdated,
+  TheBadge,
+  TransferSingle
+} from "../generated/TheBadge/TheBadge";
 
 import {
   BadgeModel,
@@ -28,7 +24,13 @@ import {
   PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
-import { TheBadgeStore } from "../generated/LibTheBadge/TheBadgeStore";
+import { UserRegistered } from "../generated/TheBadgeUsers/TheBadgeUsers";
+import {
+  BadgeModelCreated,
+  BadgeModelUpdated,
+  TheBadgeModels
+} from "../generated/TheBadgeModels/TheBadgeModels";
+import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
@@ -55,7 +57,7 @@ export function handleContractInitialized(event: Initialize): void {
 // event UserRegistered(address indexed creator, string metadata);
 export function handleUserRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.creator.toHexString();
+  const id = event.params.user.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.metadataUri = event.params.metadata;
@@ -77,7 +79,7 @@ export function handleUserRegistered(event: UserRegistered): void {
 // event CreatorRegistered(address indexed creator);
 export function handleCreatorRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.creator.toHexString();
+  const id = event.params.user.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.isCreator = true;
@@ -208,19 +210,21 @@ export function handleMint(event: TransferSingle): void {
   );
 }
 
-// BadgeModelProtocolFeeUpdated(uint256 indexed badgeModelID, uint256 indexed newAmountInBps);
-export function handleBadgeModelProtocolFeeUpdated(
-  event: BadgeModelProtocolFeeUpdated
-): void {
+//  BadgeModelUpdated(uint256 indexed badgeModelId);
+export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   const badgeModelID = event.params.badgeModelId.toString();
-  const newAmountInBps = event.params.feeInBps;
+  const theBadgeModels = TheBadgeModels.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
+  const newAmountInBps = theBadgeStore
+    .badgeModels(event.params.badgeModelId)
+    .getMintProtocolFee();
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
 
   if (!badgeModel) {
     log.error(
-      "handleBadgeModelProtocolFeeUpdated - BadgeModel not found. badgeModelId:  {}",
+      "handleBadgeModelUpdated - BadgeModel not found. badgeModelId:  {}",
       [badgeModelID]
     );
     return;

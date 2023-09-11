@@ -11,8 +11,6 @@ dataSources:
     network: {{network}}
     source:
       address: "{{TheBadge.address}}"
-      # Block to speed-up the development, it should be commented on prod
-      # startBlock: 9348882
       startBlock: {{TheBadge.startBlock}}
       abi: TheBadge
     mapping:
@@ -25,23 +23,69 @@ dataSources:
       abis:
         - name: TheBadge
           file: ./abis/TheBadge.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
-        - event: Initialize(indexed address,indexed address)
+        - event: Initialize(indexed address)
           handler: handleContractInitialized
-        - event: UserRegistered(indexed address,string)
-          handler: handleUserRegistered
-        - event: CreatorRegistered(indexed address)
-          handler: handleCreatorRegistered
-        - event: BadgeModelCreated(indexed uint256,string)
-          handler: handleBadgeModelCreated
-        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleMint
-        - event: BadgeModelProtocolFeeUpdated(indexed uint256,uint256)
-          handler: handleBadgeModelProtocolFeeUpdated
         - event: ProtocolSettingsUpdated()
           handler: handleProtocolSettingsUpdated
         - event: PaymentMade(indexed address,address,uint256,indexed uint8,indexed uint256,string)
           handler: handlePaymentMade
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleMint
+      file: ./src/theBadge.ts
+
+  - kind: ethereum/contract
+    name: TheBadgeUsers
+    network: {{network}}
+    source:
+      address: "{{TheBadgeUsers.address}}"
+      startBlock: {{TheBadgeUsers.startBlock}}
+      abi: TheBadgeUsers
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - User
+        - BadgeModel
+      abis:
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
+      eventHandlers:
+        - event: UserRegistered(indexed address,string)
+          handler: handleUserRegistered
+        - event: CreatorRegistered(indexed address)
+          handler: handleCreatorRegistered
+      file: ./src/theBadge.ts
+
+  - kind: ethereum/contract
+    name: TheBadgeModels
+    network: {{network}}
+    source:
+      address: "{{TheBadgeModels.address}}"
+      startBlock: {{TheBadgeModels.startBlock}}
+      abi: TheBadgeModels
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - User
+        - BadgeModel
+      abis:
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
+      eventHandlers:
+        - event: BadgeModelCreated(indexed uint256,string)
+          handler: handleBadgeModelCreated
+        - event: BadgeModelUpdated(indexed uint256)
+          handler: handleBadgeModelUpdated
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
@@ -49,8 +93,6 @@ dataSources:
     network: {{network}}
     source:
       address: "{{KlerosBadgeModelController.address}}"
-      # Block to speed-up the development, it should be commented on prod
-      #startBlock: 9348882
       startBlock: {{KlerosBadgeModelController.startBlock}}
       abi: KlerosBadgeModelController
     mapping:
@@ -68,6 +110,10 @@ dataSources:
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadge
           file: ./abis/TheBadge.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
         - event: Initialize(indexed address,indexed address)
           handler: handleContractInitialized
