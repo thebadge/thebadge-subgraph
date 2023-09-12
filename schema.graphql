@@ -32,6 +32,7 @@ type BadgeModel @entity {
   contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
   version: String!
+  networkName: String! # The id of the network in which this badgeModel has been created
 }
 
 type BadgeModelKlerosMetaData @entity {
@@ -59,6 +60,7 @@ type Badge @entity {
   createdAt: BigInt!
   createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
+  networkName: String! # The id of the network in which this badgeModel has been created
 }
 
 ## Equivalent to Kleros LItem

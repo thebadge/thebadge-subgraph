@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
 import {
   TheBadge,
   BadgeModelCreated,
@@ -126,6 +126,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
   badgeModel.version = _badgeModel.getVersion();
+  badgeModel.networkName = dataSource.network();
   badgeModel.save();
 
   // Updates the user with the new created badge
@@ -189,6 +190,7 @@ export function handleMint(event: TransferSingle): void {
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
   badge.uri = theBadge.uri(badgeId);
+  badge.networkName = dataSource.network();
   badge.save();
 
   // Loads or creates an user if does not exists
