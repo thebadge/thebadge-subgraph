@@ -2,9 +2,9 @@
   "name": "thebadge-subgraph",
   "license": "MIT",
   "description": "Subgraph for TheBadge smart contracts",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "scripts": {
-    "codegen:dev": "node codegen/render-templates.js goerli && graph codegen",
+    "codegen:goerli": "node codegen/render-templates.js goerli && graph codegen",
     "codegen:sepolia": "node codegen/render-templates.js sepolia && graph codegen",
     "codegen:gnosis": "node codegen/render-templates.js gnosis && graph codegen",
     "build:goerli": "yarn codegen:goerli && graph build",
