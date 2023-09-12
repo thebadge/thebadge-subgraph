@@ -17,12 +17,13 @@ import {
   MintKlerosBadge,
   Initialize
 } from "../generated/KlerosBadgeModelController/KlerosBadgeModelController";
-import { TheBadge } from "../generated/TheBadge/TheBadge";
 import {
   getArbitrationParamsIndex,
   getTCRRequestIndex,
   DISPUTE_OUTCOME_NONE
 } from "./utils";
+import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
+import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
 
 // event Initialize(address indexed admin,address tcrFactory);
 export function handleContractInitialized(event: Initialize): void {
@@ -40,7 +41,7 @@ export function handleContractInitialized(event: Initialize): void {
   controllerConfig.controllerName = "kleros";
   controllerConfig.arbitrator = klerosBadgeModelController.arbitrator();
   controllerConfig.generalProtocolConfig = klerosBadgeModelController
-    .theBadge()
+    .theBadgeModels()
     .toHexString();
   controllerConfig.save();
 }
@@ -86,10 +87,13 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const klerosBadgeModelController = KlerosBadgeModelController.bind(
     event.address
   );
-  const theBadge = TheBadge.bind(klerosBadgeModelController.theBadge());
+  const theBadgeModels = TheBadgeModels.bind(
+    klerosBadgeModelController.theBadgeModels()
+  );
+  const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
   const badgeId = event.params.badgeId;
 
-  const badgeModelId = theBadge
+  const badgeModelId = theBadgeStore
     .badges(badgeId)
     .getBadgeModelId()
     .toString();

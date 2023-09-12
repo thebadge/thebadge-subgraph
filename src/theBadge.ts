@@ -1,13 +1,10 @@
 import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
 import {
-  TheBadge,
-  BadgeModelCreated,
-  TransferSingle,
-  BadgeModelProtocolFeeUpdated,
-  PaymentMade,
   Initialize,
+  PaymentMade,
   ProtocolSettingsUpdated,
-  UserRegistered
+  TheBadge,
+  TransferSingle
 } from "../generated/TheBadge/TheBadge";
 
 import {
@@ -27,13 +24,20 @@ import {
   PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
+import { UserRegistered } from "../generated/TheBadgeUsers/TheBadgeUsers";
+import {
+  BadgeModelCreated,
+  BadgeModelUpdated,
+  TheBadgeModels
+} from "../generated/TheBadgeModels/TheBadgeModels";
+import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 
-// event Initialize(address indexed admin, address indexed minter);
+// event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const theBadge = TheBadge.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
   const admin = event.params.admin;
-  const minter = event.params.minter;
 
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
@@ -43,18 +47,17 @@ export function handleContractInitialized(event: Initialize): void {
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
-  protocolConfigs.minterAddress = minter;
-  protocolConfigs.feeCollector = theBadge.feeCollector();
-  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
-  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.feeCollector = theBadgeStore.feeCollector();
+  protocolConfigs.registerUserProtocolFee = theBadgeStore.registerUserProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
 }
 
 // event UserRegistered(address indexed creator, string metadata);
 export function handleUserRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.creator.toHexString();
+  const id = event.params.user.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.metadataUri = event.params.metadata;
@@ -76,7 +79,7 @@ export function handleUserRegistered(event: UserRegistered): void {
 // event CreatorRegistered(address indexed creator);
 export function handleCreatorRegistered(event: UserRegistered): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.creator.toHexString();
+  const id = event.params.user.toHexString();
 
   const user = loadUserOrGetDefault(id);
   user.isCreator = true;
@@ -104,7 +107,8 @@ export function handleCreatorRegistered(event: UserRegistered): void {
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadge = TheBadge.bind(event.address);
-  const _badgeModel = theBadge.badgeModels(badgeModelId);
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
+  const _badgeModel = theBadgeStore.badgeModels(badgeModelId);
   const creatorAddress = _badgeModel.getCreator().toHexString();
 
   // Note: ideally the user should be already created and we should throw an exception here it's not found
@@ -159,8 +163,9 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 // event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
 export function handleMint(event: TransferSingle): void {
   const theBadge = TheBadge.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
   const badgeID = event.params.id;
-  const _badge = theBadge.badges(badgeID);
+  const _badge = theBadgeStore.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
   // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
 
@@ -205,19 +210,21 @@ export function handleMint(event: TransferSingle): void {
   );
 }
 
-// BadgeModelProtocolFeeUpdated(uint256 indexed badgeModelID, uint256 indexed newAmountInBps);
-export function handleBadgeModelProtocolFeeUpdated(
-  event: BadgeModelProtocolFeeUpdated
-): void {
+//  BadgeModelUpdated(uint256 indexed badgeModelId);
+export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   const badgeModelID = event.params.badgeModelId.toString();
-  const newAmountInBps = event.params.newAmountInBps;
+  const theBadgeModels = TheBadgeModels.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
+  const newAmountInBps = theBadgeStore
+    .badgeModels(event.params.badgeModelId)
+    .getMintProtocolFee();
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
 
   if (!badgeModel) {
     log.error(
-      "handleBadgeModelProtocolFeeUpdated - BadgeModel not found. badgeModelId:  {}",
+      "handleBadgeModelUpdated - BadgeModel not found. badgeModelId:  {}",
       [badgeModelID]
     );
     return;
@@ -232,6 +239,7 @@ export function handleProtocolSettingsUpdated(
   event: ProtocolSettingsUpdated
 ): void {
   const theBadge = TheBadge.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
 
   const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
 
@@ -243,9 +251,9 @@ export function handleProtocolSettingsUpdated(
     return;
   }
 
-  protocolConfigs.registerUserProtocolFee = theBadge.registerUserProtocolFee();
-  protocolConfigs.createBadgeModelProtocolFee = theBadge.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadge.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.registerUserProtocolFee = theBadgeStore.registerUserProtocolFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
 }
 
