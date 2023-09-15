@@ -215,9 +215,7 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   const badgeModelID = event.params.badgeModelId.toString();
   const theBadgeModels = TheBadgeModels.bind(event.address);
   const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
-  const newAmountInBps = theBadgeStore
-    .badgeModels(event.params.badgeModelId)
-    .getMintProtocolFee();
+  const storeBadgeModel = theBadgeStore.badgeModels(event.params.badgeModelId);
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
@@ -230,7 +228,8 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
     return;
   }
 
-  badgeModel.protocolFeeInBps = newAmountInBps;
+  badgeModel.protocolFeeInBps = storeBadgeModel.getMintProtocolFee();
+  badgeModel.creatorFee = storeBadgeModel.getMintCreatorFee();
   badgeModel.save();
 }
 
