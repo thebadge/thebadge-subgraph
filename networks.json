@@ -1,9 +1,9 @@
 {
   "TheBadge": {
     "5": {
-      "address": "0x2f2f14FB89129a6E9D4d01E3D29a408Af4A868Bb",
-      "transactionHash": "0xe3885c021a33e46e9ee39b85d0491673d4c14063f0bf6cf422a20bfffa2a4177",
-      "startBlock": 9701209
+      "address": "0x76149777Ce10AEd3c39C2D66F0A20E95c4fC2d96",
+      "transactionHash": "0x7fe9610fe286d433f31242ff0f4c582b30072ea33e5b4d595e994d575a271d08",
+      "startBlock": 9705116
     },
     "11155111": {
       "address": "0x83701fe7a462bD714A9006a9FF604367C24613E3",
@@ -17,9 +17,9 @@
   },
   "TheBadgeUsers": {
     "5": {
-      "address": "0x9d9284C4c34A280DCae6aA8946c4133140ABA62A",
-      "transactionHash": "0xca383cf145d6fca6bafe6871c1be15dbb094b0fbfe30d7a5552830a36ce88926",
-      "startBlock": 9701206
+      "address": "0x873a18c9F91a3e4D69B885EA13857848445b87EE",
+      "transactionHash": "0x8a3d172ab91b6fb97cf5b6821c314e5ba2d2b1072cebd1992f2a083caec03d57",
+      "startBlock": 9705114
     },
     "11155111": {
       "address": "0x5E7c648EE852241f145e1d480932C091979883D1",
@@ -33,9 +33,9 @@
   },
   "TheBadgeModels": {
     "5": {
-      "address": "0x25AB0275Fff77dC085257d8FD817ca14Aa42E5a3",
-      "transactionHash": "0xde6d1d34d73c2d766a218ddc51353db7567494dcf89eb50d56fa6d0538650f61",
-      "startBlock": 9701208
+      "address": "0xa6aef6A5eA2E94CC72C158513Ae1e350EDcaAd56",
+      "transactionHash": "0xbb12bb4eb958c6e237a00e51776db7a9eef4b70a7b1f10d96c75500dda4bcf02",
+      "startBlock": 9705115
     },
     "11155111": {
       "address": "0x5df8183d0B77Bea3B72391eB0c4c873d2fdDC6f2",
@@ -49,9 +49,9 @@
   },
   "KlerosBadgeModelController": {
     "5": {
-      "address": "0x9a2d2777af64478B370A3beF58612F147fFC9b12",
-      "transactionHash": "0xdae710265ec97b4ba426a96b1237950e163bba66abce3525b1eb6523f457d2d1",
-      "startBlock": 9701211
+      "address": "0x66baE30240d7963CA8e5Bc61FA5cd4AbFf4B2F07",
+      "transactionHash": "0x66ee6ebf98633c279ba2e27604c63d3ea8796fbd39a8288a58840340bb27ca35",
+      "startBlock": 9705118
     },
     "11155111": {
       "address": "0x93549ecf683cc80C4aE73e2dbf11cb0FA51bc303",
@@ -65,9 +65,9 @@
   },
   "TpBadgeModelController": {
     "5": {
-      "address": "0x8b4b38716B0C64DA8763E5630Ad0ea3Db5961178",
-      "transactionHash": "0xb050ed71201782c88b55085bfb61d90769e9fef8562bfc833cc80f63f2dc3999",
-      "startBlock": 9701214
+      "address": "0x9F5E64f42fF843dDAd6a5468A489d8591079906A",
+      "transactionHash": "0x2fa6760fae61fdf4b2b035c80839b44be7f8b4491fb59d1214ce80389e3ef431",
+      "startBlock": 9705121
     },
     "11155111": {
       "address": "",
