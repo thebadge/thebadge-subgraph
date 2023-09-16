@@ -9,7 +9,8 @@ import {
   Evidence,
   BadgeModel,
   _ItemIDToEvidenceGroupIDToBadgeID,
-  ControllerConfig
+  ControllerConfig,
+  Badge
 } from "../generated/schema";
 import {
   KlerosBadgeModelController,
@@ -20,7 +21,8 @@ import {
 import {
   getArbitrationParamsIndex,
   getTCRRequestIndex,
-  DISPUTE_OUTCOME_NONE
+  DISPUTE_OUTCOME_NONE,
+  getTBStatus
 } from "./utils";
 import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
@@ -150,6 +152,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   klerosBadgeIdToBadgeId.save();
 
   // BadgeKlerosMetaData
+  const itemStatus = tcr.getItemInfo(itemID).getStatus();
   const badgeKlerosMetaData = new BadgeKlerosMetaData(badgeId.toString());
   badgeKlerosMetaData.badge = badgeId.toString();
   badgeKlerosMetaData.itemID = itemID;
@@ -157,6 +160,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
     _badgeModelKlerosMetaData.challengePeriodDuration
   );
   badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(1);
+  badgeKlerosMetaData.tcrStatus = getTBStatus(itemStatus);
   badgeKlerosMetaData.save();
 
   const itemIDToEvidenceGroupIDToBadgeID = _ItemIDToEvidenceGroupIDToBadgeID.load(
