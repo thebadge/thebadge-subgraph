@@ -337,10 +337,12 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     itemID.toHexString()
   );
   if (!klerosBadgeIdToBadgeId) {
-    log.error(
-      `handleStatusUpdated - klerosBadgeIdToBadgeId not found for id {}`,
-      [itemID.toHexString()]
-    );
+    if (!updatedDirectly) {
+      log.error(
+        `handleStatusUpdated - klerosBadgeIdToBadgeId not found for id {}`,
+        [itemID.toHexString()]
+      );
+    }
     return;
   }
 
