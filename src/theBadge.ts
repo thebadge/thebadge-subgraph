@@ -11,7 +11,9 @@ import {
   BadgeModel,
   Badge,
   ProtocolStatistic,
-  ProtocolConfig
+  ProtocolConfig,
+  BadgeKlerosMetaData,
+  BadgeThirdPartyMetaData
 } from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
@@ -167,7 +169,7 @@ export function handleMint(event: TransferSingle): void {
   const badgeID = event.params.id;
   const _badge = theBadgeStore.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
-  // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+  let badgeStatus = TheBadgeBadgeStatus_Requested;
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
@@ -180,6 +182,26 @@ export function handleMint(event: TransferSingle): void {
     return;
   }
 
+  const badgeThirdPartyMetadata = BadgeThirdPartyMetaData.load(
+    badgeID.toString()
+  );
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeID.toString());
+  if (!badgeThirdPartyMetadata && !badgeKlerosMetadata) {
+    log.error(
+      "handleMint - badgeThirdPartyMetadata or badgeKlerosMetadata not found. badgeId {} badgeModelId {}",
+      [badgeID.toString(), badgeModelID]
+    );
+    return;
+  }
+
+  if (badgeThirdPartyMetadata) {
+    badgeStatus = badgeThirdPartyMetadata.tcrStatus;
+  } else {
+    badgeStatus = badgeKlerosMetadata
+      ? badgeKlerosMetadata.tcrStatus
+      : badgeStatus;
+  }
+
   badgeModel.badgesMintedAmount = badgeModel.badgesMintedAmount.plus(
     BigInt.fromI32(1)
   );
@@ -190,7 +212,7 @@ export function handleMint(event: TransferSingle): void {
   const badge = new Badge(badgeId.toString());
   badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
-  badge.status = TheBadgeBadgeStatus_Requested;
+  badge.status = badgeStatus;
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
