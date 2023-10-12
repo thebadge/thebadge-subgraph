@@ -252,6 +252,7 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
 
   badgeModel.protocolFeeInBps = storeBadgeModel.getMintProtocolFee();
   badgeModel.creatorFee = storeBadgeModel.getMintCreatorFee();
+  badgeModel.paused = storeBadgeModel.getPaused();
   badgeModel.save();
 }
 
