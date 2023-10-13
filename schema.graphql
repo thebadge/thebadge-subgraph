@@ -122,9 +122,11 @@ type User @entity {
   # Note: this was enabled for optimization but it does not let us to query from the user to its badges, we need to make the property mandatory an empty
   createdBadgeModels: [BadgeModel!]! # @derivedFrom(field: "creator")
   # creator
-  isCreator: Boolean!
-  isCurator: Boolean!
   metadataUri: String
+  isCompany: Boolean!
+  isCreator: Boolean!
+  suspended: Boolean!
+  isCurator: Boolean!
   "User protocol statistics."
   statistics: UserStatistic! @derivedFrom(field: "user")
 }

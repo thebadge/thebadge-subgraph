@@ -51,29 +51,29 @@ export function loadUserStatisticsOrGetDefault(
   return userStatistics;
 }
 
-export function loadProtocolStatisticsOrGetDefault(
+export function initializeProtocolStatistics(
   contractAddress: string
 ): ProtocolStatistic {
-  // TODO this should be moved to the genesis event (which does not exists at the moment on the contract)
   let statistic = ProtocolStatistic.load(contractAddress);
 
-  if (!statistic) {
-    statistic = new ProtocolStatistic(contractAddress);
-    statistic.badgeModelsCreatedAmount = BigInt.fromI32(0);
-    statistic.badgesMintedAmount = BigInt.fromI32(0);
-    statistic.badgesChallengedAmount = BigInt.fromI32(0);
-    statistic.badgesOwnersAmount = BigInt.fromI32(0);
-    statistic.badgeCreatorsAmount = BigInt.fromI32(0);
-    statistic.badgeCuratorsAmount = BigInt.fromI32(0);
-    statistic.protocolEarnedFees = BigInt.fromI32(0);
-    statistic.totalCreatorsFees = BigInt.fromI32(0);
-    statistic.registeredUsersAmount = BigInt.fromI32(0);
-    statistic.badgeCurators = [];
-    statistic.badgeCreators = [];
-    statistic.registeredUsers = [];
-    statistic.save();
+  if (statistic) {
+    return statistic;
   }
 
+  statistic = new ProtocolStatistic(contractAddress);
+  statistic.badgeModelsCreatedAmount = BigInt.fromI32(0);
+  statistic.badgesMintedAmount = BigInt.fromI32(0);
+  statistic.badgesChallengedAmount = BigInt.fromI32(0);
+  statistic.badgesOwnersAmount = BigInt.fromI32(0);
+  statistic.badgeCreatorsAmount = BigInt.fromI32(0);
+  statistic.badgeCuratorsAmount = BigInt.fromI32(0);
+  statistic.protocolEarnedFees = BigInt.fromI32(0);
+  statistic.totalCreatorsFees = BigInt.fromI32(0);
+  statistic.registeredUsersAmount = BigInt.fromI32(0);
+  statistic.badgeCurators = [];
+  statistic.badgeCreators = [];
+  statistic.registeredUsers = [];
+  statistic.save();
   return statistic;
 }
 
@@ -253,7 +253,14 @@ export function handleMintStatisticsUpdate(
   ////  ----------------- ///
 
   // Update protocol statistics
-  const statistic = loadProtocolStatisticsOrGetDefault(protocolStatisticsId);
+  const statistic = ProtocolStatistic.load(protocolStatisticsId);
+  if (!statistic) {
+    log.error(
+        "handleMintStatisticsUpdate - ProtocolStatistic not found for contractAddress {}",
+        [protocolStatisticsId]
+    );
+    return;
+  }
 
   statistic.badgesMintedAmount = statistic.badgesMintedAmount.plus(
     BigInt.fromI32(1)

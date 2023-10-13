@@ -56,8 +56,8 @@ dataSources:
       eventHandlers:
         - event: UserRegistered(indexed address,string)
           handler: handleUserRegistered
-        - event: CreatorRegistered(indexed address)
-          handler: handleCreatorRegistered
+        - event: UpdatedUser(indexed address,string,bool,bool,bool)
+          handler: handleUserUpdated
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
@@ -106,6 +106,8 @@ dataSources:
       abis:
         - name: KlerosBadgeModelController
           file: ./abis/KlerosBadgeModelController.json
+        - name: KlerosBadgeModelControllerStore
+          file: ./abis/KlerosBadgeModelControllerStore.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadge

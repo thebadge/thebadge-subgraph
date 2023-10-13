@@ -17,7 +17,7 @@ import {
 } from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
-  loadProtocolStatisticsOrGetDefault,
+  initializeProtocolStatistics,
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
   PaymentType_CreatorMintFee,
@@ -26,7 +26,10 @@ import {
   PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
-import { UserRegistered } from "../generated/TheBadgeUsers/TheBadgeUsers";
+import {
+  UpdatedUser,
+  UserRegistered
+} from "../generated/TheBadgeUsers/TheBadgeUsers";
 import {
   BadgeModelCreated,
   BadgeModelUpdated,
@@ -44,8 +47,7 @@ export function handleContractInitialized(event: Initialize): void {
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
-  statistic.save();
+  const statistic = initializeProtocolStatistics(contractAddress);
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
@@ -63,11 +65,20 @@ export function handleUserRegistered(event: UserRegistered): void {
 
   const user = loadUserOrGetDefault(id);
   user.metadataUri = event.params.metadata;
-  user.isCreator = true; // TODO REMOVE
+  user.isCreator = true; // TODO REMOVE, this should be managed under the UpdatedUser() listener
+  // TODO IMPLEMENT
+  //user.isCompany = event.params.isCompany;
+  user.isCompany = false;
   user.save();
 
-  // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+  const statistic = ProtocolStatistic.load(contractAddress);
+  if (!statistic) {
+    log.error(
+      "handleUserRegistered - ProtocolStatistic not found for contractAddress {}",
+      [contractAddress]
+    );
+    return;
+  }
 
   statistic.registeredUsersAmount = statistic.registeredUsersAmount.plus(
     BigInt.fromI32(1)
@@ -78,31 +89,82 @@ export function handleUserRegistered(event: UserRegistered): void {
   statistic.save();
 }
 
-// event CreatorRegistered(address indexed creator);
-export function handleCreatorRegistered(event: UserRegistered): void {
+// // event CreatorRegistered(address indexed creator);
+// export function handleCreatorRegistered(event: UserRegistered): void {
+//   const contractAddress = event.address.toHexString();
+//   const id = event.params.user.toHexString();
+//
+//   const user = loadUserOrGetDefault(id);
+//   user.isCreator = true;
+//   user.save();
+//
+//   const statistic = ProtocolStatistic.load(contractAddress);
+//   if (!statistic) {
+//     log.error(
+//       "handleCreatorRegistered - ProtocolStatistic not found for contractAddress {}",
+//       [contractAddress]
+//     );
+//     return;
+//   }
+//
+//   statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+//     BigInt.fromI32(1)
+//   );
+//   const auxCreators = statistic.badgeCreators;
+//   auxCreators.push(Bytes.fromHexString(id));
+//   statistic.badgeCreators = auxCreators;
+//   statistic.save();
+//
+//   // Create stats for new creator
+//   const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
+//     contractAddress
+//   );
+//   creatorStatistic.save();
+// }
+
+// event UpdatedUser(indexed address,string,bool,bool,bool);
+export function handleUserUpdated(event: UpdatedUser): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.user.toHexString();
+
+  const statistic = ProtocolStatistic.load(contractAddress);
+  if (!statistic) {
+    // This should not happen as the statistics should be already instantiated in the initialized event of the contract
+    log.error(
+      "handleUserUpdated - ProtocolStatistic not found for contractAddress {}",
+      [contractAddress]
+    );
+    return;
+  }
+
+  const id = event.params.userAddress.toHexString();
+  const isCreator = event.params.isCreator;
+  const suspended = event.params.suspended;
+  const metadata = event.params.metadata;
 
   const user = loadUserOrGetDefault(id);
-  user.isCreator = true;
+  // If is a new creator the creator statistics should be created
+  const isNewCreator = !user.isCreator && isCreator;
+
+  user.isCreator = isCreator;
+  user.metadataUri = metadata;
+  user.suspended = suspended;
   user.save();
 
-  // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
-
-  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
-    BigInt.fromI32(1)
-  );
-  const auxCreators = statistic.badgeCreators;
-  auxCreators.push(Bytes.fromHexString(id));
-  statistic.badgeCreators = auxCreators;
-  statistic.save();
-
   // Create stats for new creator
-  const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
-    contractAddress
-  );
-  creatorStatistic.save();
+  if (isNewCreator) {
+    statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+      BigInt.fromI32(1)
+    );
+    const auxCreators = statistic.badgeCreators;
+    auxCreators.push(Bytes.fromHexString(id));
+    statistic.badgeCreators = auxCreators;
+    statistic.save();
+
+    const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
+      contractAddress
+    );
+    creatorStatistic.save();
+  }
 }
 
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
