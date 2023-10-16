@@ -53,6 +53,8 @@ dataSources:
       abis:
         - name: TheBadgeUsers
           file: ./abis/TheBadgeUsers.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
         - event: UserRegistered(indexed address,string)
           handler: handleUserRegistered

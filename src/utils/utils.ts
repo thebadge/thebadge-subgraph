@@ -16,14 +16,17 @@ import {
 
 export function loadUserOrGetDefault(id: string): User {
   let user = User.load(id);
+
   if (user) {
     return user;
   }
 
   user = new User(id);
-  user.isCreator = false;
-  user.isCurator = false;
   user.metadataUri = null;
+  user.isCompany = false;
+  user.isCreator = false;
+  user.suspended = false;
+  user.isCurator = false;
   user.createdBadgeModels = [];
   user.save();
 
@@ -256,8 +259,8 @@ export function handleMintStatisticsUpdate(
   const statistic = ProtocolStatistic.load(protocolStatisticsId);
   if (!statistic) {
     log.error(
-        "handleMintStatisticsUpdate - ProtocolStatistic not found for contractAddress {}",
-        [protocolStatisticsId]
+      "handleMintStatisticsUpdate - ProtocolStatistic not found for contractAddress {}",
+      [protocolStatisticsId]
     );
     return;
   }
