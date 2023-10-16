@@ -107,16 +107,17 @@ export function loadUserCuratorStatisticsOrGetDefault(
 ): CuratorStatistic {
   let curatorStatistics = CuratorStatistic.load(userAddress);
 
-  if (!curatorStatistics) {
-    curatorStatistics = new CuratorStatistic(userAddress);
-    curatorStatistics.userStatistic = userAddress;
-    curatorStatistics.challengesMadeAmount = BigInt.fromI32(0);
-    curatorStatistics.challengesMadeLostAmount = BigInt.fromI32(0);
-    curatorStatistics.challengesMadeWonAmount = BigInt.fromI32(0);
-    curatorStatistics.challengesMadeRejectedAmount = BigInt.fromI32(0);
-    curatorStatistics.save();
+  if (curatorStatistics) {
+    return curatorStatistics;
   }
 
+  curatorStatistics = new CuratorStatistic(userAddress);
+  curatorStatistics.userStatistic = userAddress;
+  curatorStatistics.challengesMadeAmount = BigInt.fromI32(0);
+  curatorStatistics.challengesMadeLostAmount = BigInt.fromI32(0);
+  curatorStatistics.challengesMadeWonAmount = BigInt.fromI32(0);
+  curatorStatistics.challengesMadeRejectedAmount = BigInt.fromI32(0);
+  curatorStatistics.save();
   return curatorStatistics;
 }
 
