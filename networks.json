@@ -1,14 +1,14 @@
 {
   "TheBadge": {
     "5": {
-      "address": "0x24a2cC73D3b33fa92B9dc299835ec3715FB033fB",
-      "transactionHash": "0x0aa9d9067c1d4306d119997ed8a9de1f3547dece1f2f3efe4bd040988bb189cd",
-      "startBlock": 9859870
+      "address": "0x8948cc0dcf830a345891d68d504fbfdeed9cd4ee",
+      "transactionHash": "0xfc0ec1e8df1b8e87dcb26d342e74be6440782c830422cf1d65a874020494a2b0",
+      "startBlock": 9882170
     },
     "11155111": {
-      "address": "0xE60E872Bb117AC85DBf62377557023DA9BB0e45f",
-      "transactionHash": "0x5437e67e2490fa61da79e7a18ed0f3beaa185f5281634deb8bfc1024ab1db162",
-      "startBlock": 4483352
+      "address": "0x276c3FDc29ef2c7CD621446448fadfcFA4acd1D6",
+      "transactionHash": "0xb63566b5a28c4446eb050fff114c5df89cde2859526f8d5c1bb5da846372ef2c",
+      "startBlock": 4508150
     },
     "100": {
       "address": "0xE94f357416407c801e0de23228837377169d3D2A",
@@ -17,14 +17,14 @@
   },
   "TheBadgeUsers": {
     "5": {
-      "address": "0x1e2D6FCF076726049F5554f848Fc332c052e0e5b",
-      "transactionHash": "0xae0986a884c0ff972eeb4c8009abb8fc931817b52db1d576f72750375b2cf151",
-      "startBlock": 9859868
+      "address": "0x8cf210dc04137f645dd19b029d82ef7626640303",
+      "transactionHash": "0x5a6970e772ff1b49d54da4ae496be5868c03190d0878e52f75004c57afd0993b",
+      "startBlock": 9882166
     },
     "11155111": {
-      "address": "0xcd22f18524e6ece2fec58574184c0c713446229e",
-      "transactionHash": "0x0118eba55b80eeb572b9d56db0e2483664304705d7f87798276bf8ff33844b7f",
-      "startBlock": 4483348
+      "address": "0x0b04F0a99c77892805308e5CFc92d84D2dDDD3d3",
+      "transactionHash": "0x112faaf70f2b6b986892607ed877b425a06cf1c62d2d22a872b39ab1c3ad7d35",
+      "startBlock": 4508147
     },
     "100": {
       "address": "0xE94f357416407c801e0de23228837377169d3D2A",
@@ -33,14 +33,14 @@
   },
   "TheBadgeModels": {
     "5": {
-      "address": "0x17179b1c18AB35c78C95dE4c57eDb08b6286D60a",
-      "transactionHash": "0x5452e5ba65f859135b1f62bdb856c920102937eac5013151056e3c3d2f5c8f5b",
-      "startBlock": 9859869
+      "address": "0x5ea8745702cb89d78bd9658D95F2B7Cc674DCa2E",
+      "transactionHash": "0xe0cd371e2601fd94e3c7fe669d5c341579f637cf42faf95b64a7c6f1b4181ad8",
+      "startBlock": 9882168
     },
     "11155111": {
-      "address": "0x874D3BCb8ac6fE0229F62aD2eddfe338E2500407",
-      "transactionHash": "0xaadd9f8c5b416b6b114c2ae593be50508cac103351f15ee533c2e254de996db3",
-      "startBlock": 4483350
+      "address": "0x2A01D3c85B410eC22C90A536859D1f1cf77ED02C",
+      "transactionHash": "0xcd45ebf5d32ea94fa7b8a5f258b6e30ea4a816fbc98e03096c183b11c85e1ecb",
+      "startBlock": 4508149
     },
     "100": {
       "address": "0xE94f357416407c801e0de23228837377169d3D2A",
@@ -49,14 +49,14 @@
   },
   "KlerosBadgeModelController": {
     "5": {
-      "address": "0x2eB78fEC61CD7bc9780A3E45b2b2b794CB9B568D",
-      "transactionHash": "0xa7f7b7f7b5c825700cd21f0df3aa5eeaeefd5e2985dad59eda5def60a59a9c94",
-      "startBlock": 9859874
+      "address": "0xaA00516B9809Ef25Ccfd23B94fb079aF5dba14F6",
+      "transactionHash": "0xa1beb5db18f7c9e7e279411f2ed15aecbc73f3b9826d46788eb078eec289f09c",
+      "startBlock": 9882175
     },
     "11155111": {
-      "address": "0xF07ED3196B56DE833fFe82508DbD42dC427D6Ae9",
-      "transactionHash": "0xa8fab9233cabe3442afde3b063108a460f96463d2d2892982a5af350386dd946",
-      "startBlock": 4483356
+      "address": "0x0dcAe922A6349D4E5934b7c5Fc71bA13a22FD074",
+      "transactionHash": "0x7cd711f92c60b5e1d07257b96fba1441fd39874ecda53ca9c31358b144a585b6",
+      "startBlock": 4508151
     },
     "100": {
       "address": "",
@@ -65,14 +65,14 @@
   },
   "TpBadgeModelController": {
     "5": {
-      "address": "0x3157c445bF3De73E66260203678Fef4FDf028104",
-      "transactionHash": "0x0638f529eb41d218db8f3a93bcc0e5df4bcce9c6602a666db1afac8a8ecd137b",
-      "startBlock": 9859878
+      "address": "0x37dDEF28629aFCefF4F2F54C0eab6BaFD910F69B",
+      "transactionHash": "0xe7ca30718554fc07ceae14ea17a8596046c927ab1d876a589081ad3c7d6c29e0",
+      "startBlock": 9882179
     },
     "11155111": {
-      "address": "0xd319B3dE32084B2763aa57612ba52D6d18470F66",
-      "transactionHash": "0x34711856ce90afe62db4b447ec049287d3b85745f34d76ef734a216b7f0f8ade",
-      "startBlock": 4483360
+      "address": "0x9af211eEB3010e00c078E6ae9AcE1fFF5a3Fa04B",
+      "transactionHash": "0xd76fb3706c8e0f76bbb8d67edf6f257c8a29138c65414bfa337ee687e5cad5fe",
+      "startBlock": 4508153
     },
     "100": {
       "address": "",
