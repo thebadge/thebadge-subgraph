@@ -128,7 +128,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const requestId = itemID.toHexString() + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
-  const tcr = LightGeneralizedTCR.bind(event.address);
+  const tcr = LightGeneralizedTCR.bind(tcrListAddress);
   request.type = "Registration";
   request.createdAt = event.block.timestamp;
   request.badgeKlerosMetaData = badgeId.toString();
