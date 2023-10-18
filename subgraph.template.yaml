@@ -53,11 +53,13 @@ dataSources:
       abis:
         - name: TheBadgeUsers
           file: ./abis/TheBadgeUsers.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
         - event: UserRegistered(indexed address,string)
           handler: handleUserRegistered
-        - event: CreatorRegistered(indexed address)
-          handler: handleCreatorRegistered
+        - event: UpdatedUser(indexed address,string,bool,bool,bool)
+          handler: handleUserUpdated
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
@@ -106,6 +108,8 @@ dataSources:
       abis:
         - name: KlerosBadgeModelController
           file: ./abis/KlerosBadgeModelController.json
+        - name: KlerosBadgeModelControllerStore
+          file: ./abis/KlerosBadgeModelControllerStore.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadge
@@ -121,6 +125,40 @@ dataSources:
           handler: handleNewKlerosBadgeModel
         - event: MintKlerosBadge(indexed uint256,string)
           handler: handleMintKlerosBadge
+
+  - kind: ethereum/contract
+    name: TpBadgeModelController
+    network: {{network}}
+    source:
+      address: "{{TpBadgeModelController.address}}"
+      startBlock: {{TpBadgeModelController.startBlock}}
+      abi: TpBadgeModelController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/thirdPartyBadgeModelController.ts
+      entities:
+        - BadgeModelThirdPartyMetaData
+        - BadgeThirdPartyMetaData
+      abis:
+        - name: TpBadgeModelController
+          file: ./abis/TpBadgeModelController.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TpBadgeModelControllerStore
+          file: ./abis/TpBadgeModelControllerStore.json
+      eventHandlers:
+        - event: Initialize(indexed address)
+          handler: handleContractInitialized
+        - event: NewThirdPartyBadgeModel(indexed uint256,indexed address)
+          handler: handleNewThirdPartyBadgeModel
+        - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
+          handler: handleMintThirdPartyBadge
 
 templates:
   - kind: ethereum/contract

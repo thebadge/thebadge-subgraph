@@ -11,11 +11,13 @@ import {
   BadgeModel,
   Badge,
   ProtocolStatistic,
-  ProtocolConfig
+  ProtocolConfig,
+  BadgeKlerosMetaData,
+  BadgeThirdPartyMetaData
 } from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
-  loadProtocolStatisticsOrGetDefault,
+  initializeProtocolStatistics,
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
   PaymentType_CreatorMintFee,
@@ -24,7 +26,11 @@ import {
   PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
 } from "./utils";
-import { UserRegistered } from "../generated/TheBadgeUsers/TheBadgeUsers";
+import {
+  TheBadgeUsers,
+  UpdatedUser,
+  UserRegistered
+} from "../generated/TheBadgeUsers/TheBadgeUsers";
 import {
   BadgeModelCreated,
   BadgeModelUpdated,
@@ -42,8 +48,7 @@ export function handleContractInitialized(event: Initialize): void {
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
-  statistic.save();
+  const statistic = initializeProtocolStatistics(contractAddress);
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
@@ -56,16 +61,29 @@ export function handleContractInitialized(event: Initialize): void {
 
 // event UserRegistered(address indexed creator, string metadata);
 export function handleUserRegistered(event: UserRegistered): void {
-  const contractAddress = event.address.toHexString();
   const id = event.params.user.toHexString();
+  const theBadgeUsers = TheBadgeUsers.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadgeUsers._badgeStore());
+  const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
+    "TheBadge"
+  );
 
   const user = loadUserOrGetDefault(id);
   user.metadataUri = event.params.metadata;
-  user.isCreator = true; // TODO REMOVE
+  user.isCreator = true; // TODO REMOVE, this should be managed under the UpdatedUser() listener
+  user.isCompany = theBadgeStore.getUser(event.params.user).isCompany;
   user.save();
 
-  // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
+  const statistic = ProtocolStatistic.load(
+    theBadgeContractAddress.toHexString()
+  );
+  if (!statistic) {
+    log.error(
+      "handleUserRegistered - ProtocolStatistic not found for contractAddress {}",
+      [theBadgeContractAddress.toHexString()]
+    );
+    return;
+  }
 
   statistic.registeredUsersAmount = statistic.registeredUsersAmount.plus(
     BigInt.fromI32(1)
@@ -76,38 +94,66 @@ export function handleUserRegistered(event: UserRegistered): void {
   statistic.save();
 }
 
-// event CreatorRegistered(address indexed creator);
-export function handleCreatorRegistered(event: UserRegistered): void {
+// event UpdatedUser(indexed address,string,bool,bool,bool);
+export function handleUserUpdated(event: UpdatedUser): void {
   const contractAddress = event.address.toHexString();
-  const id = event.params.user.toHexString();
+  const theBadgeUsers = TheBadgeUsers.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadgeUsers._badgeStore());
+  const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
+    "TheBadge"
+  );
+
+  const statistic = ProtocolStatistic.load(
+    theBadgeContractAddress.toHexString()
+  );
+  if (!statistic) {
+    // This should not happen as the statistics should be already instantiated in the initialized event of the contract
+    log.error(
+      "handleUserUpdated - ProtocolStatistic not found for contractAddress {}",
+      [contractAddress]
+    );
+    return;
+  }
+
+  const id = event.params.userAddress.toHexString();
+  const isCreator = event.params.isCreator;
+  const suspended = event.params.suspended;
+  const metadata = event.params.metadata;
 
   const user = loadUserOrGetDefault(id);
-  user.isCreator = true;
+  // If is a new creator the creator statistics should be created
+  const isNewCreator = !user.isCreator && isCreator;
+
+  user.isCreator = isCreator;
+  user.metadataUri = metadata;
+  user.suspended = suspended;
   user.save();
 
-  // Register new statistic using the contractAddress
-  const statistic = loadProtocolStatisticsOrGetDefault(contractAddress);
-
-  statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
-    BigInt.fromI32(1)
-  );
-  const auxCreators = statistic.badgeCreators;
-  auxCreators.push(Bytes.fromHexString(id));
-  statistic.badgeCreators = auxCreators;
-  statistic.save();
-
   // Create stats for new creator
-  const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
-    contractAddress
-  );
-  creatorStatistic.save();
+  if (isNewCreator) {
+    statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+      BigInt.fromI32(1)
+    );
+    const auxCreators = statistic.badgeCreators;
+    auxCreators.push(Bytes.fromHexString(id));
+    statistic.badgeCreators = auxCreators;
+    statistic.save();
+
+    const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
+      contractAddress
+    );
+    creatorStatistic.save();
+  }
 }
 
 // event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
-  const theBadge = TheBadge.bind(event.address);
-  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
+  const theBadgeModels = TheBadgeModels.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
+  const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
+    "TheBadge"
+  );
   const _badgeModel = theBadgeStore.badgeModels(badgeModelId);
   const creatorAddress = _badgeModel.getCreator().toHexString();
 
@@ -150,7 +196,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   creatorStatistics.save();
 
   const protocolStatistics = ProtocolStatistic.load(
-    event.address.toHexString()
+    theBadgeContractAddress.toHexString()
   );
   if (protocolStatistics) {
     protocolStatistics.badgeModelsCreatedAmount = protocolStatistics.badgeModelsCreatedAmount.plus(
@@ -167,7 +213,7 @@ export function handleMint(event: TransferSingle): void {
   const badgeID = event.params.id;
   const _badge = theBadgeStore.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
-  // const badgeModel = theBadge.badgeModel(_badge.getBadgeModelId());
+  let badgeStatus = TheBadgeBadgeStatus_Requested;
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
@@ -180,6 +226,26 @@ export function handleMint(event: TransferSingle): void {
     return;
   }
 
+  const badgeThirdPartyMetadata = BadgeThirdPartyMetaData.load(
+    badgeID.toString()
+  );
+  const badgeKlerosMetadata = BadgeKlerosMetaData.load(badgeID.toString());
+  if (!badgeThirdPartyMetadata && !badgeKlerosMetadata) {
+    log.error(
+      "handleMint - badgeThirdPartyMetadata or badgeKlerosMetadata not found. badgeId {} badgeModelId {}",
+      [badgeID.toString(), badgeModelID]
+    );
+    return;
+  }
+
+  if (badgeThirdPartyMetadata) {
+    badgeStatus = badgeThirdPartyMetadata.tcrStatus;
+  } else {
+    badgeStatus = badgeKlerosMetadata
+      ? badgeKlerosMetadata.tcrStatus
+      : badgeStatus;
+  }
+
   badgeModel.badgesMintedAmount = badgeModel.badgesMintedAmount.plus(
     BigInt.fromI32(1)
   );
@@ -190,7 +256,7 @@ export function handleMint(event: TransferSingle): void {
   const badge = new Badge(badgeId.toString());
   badge.badgeModel = badgeModelID;
   badge.account = event.params.to.toHexString();
-  badge.status = TheBadgeBadgeStatus_Requested;
+  badge.status = badgeStatus;
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
@@ -215,9 +281,7 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   const badgeModelID = event.params.badgeModelId.toString();
   const theBadgeModels = TheBadgeModels.bind(event.address);
   const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
-  const newAmountInBps = theBadgeStore
-    .badgeModels(event.params.badgeModelId)
-    .getMintProtocolFee();
+  const storeBadgeModel = theBadgeStore.badgeModels(event.params.badgeModelId);
 
   // Badge model
   const badgeModel = BadgeModel.load(badgeModelID);
@@ -230,7 +294,9 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
     return;
   }
 
-  badgeModel.protocolFeeInBps = newAmountInBps;
+  badgeModel.protocolFeeInBps = storeBadgeModel.getMintProtocolFee();
+  badgeModel.creatorFee = storeBadgeModel.getMintCreatorFee();
+  badgeModel.paused = storeBadgeModel.getPaused();
   badgeModel.save();
 }
 

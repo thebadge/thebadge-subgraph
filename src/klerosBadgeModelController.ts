@@ -9,7 +9,7 @@ import {
   Evidence,
   BadgeModel,
   _ItemIDToEvidenceGroupIDToBadgeID,
-  ControllerConfig
+  ControllerConfig,
 } from "../generated/schema";
 import {
   KlerosBadgeModelController,
@@ -20,10 +20,12 @@ import {
 import {
   getArbitrationParamsIndex,
   getTCRRequestIndex,
-  DISPUTE_OUTCOME_NONE
+  DISPUTE_OUTCOME_NONE,
+  getTBStatus
 } from "./utils";
 import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
+import { KlerosBadgeModelControllerStore } from "../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
 
 // event Initialize(address indexed admin,address tcrFactory);
 export function handleContractInitialized(event: Initialize): void {
@@ -34,12 +36,15 @@ export function handleContractInitialized(event: Initialize): void {
   const admin = event.params.admin;
   const tcrFactory = event.params.tcrFactory;
 
+  const klerosBadgeModelControllerStore = KlerosBadgeModelControllerStore.bind(
+      klerosBadgeModelController.klerosBadgeModelControllerStore()
+  );
   const controllerConfig = new ControllerConfig(contractAddress);
   controllerConfig.verifyUserProtocolFee = klerosBadgeModelController.getVerifyUserProtocolFee();
   controllerConfig.tcrFactory = tcrFactory;
   controllerConfig.contractAdmin = admin;
   controllerConfig.controllerName = "kleros";
-  controllerConfig.arbitrator = klerosBadgeModelController.arbitrator();
+  controllerConfig.arbitrator = klerosBadgeModelControllerStore.arbitrator();
   controllerConfig.generalProtocolConfig = klerosBadgeModelController
     .theBadgeModels()
     .toHexString();
@@ -108,7 +113,12 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
     return;
   }
 
-  const itemID = klerosBadgeModelController.klerosBadges(badgeId).getItemID();
+  const klerosBadgeModelControllerStore = KlerosBadgeModelControllerStore.bind(
+    klerosBadgeModelController.klerosBadgeModelControllerStore()
+  );
+  const itemID = klerosBadgeModelControllerStore
+    .klerosBadges(badgeId)
+    .getItemID();
 
   // request
   const requestIndex = getTCRRequestIndex(
@@ -118,13 +128,13 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const requestId = itemID.toHexString() + "-" + requestIndex.toString();
   const request = new KlerosBadgeRequest(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
-  const tcr = LightGeneralizedTCR.bind(event.address);
+  const tcr = LightGeneralizedTCR.bind(tcrListAddress);
   request.type = "Registration";
   request.createdAt = event.block.timestamp;
   request.badgeKlerosMetaData = badgeId.toString();
   request.requestIndex = requestIndex;
   request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
-  request.requester = klerosBadgeModelController
+  request.requester = klerosBadgeModelControllerStore
     .klerosBadges(badgeId)
     .getCallee();
   request.numberOfEvidences = BigInt.fromI32(1);
@@ -150,6 +160,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   klerosBadgeIdToBadgeId.save();
 
   // BadgeKlerosMetaData
+  const itemStatus = tcr.getItemInfo(itemID).getStatus();
   const badgeKlerosMetaData = new BadgeKlerosMetaData(badgeId.toString());
   badgeKlerosMetaData.badge = badgeId.toString();
   badgeKlerosMetaData.itemID = itemID;
@@ -157,6 +168,7 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
     _badgeModelKlerosMetaData.challengePeriodDuration
   );
   badgeKlerosMetaData.numberOfRequests = BigInt.fromI32(1);
+  badgeKlerosMetaData.tcrStatus = getTBStatus(itemStatus);
   badgeKlerosMetaData.save();
 
   const itemIDToEvidenceGroupIDToBadgeID = _ItemIDToEvidenceGroupIDToBadgeID.load(

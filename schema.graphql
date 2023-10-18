@@ -29,6 +29,7 @@ type BadgeModel @entity {
   badgesMintedAmount: BigInt!
   createdAt: BigInt!
   badgeModelKleros: BadgeModelKlerosMetaData
+  badgeModelThirdParty: BadgeModelThirdPartyMetaData
   contractAddress: Bytes!
   mintedBadges: [Badge!]! @derivedFrom(field: "badgeModel")
   version: String!
@@ -40,6 +41,17 @@ type BadgeModelKlerosMetaData @entity {
   badgeModel: BadgeModel!
   registrationUri: String!
   removalUri: String!
+  tcrList: Bytes!
+  governor: Bytes!
+  arbitrator: Bytes!
+  admin: Bytes!
+  submissionBaseDeposit: BigInt!
+  challengePeriodDuration: BigInt!
+}
+
+type BadgeModelThirdPartyMetaData @entity {
+  id: ID!
+  badgeModel: BadgeModel!
   tcrList: Bytes!
   governor: Bytes!
   arbitrator: Bytes!
@@ -60,6 +72,7 @@ type Badge @entity {
   createdAt: BigInt!
   createdTxHash: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
+  badgeThirdPartyMetaData: BadgeThirdPartyMetaData @derivedFrom(field: "badge")
   networkName: String! # The id of the network in which this badgeModel has been created
 }
 
@@ -67,11 +80,20 @@ type Badge @entity {
 type BadgeKlerosMetaData @entity {
   id: ID! # the same as ID as the BADGE
   badge: Badge!
+  tcrStatus: BadgeStatus!
   itemID: Bytes!
   reviewDueDate: BigInt! # The timestamp when the review period ends. if zero, it does not have review period
   "The total number of requests for this item."
   numberOfRequests: BigInt!
   requests: [KlerosBadgeRequest!]! @derivedFrom(field: "badgeKlerosMetaData")
+}
+
+## Equivalent to BadgeKlerosMetaData
+type BadgeThirdPartyMetaData @entity {
+  id: ID! # the same as ID as the BADGE
+  badge: Badge!
+  tcrStatus: BadgeStatus!
+  itemID: Bytes!
 }
 
 type _KlerosBadgeIdToBadgeId @entity {
@@ -100,9 +122,11 @@ type User @entity {
   # Note: this was enabled for optimization but it does not let us to query from the user to its badges, we need to make the property mandatory an empty
   createdBadgeModels: [BadgeModel!]! # @derivedFrom(field: "creator")
   # creator
-  isCreator: Boolean!
-  isCurator: Boolean!
   metadataUri: String
+  isCompany: Boolean!
+  isCreator: Boolean!
+  suspended: Boolean!
+  isCurator: Boolean!
   "User protocol statistics."
   statistics: UserStatistic! @derivedFrom(field: "user")
 }

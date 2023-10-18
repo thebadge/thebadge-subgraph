@@ -337,10 +337,12 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
     itemID.toHexString()
   );
   if (!klerosBadgeIdToBadgeId) {
-    log.error(
-      `handleStatusUpdated - klerosBadgeIdToBadgeId not found for id {}`,
-      [itemID.toHexString()]
-    );
+    if (!updatedDirectly) {
+      log.error(
+        `handleStatusUpdated - klerosBadgeIdToBadgeId not found for id {}`,
+        [itemID.toHexString()]
+      );
+    }
     return;
   }
 
@@ -394,6 +396,7 @@ export function handleStatusUpdated(event: ItemStatusChange): void {
   // If it was added or removed directly, that means that the request is still open
   // If the request has no disputeID, that means that's not a dispute open
   if (!updatedDirectly && request.disputeID) {
+    // TODO: Bug on challengerAddress because we use the proxy
     updateUsersChallengesStatistics(badge.account, challengerAddress, ruling);
   }
 }

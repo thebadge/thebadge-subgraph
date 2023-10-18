@@ -55,6 +55,16 @@ async function main() {
     startBlock: KlerosBadgeModelControllerStartBlock
   };
 
+  const {
+    address: ThirdPartyBadgeModelControllerAdd,
+    startBlock: ThirdPartyBadgeModelControllerStartBlock
+  } = deployments["TpBadgeModelController"][chainId];
+  templateData["TpBadgeModelController"] = {
+    address: ThirdPartyBadgeModelControllerAdd,
+    addressLowerCase: ThirdPartyBadgeModelControllerAdd.toLowerCase(),
+    startBlock: ThirdPartyBadgeModelControllerStartBlock
+  };
+
   for (const templatedFileDesc of [["subgraph", "yaml"]]) {
     const template = fs
       .readFileSync(`${templatedFileDesc[0]}.template.${templatedFileDesc[1]}`)
