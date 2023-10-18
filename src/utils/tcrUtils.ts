@@ -12,10 +12,10 @@ export const DISPUTE_OUTCOME_REJECT = "Reject";
 
 // DisputeOutcome "enum" (we cannot use enums in assemblyScript x2 :@!!)
 const TheBadgeBadgeStatus_Absent = "Absent";
-const TheBadgeBadgeStatus_Requested = "Requested";
-export const TheBadgeBadgeStatus_Challenged = "Challenged";
+export const TheBadgeBadgeStatus_Requested = "Requested";
 const TheBadgeBadgeStatus_Approved = "Approved";
-const TheBadgeBadgeStatus_RemovalRequested = "RemovalRequested";
+export const TheBadgeBadgeStatus_Challenged = "Challenged";
+export const TheBadgeBadgeStatus_RemovalRequested = "RequestRemoval";
 //
 
 // DisputeOutcome "enum" (we cannot use enums in assemblyScript x3 :@!!!)
@@ -24,6 +24,12 @@ const TCRItemStatusCode_REGISTERED_CODE = 1;
 const TCRItemStatusCode_REGISTRATION_REQUESTED_CODE = 2;
 export const TCRItemStatusCode_CLEARING_REQUESTED_CODE = 3;
 //
+
+// Payment types
+export const PaymentType_ProtocolFee = 0;
+export const PaymentType_CreatorMintFee = 1;
+export const PaymentType_UserRegistrationFee = 2;
+export const PaymentType_UserVerificationFee = 3;
 
 export function getTCRRequestIndex(tcrAddress: Address, itemId: Bytes): BigInt {
   const tcrList = LightGeneralizedTCR.bind(tcrAddress);

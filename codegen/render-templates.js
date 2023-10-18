@@ -3,34 +3,66 @@ const mustache = require("mustache");
 
 const chainNameToChainId = {
   goerli: 5,
+  sepolia: 11155111,
   xdai: 100,
-  gnosis: 100, // Added to avoid bugs
+  gnosis: 100 // Added to avoid bugs
 };
 
 async function main() {
   const networkName = process.argv[2];
   const chainId = chainNameToChainId[networkName];
   const deployments = JSON.parse(fs.readFileSync("networks.json", "utf8"));
+  const templateData = {
+    network: networkName
+  };
   const {
     address: theBadgeContractAdd,
     startBlock: theBadgeContractAddStartBlock
   } = deployments["TheBadge"][chainId];
-  const {
-    address: klerosControllerAdd,
-    startBlock: klerosControllerStartBlock
-  } = deployments["KlerosController"][chainId];
-  const templateData = {
-    network: networkName
-  };
   templateData["TheBadge"] = {
     address: theBadgeContractAdd,
     addressLowerCase: theBadgeContractAdd.toLowerCase(),
     startBlock: theBadgeContractAddStartBlock
   };
-  templateData["KlerosController"] = {
-    address: klerosControllerAdd,
-    addressLowerCase: klerosControllerAdd.toLowerCase(),
-    startBlock: klerosControllerStartBlock
+
+  const {
+    address: theBadgeUsersContractAdd,
+    startBlock: theBadgeUsersContractAddStartBlock
+  } = deployments["TheBadgeUsers"][chainId];
+  templateData["TheBadgeUsers"] = {
+    address: theBadgeUsersContractAdd,
+    addressLowerCase: theBadgeUsersContractAdd.toLowerCase(),
+    startBlock: theBadgeUsersContractAddStartBlock
+  };
+
+  const {
+    address: theBadgeModelsContractAdd,
+    startBlock: theBadgeModelsContractAddStartBlock
+  } = deployments["TheBadgeModels"][chainId];
+  templateData["TheBadgeModels"] = {
+    address: theBadgeModelsContractAdd,
+    addressLowerCase: theBadgeModelsContractAdd.toLowerCase(),
+    startBlock: theBadgeModelsContractAddStartBlock
+  };
+
+  const {
+    address: KlerosBadgeModelControllerAdd,
+    startBlock: KlerosBadgeModelControllerStartBlock
+  } = deployments["KlerosBadgeModelController"][chainId];
+  templateData["KlerosBadgeModelController"] = {
+    address: KlerosBadgeModelControllerAdd,
+    addressLowerCase: KlerosBadgeModelControllerAdd.toLowerCase(),
+    startBlock: KlerosBadgeModelControllerStartBlock
+  };
+
+  const {
+    address: ThirdPartyBadgeModelControllerAdd,
+    startBlock: ThirdPartyBadgeModelControllerStartBlock
+  } = deployments["TpBadgeModelController"][chainId];
+  templateData["TpBadgeModelController"] = {
+    address: ThirdPartyBadgeModelControllerAdd,
+    addressLowerCase: ThirdPartyBadgeModelControllerAdd.toLowerCase(),
+    startBlock: ThirdPartyBadgeModelControllerStartBlock
   };
 
   for (const templatedFileDesc of [["subgraph", "yaml"]]) {

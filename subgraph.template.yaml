@@ -11,8 +11,6 @@ dataSources:
     network: {{network}}
     source:
       address: "{{TheBadge.address}}"
-      # Block to speed-up the development, it should be commented on prod
-      # startBlock: 9348882
       startBlock: {{TheBadge.startBlock}}
       abi: TheBadge
     mapping:
@@ -25,44 +23,142 @@ dataSources:
       abis:
         - name: TheBadge
           file: ./abis/TheBadge.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
-        - event: CreatorRegistered(indexed address,string)
-          handler: handleCreatorRegistered
-        - event: BadgeModelCreated(indexed uint256,string)
-          handler: handleBadgeModelCreated
+        - event: Initialize(indexed address)
+          handler: handleContractInitialized
+        - event: ProtocolSettingsUpdated()
+          handler: handleProtocolSettingsUpdated
+        - event: PaymentMade(indexed address,address,uint256,indexed uint8,indexed uint256,string)
+          handler: handlePaymentMade
         - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleMint
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
-    name: KlerosController
+    name: TheBadgeUsers
     network: {{network}}
     source:
-      address: "{{KlerosController.address}}"
-      # Block to speed-up the development, it should be commented on prod
-      #startBlock: 9348882
-      startBlock: {{KlerosController.startBlock}}
-      abi: KlerosController
+      address: "{{TheBadgeUsers.address}}"
+      startBlock: {{TheBadgeUsers.startBlock}}
+      abi: TheBadgeUsers
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/kleros.ts
+      entities:
+        - User
+        - BadgeModel
+      abis:
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
+      eventHandlers:
+        - event: UserRegistered(indexed address,string)
+          handler: handleUserRegistered
+        - event: UpdatedUser(indexed address,string,bool,bool,bool)
+          handler: handleUserUpdated
+      file: ./src/theBadge.ts
+
+  - kind: ethereum/contract
+    name: TheBadgeModels
+    network: {{network}}
+    source:
+      address: "{{TheBadgeModels.address}}"
+      startBlock: {{TheBadgeModels.startBlock}}
+      abi: TheBadgeModels
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - User
+        - BadgeModel
+      abis:
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
+      eventHandlers:
+        - event: BadgeModelCreated(indexed uint256,string)
+          handler: handleBadgeModelCreated
+        - event: BadgeModelUpdated(indexed uint256)
+          handler: handleBadgeModelUpdated
+      file: ./src/theBadge.ts
+
+  - kind: ethereum/contract
+    name: KlerosBadgeModelController
+    network: {{network}}
+    source:
+      address: "{{KlerosBadgeModelController.address}}"
+      startBlock: {{KlerosBadgeModelController.startBlock}}
+      abi: KlerosBadgeModelController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/klerosBadgeModelController.ts
       entities:
         - BadgeModelKlerosMetaData
         - BadgeKlerosMetaData
       abis:
-        - name: KlerosController
-          file: ./abis/KlerosController.json
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
+        - name: KlerosBadgeModelControllerStore
+          file: ./abis/KlerosBadgeModelControllerStore.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadge
           file: ./abis/TheBadge.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
-        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string)
+        - event: Initialize(indexed address,indexed address)
+          handler: handleContractInitialized
+        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string,string)
           handler: handleNewKlerosBadgeModel
-        - event: mintKlerosBadge(indexed uint256,string)
+        - event: MintKlerosBadge(indexed uint256,string)
           handler: handleMintKlerosBadge
+
+  - kind: ethereum/contract
+    name: TpBadgeModelController
+    network: {{network}}
+    source:
+      address: "{{TpBadgeModelController.address}}"
+      startBlock: {{TpBadgeModelController.startBlock}}
+      abi: TpBadgeModelController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/thirdPartyBadgeModelController.ts
+      entities:
+        - BadgeModelThirdPartyMetaData
+        - BadgeThirdPartyMetaData
+      abis:
+        - name: TpBadgeModelController
+          file: ./abis/TpBadgeModelController.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TpBadgeModelControllerStore
+          file: ./abis/TpBadgeModelControllerStore.json
+      eventHandlers:
+        - event: Initialize(indexed address)
+          handler: handleContractInitialized
+        - event: NewThirdPartyBadgeModel(indexed uint256,indexed address)
+          handler: handleNewThirdPartyBadgeModel
+        - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
+          handler: handleMintThirdPartyBadge
 
 templates:
   - kind: ethereum/contract
@@ -79,8 +175,8 @@ templates:
         - Evidence
         - BadgeModelKlerosMetaData
       abis:
-        - name: KlerosController
-          file: ./abis/KlerosController.json
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
       eventHandlers:
