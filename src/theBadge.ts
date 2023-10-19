@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log, dataSource } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
 import {
   Initialize,
   PaymentMade,
@@ -33,6 +33,7 @@ import {
 } from "../generated/TheBadgeUsers/TheBadgeUsers";
 import {
   BadgeModelCreated,
+  BadgeModelSuspended,
   BadgeModelUpdated,
   TheBadgeModels
 } from "../generated/TheBadgeModels/TheBadgeModels";
@@ -276,7 +277,7 @@ export function handleMint(event: TransferSingle): void {
   );
 }
 
-//  BadgeModelUpdated(uint256 indexed badgeModelId);
+// BadgeModelUpdated(uint256 indexed badgeModelId);
 export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   const badgeModelID = event.params.badgeModelId.toString();
   const theBadgeModels = TheBadgeModels.bind(event.address);
@@ -298,6 +299,27 @@ export function handleBadgeModelUpdated(event: BadgeModelUpdated): void {
   badgeModel.creatorFee = storeBadgeModel.getMintCreatorFee();
   badgeModel.paused = storeBadgeModel.getPaused();
   badgeModel.save();
+}
+
+// BadgeModelSuspended(uint256 indexed badgeModelId, bool suspended);
+export function handleBadgeModelSuspended(event: BadgeModelSuspended): void {
+  const badgeModelID = event.params.badgeModelId.toString();
+  const suspended = event.params.suspended;
+
+  // Badge model
+  const badgeModel = BadgeModel.load(badgeModelID);
+
+  if (!badgeModel) {
+    log.error(
+      "handleBadgeModelUpdated - BadgeModel not found. badgeModelId:  {}",
+      [badgeModelID]
+    );
+    return;
+  }
+
+  if (suspended) {
+    store.remove("BadgeModel", badgeModelID);
+  }
 }
 
 // ProtocolSettingsUpdated();
