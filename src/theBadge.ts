@@ -268,11 +268,12 @@ export function handleMint(event: TransferSingle): void {
   const user = loadUserOrGetDefault(event.params.to.toHexString());
 
   // Updates statistics
+  const contractAddress = event.address.toHexString();
   handleMintStatisticsUpdate(
     user.id,
     badgeModel.creator,
     badgeModel.id,
-    badgeModel.contractAddress.toHexString()
+    contractAddress
   );
 }
 
