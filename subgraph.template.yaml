@@ -88,6 +88,8 @@ dataSources:
           handler: handleBadgeModelCreated
         - event: BadgeModelUpdated(indexed uint256)
           handler: handleBadgeModelUpdated
+        - event: BadgeModelSuspended(indexed uint256,bool)
+          handler: handleBadgeModelSuspended
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
