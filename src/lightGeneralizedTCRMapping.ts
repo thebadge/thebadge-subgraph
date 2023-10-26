@@ -23,7 +23,6 @@ import {
 } from "../generated/schema";
 import {
   DISPUTE_OUTCOME_NONE,
-  findAddressInArray,
   getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
@@ -33,6 +32,8 @@ import {
   TheBadgeBadgeStatus_Challenged,
   updateUsersChallengesStatistics
 } from "./utils";
+import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
+import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.
@@ -275,14 +276,20 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
+  const theBadgeModels = TheBadgeModels.bind(Address.fromBytes(badgeModel.contractAddress));
+  const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
+  const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
+    "TheBadge"
+  );
+
   // Updates the protocol statistics
   const statistic = ProtocolStatistic.load(
-    badgeModel.contractAddress.toHexString()
+    theBadgeContractAddress.toHexString()
   );
   if (!statistic) {
     log.error(
       `handleRequestChallenged - statistic with address: {} not found`,
-      [badgeModel.contractAddress.toHexString()]
+      [theBadgeContractAddress.toHexString()]
     );
     return;
   }
@@ -291,12 +298,8 @@ export function handleRequestChallenged(event: Dispute): void {
     BigInt.fromI32(1)
   );
 
-  const userCuratorFound = findAddressInArray(
-    statistic.badgeCurators,
-    userAddress
-  );
-
-  if (!userCuratorFound) {
+  // New curator registered
+  if (!statistic.badgeCurators.includes(Bytes.fromHexString(userAddress))) {
     statistic.badgeCuratorsAmount = statistic.badgeCuratorsAmount.plus(
       BigInt.fromI32(1)
     );

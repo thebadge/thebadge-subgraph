@@ -122,28 +122,28 @@ export function handleUserUpdated(event: UpdatedUser): void {
   const metadata = event.params.metadata;
 
   const user = loadUserOrGetDefault(id);
-  // If is a new creator the creator statistics should be created
-  const isNewCreator = !user.isCreator && isCreator;
 
   user.isCreator = isCreator;
   user.metadataUri = metadata;
   user.suspended = suspended;
   user.save();
 
-  // Create stats for new creator
-  if (isNewCreator) {
-    statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
-      BigInt.fromI32(1)
-    );
-    const auxCreators = statistic.badgeCreators;
-    auxCreators.push(Bytes.fromHexString(id));
-    statistic.badgeCreators = auxCreators;
-    statistic.save();
+  if (isCreator) {
+    // New creator registered
+    if (!statistic.badgeCreators.includes(Bytes.fromHexString(id))) {
+      statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
+        BigInt.fromI32(1)
+      );
+      const auxCreators = statistic.badgeCreators;
+      auxCreators.push(Bytes.fromHexString(id));
+      statistic.badgeCreators = auxCreators;
+      statistic.save();
 
-    const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
-      contractAddress
-    );
-    creatorStatistic.save();
+      const creatorStatistic = loadUserCreatorStatisticsOrGetDefault(
+        contractAddress
+      );
+      creatorStatistic.save();
+    }
   }
 }
 

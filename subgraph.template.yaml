@@ -181,6 +181,10 @@ templates:
           file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
         - event: RequestSubmitted(indexed bytes32,uint256)
           handler: handleRequestSubmitted
