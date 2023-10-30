@@ -84,7 +84,7 @@ dataSources:
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
       eventHandlers:
-        - event: BadgeModelCreated(indexed uint256,string)
+        - event: BadgeModelCreated(indexed uint256)
           handler: handleBadgeModelCreated
         - event: BadgeModelUpdated(indexed uint256)
           handler: handleBadgeModelUpdated

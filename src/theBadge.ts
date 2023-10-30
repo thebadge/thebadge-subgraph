@@ -170,7 +170,7 @@ export function handleUserUpdated(event: UpdatedUser): void {
   }
 }
 
-// event BadgeModelCreated(uint256 indexed badgeModelId, string metadata);
+// event BadgeModelCreated(uint256 indexed badgeModelId);
 export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const badgeModelId = event.params.badgeModelId;
   const theBadgeModels = TheBadgeModels.bind(event.address);
@@ -193,7 +193,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
 
   // Badge model
   const badgeModel = new BadgeModel(badgeModelId.toString());
-  badgeModel.uri = event.params.metadata;
+  badgeModel.uri = _badgeModel.getMetadata();
   badgeModel.controllerType = _badgeModel.getControllerName();
   badgeModel.validFor = _badgeModel.getValidFor();
   badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
