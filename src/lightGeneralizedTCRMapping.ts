@@ -27,6 +27,7 @@ import {
   getFinalRuling,
   getTBStatus,
   loadUserCuratorStatisticsOrGetDefault,
+  loadUserOrGetDefault,
   loadUserStatisticsOrGetDefault,
   TCRItemStatusCode_CLEARING_REQUESTED_CODE,
   TheBadgeBadgeStatus_Challenged,
@@ -241,7 +242,8 @@ export function handleRequestChallenged(event: Dispute): void {
 
   // Marks the user as curator
   const userAddress = event.transaction.from.toHexString();
-  const user = User.load(userAddress);
+  const user = loadUserOrGetDefault(userAddress);
+  user.save()
 
   if (!user) {
     log.error(`handleRequestChallenged - user with address: {} not found`, [
@@ -276,7 +278,9 @@ export function handleRequestChallenged(event: Dispute): void {
     return;
   }
 
-  const theBadgeModels = TheBadgeModels.bind(Address.fromBytes(badgeModel.contractAddress));
+  const theBadgeModels = TheBadgeModels.bind(
+    Address.fromBytes(badgeModel.contractAddress)
+  );
   const theBadgeStore = TheBadgeStore.bind(theBadgeModels._badgeStore());
   const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
     "TheBadge"
