@@ -13,13 +13,15 @@ import {
   ProtocolStatistic,
   ProtocolConfig,
   BadgeKlerosMetaData,
-  BadgeThirdPartyMetaData
+  BadgeThirdPartyMetaData,
+  User
 } from "../generated/schema";
 import {
   handleMintStatisticsUpdate,
   initializeProtocolStatistics,
   loadUserCreatorStatisticsOrGetDefault,
   loadUserOrGetDefault,
+  loadUserStatisticsOrGetDefault,
   PaymentType_CreatorMintFee,
   PaymentType_ProtocolFee,
   PaymentType_UserRegistrationFee,
@@ -42,14 +44,14 @@ import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
+  const admin = event.params.admin;
   const theBadge = TheBadge.bind(event.address);
   const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
-  const admin = event.params.admin;
-
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
   const statistic = initializeProtocolStatistics(contractAddress);
+  statistic.save();
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
@@ -69,12 +71,25 @@ export function handleUserRegistered(event: UserRegistered): void {
     "TheBadge"
   );
 
-  const user = loadUserOrGetDefault(id);
-  user.metadataUri = event.params.metadata;
+  let user = User.load(id);
+
+  if (!user) {
+    user = new User(id);
+    user.metadataUri = event.params.metadata;
+    user.isCompany = theBadgeStore.getUser(event.params.user).isCompany;
+    user.suspended = false;
+    user.isCurator = false;
+    user.createdBadgeModels = [];
+  }
+
   user.isCreator = true; // TODO REMOVE, this should be managed under the UpdatedUser() listener
-  user.isCompany = theBadgeStore.getUser(event.params.user).isCompany;
   user.save();
 
+  // Setup statistics for the user
+  const userStatistics = loadUserStatisticsOrGetDefault(id);
+  userStatistics.save();
+
+  // Add a new registered user to the protocol statistics
   const statistic = ProtocolStatistic.load(
     theBadgeContractAddress.toHexString()
   );
@@ -121,7 +136,15 @@ export function handleUserUpdated(event: UpdatedUser): void {
   const suspended = event.params.suspended;
   const metadata = event.params.metadata;
 
-  const user = loadUserOrGetDefault(id);
+  const user = User.load(id);
+
+  if (!user) {
+    log.error(
+      "handleUserUpdated - User with address {} not found, please check the contract as it could be an error there",
+      [id]
+    );
+    return;
+  }
 
   user.isCreator = isCreator;
   user.metadataUri = metadata;
@@ -158,10 +181,15 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   const _badgeModel = theBadgeStore.badgeModels(badgeModelId);
   const creatorAddress = _badgeModel.getCreator().toHexString();
 
-  // Note: ideally the user should be already created and we should throw an exception here it's not found
-  // But on the smart contract there is no restriction about registered users, so it could happen that an user that was not registered
-  // Emits the BadgeModelCreated before the CreatorRegistered, therefore we need to create the user entity here
-  const user = loadUserOrGetDefault(creatorAddress);
+  const user = User.load(creatorAddress);
+
+  if (!user) {
+    log.error(
+      "handleBadgeModelCreated - User with address {} not found, please check the contract as it could be an error there",
+      [creatorAddress]
+    );
+    return;
+  }
 
   // Badge model
   const badgeModel = new BadgeModel(badgeModelId.toString());
