@@ -1,10 +1,10 @@
 import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
 import {
+  BadgeRequested,
   Initialize,
   PaymentMade,
   ProtocolSettingsUpdated,
-  TheBadge,
-  TransferSingle
+  TheBadge
 } from "../generated/TheBadge/TheBadge";
 
 import {
@@ -235,11 +235,14 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   }
 }
 
-// event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value);
-export function handleMint(event: TransferSingle): void {
+// event BadgeRequested(uint256 indexed badgeModelID, uint256 indexed badgeID, address indexed recipient, address controller, uint256 controllerBadgeId);
+export function handleMint(event: BadgeRequested): void {
+  const contractAddress = event.address.toHexString();
   const theBadge = TheBadge.bind(event.address);
+  const badgeID = event.params.badgeID;
+  const badgeRecipient = event.params.recipient.toHexString();
   const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
-  const badgeID = event.params.id;
+
   const _badge = theBadgeStore.badges(badgeID);
   const badgeModelID = _badge.getBadgeModelId().toString();
   let badgeStatus = TheBadgeBadgeStatus_Requested;
@@ -281,10 +284,10 @@ export function handleMint(event: TransferSingle): void {
   badgeModel.save();
 
   // badge
-  const badgeId = event.params.id;
+  const badgeId = badgeID;
   const badge = new Badge(badgeId.toString());
   badge.badgeModel = badgeModelID;
-  badge.account = event.params.to.toHexString();
+  badge.account = badgeRecipient;
   badge.status = badgeStatus;
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
@@ -294,10 +297,10 @@ export function handleMint(event: TransferSingle): void {
   badge.save();
 
   // Loads or creates an user if does not exists
-  const user = loadUserOrGetDefault(event.params.to.toHexString());
+  const user = loadUserOrGetDefault(badgeRecipient);
 
   // Updates statistics
-  const contractAddress = event.address.toHexString();
+
   handleMintStatisticsUpdate(
     user.id,
     badgeModel.creator,
