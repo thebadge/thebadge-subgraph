@@ -84,10 +84,12 @@ dataSources:
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
       eventHandlers:
-        - event: BadgeModelCreated(indexed uint256,string)
+        - event: BadgeModelCreated(indexed uint256)
           handler: handleBadgeModelCreated
         - event: BadgeModelUpdated(indexed uint256)
           handler: handleBadgeModelUpdated
+        - event: BadgeModelSuspended(indexed uint256,bool)
+          handler: handleBadgeModelSuspended
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
@@ -179,6 +181,10 @@ templates:
           file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
       eventHandlers:
         - event: RequestSubmitted(indexed bytes32,uint256)
           handler: handleRequestSubmitted
