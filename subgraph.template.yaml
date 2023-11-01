@@ -33,7 +33,7 @@ dataSources:
         - event: PaymentMade(indexed address,address,uint256,indexed uint8,indexed uint256,string)
           handler: handlePaymentMade
         - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleMint
+          handler: handleMint # TODO FIX this should be called on the mint not on the transfer
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
