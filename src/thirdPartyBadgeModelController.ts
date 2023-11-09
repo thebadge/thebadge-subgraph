@@ -5,16 +5,18 @@ import {
   BadgeModelThirdPartyMetaData,
   BadgeModel,
   ControllerConfig,
-  BadgeThirdPartyMetaData
+  BadgeThirdPartyMetaData,
+  Badge
 } from "../generated/schema";
 import {
   Initialize,
   NewThirdPartyBadgeModel,
+  ThirdPartyBadgeClaimed,
   ThirdPartyBadgeMinted,
   TpBadgeModelController
 } from "../generated/TpBadgeModelController/TpBadgeModelController";
 import { TpBadgeModelControllerStore } from "../generated/TpBadgeModelController/TpBadgeModelControllerStore";
-import { getTBStatus } from "./utils";
+import { getTBStatus, loadUserOrGetDefault } from "./utils";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
@@ -98,4 +100,30 @@ export function handleMintThirdPartyBadge(event: ThirdPartyBadgeMinted): void {
   badgeThirdPartyMetaData.itemID = itemID;
   badgeThirdPartyMetaData.tcrStatus = getTBStatus(itemStatus);
   badgeThirdPartyMetaData.save();
+}
+
+// event ThirdPartyBadgeClaimed(address indexed originAddress,address indexed recipientAddress,uint256 indexed badgeId);
+export function handleThirdPartyBadgeClaim(
+  event: ThirdPartyBadgeClaimed
+): void {
+  const badgeId = event.params.badgeId;
+  const recipientAddress = event.params.recipientAddress;
+  // const originAddress = event.params.originAddress;
+
+  // badge
+  const badgeFound = Badge.load(badgeId.toString());
+
+  if (!badgeFound) {
+    log.error(
+      `handleThirdPartyBadgeClaim - badge claimed with id: {} not found!`,
+      [badgeId.toString()]
+    );
+    return;
+  }
+
+  // Loads or creates the recipient user if does not exists
+  const user = loadUserOrGetDefault(recipientAddress.toHexString());
+
+  badgeFound.account = user.id;
+  badgeFound.save();
 }
