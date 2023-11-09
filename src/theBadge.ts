@@ -1,6 +1,6 @@
 import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
 import {
-  BadgeRequested,
+  BadgeRequested, BadgeTransferred,
   Initialize,
   PaymentMade,
   ProtocolSettingsUpdated,
@@ -306,6 +306,32 @@ export function handleMint(event: BadgeRequested): void {
     badgeModel.id,
     contractAddress
   );
+}
+
+// event BadgeTransferred(uint256 indexed badgeId, address indexed origin, address indexed destination);
+export function handleClaim(
+    event: BadgeTransferred
+): void {
+  const badgeId = event.params.badgeId;
+  const recipientAddress = event.params.destination;
+
+  // badge
+  const badgeFound = Badge.load(badgeId.toString());
+
+  if (!badgeFound) {
+    log.error(
+        `handleClaim - badge claimed with id: {} not found!`,
+        [badgeId.toString()]
+    );
+    return;
+  }
+
+  // Loads or creates the recipient user if does not exists
+  const user = loadUserOrGetDefault(recipientAddress.toHexString());
+
+  badgeFound.account = user.id;
+  badgeFound.claimedTxHash = event.transaction.hash;
+  badgeFound.save();
 }
 
 // BadgeModelUpdated(uint256 indexed badgeModelId);

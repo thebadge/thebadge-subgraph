@@ -34,6 +34,8 @@ dataSources:
           handler: handlePaymentMade
         - event: BadgeRequested(indexed uint256,indexed uint256,indexed address,address,uint256)
           handler: handleMint
+        - event: BadgeTransferred(indexed uint256,indexed address,indexed address)
+          handler: handleClaim
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
@@ -161,8 +163,6 @@ dataSources:
           handler: handleNewThirdPartyBadgeModel
         - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
           handler: handleMintThirdPartyBadge
-        - event: ThirdPartyBadgeClaimed(indexed address,indexed address,indexed uint256)
-          handler: handleThirdPartyBadgeClaim
 
 templates:
   - kind: ethereum/contract
