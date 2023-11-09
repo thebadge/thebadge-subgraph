@@ -108,7 +108,6 @@ export function handleThirdPartyBadgeClaim(
 ): void {
   const badgeId = event.params.badgeId;
   const recipientAddress = event.params.recipientAddress;
-  // const originAddress = event.params.originAddress;
 
   // badge
   const badgeFound = Badge.load(badgeId.toString());
