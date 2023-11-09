@@ -161,6 +161,8 @@ dataSources:
           handler: handleNewThirdPartyBadgeModel
         - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
           handler: handleMintThirdPartyBadge
+        - event: ThirdPartyBadgeClaimed(indexed address,indexed address,indexed uint256)
+          handler: handleThirdPartyBadgeClaim
 
 templates:
   - kind: ethereum/contract
