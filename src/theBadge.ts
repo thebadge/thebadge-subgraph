@@ -300,7 +300,6 @@ export function handleMint(event: BadgeRequested): void {
   const user = loadUserOrGetDefault(badgeRecipient);
 
   // Updates statistics
-
   handleMintStatisticsUpdate(
     user.id,
     badgeModel.creator,
