@@ -1,9 +1,20 @@
-# TheBadge - subgraph
+<div style="text-align: center;">
+  <a href="https://thebadge.xyz">
+    <img alt="TheBadge" src="https://www.thebadge.xyz/the_badge_github_logo.png">
+  </a>
+</div>
 
-![the_badge.png](assets%2Fimages%2Fthe_badge.png)
+<h1 align="center">TheBadge DApp Subgraph</h1>
 
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/thebadge/thebadge-relayer/issues)
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/thebadge/thebadge-relayer/blob/main/LICENSE)
+<p align="center">
+  <a href="https://discord.com/invite/FTxtkgbAC4"><img src="https://img.shields.io/discord/1006480637512917033?style=plastic" alt="Join to Discord"></a>
+  <a href="https://github.com/thebadge/thebadge-subgraph/issues"><img src="https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat" alt="contributions welcome"></a>
+  <a href="https://twitter.com/intent/user?screen_name=thebadgexyz"><img src="https://img.shields.io/twitter/follow/thebadgexyz?style=social" alt="Follow us on Twitter"></a>
+  <a href="https://github.com/thebadge/thebadge-subgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT licensed"></a>
+  <a href="https://github.com/thebadge/thebadge-subgraph/releases"><img src="https://img.shields.io/github/v/release/thebadge/thebadge-subgraph?label=Latest%20Release" alt="Latest release"></a>
+</p>
+
+For questions or request information reach out via [Discord](https://discord.gg/tVP75NqVuC).
 
 # Setup
 
