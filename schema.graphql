@@ -70,6 +70,7 @@ type Badge @entity {
   status: BadgeStatus!
   validUntil: BigInt!
   createdAt: BigInt!
+  claimedAt: BigInt!
   createdTxHash: Bytes!
   claimedTxHash: Bytes
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")

@@ -1,6 +1,7 @@
 import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
 import {
-  BadgeRequested, BadgeTransferred,
+  BadgeRequested,
+  BadgeTransferred,
   Initialize,
   PaymentMade,
   ProtocolSettingsUpdated,
@@ -309,9 +310,7 @@ export function handleMint(event: BadgeRequested): void {
 }
 
 // event BadgeTransferred(uint256 indexed badgeId, address indexed origin, address indexed destination);
-export function handleClaim(
-    event: BadgeTransferred
-): void {
+export function handleClaim(event: BadgeTransferred): void {
   const badgeId = event.params.badgeId;
   const recipientAddress = event.params.destination;
 
@@ -319,18 +318,23 @@ export function handleClaim(
   const badgeFound = Badge.load(badgeId.toString());
 
   if (!badgeFound) {
-    log.error(
-        `handleClaim - badge claimed with id: {} not found!`,
-        [badgeId.toString()]
-    );
+    log.error(`handleClaim - badge claimed with id: {} not found!`, [
+      badgeId.toString()
+    ]);
     return;
   }
+
+  const theBadge = TheBadge.bind(event.address);
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
+  const _badge = theBadgeStore.badges(badgeId);
 
   // Loads or creates the recipient user if does not exists
   const user = loadUserOrGetDefault(recipientAddress.toHexString());
 
   badgeFound.account = user.id;
   badgeFound.claimedTxHash = event.transaction.hash;
+  badgeFound.claimedAt = event.block.timestamp;
+  badgeFound.validUntil = _badge.getDueDate();
   badgeFound.save();
 }
 
