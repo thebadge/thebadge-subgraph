@@ -70,7 +70,7 @@ type Badge @entity {
   status: BadgeStatus!
   validUntil: BigInt!
   createdAt: BigInt!
-  claimedAt: BigInt!
+  claimedAt: BigInt
   createdTxHash: Bytes!
   claimedTxHash: Bytes
   contractAddress: Bytes!
