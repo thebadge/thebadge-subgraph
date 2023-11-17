@@ -290,9 +290,11 @@ export function handleMint(event: BadgeRequested): void {
   badge.badgeModel = badgeModelID;
   badge.account = badgeRecipient;
   badge.status = badgeStatus;
+  // TODO CONVERT * 1000 is used to convert the Ethereum timestamp (in seconds) to JavaScript's expected milliseconds.
   badge.validUntil = _badge.getDueDate();
   badge.createdAt = event.block.timestamp;
   badge.createdTxHash = event.transaction.hash;
+  badge.contractAddress = event.address;
   badge.uri = theBadge.uri(badgeId);
   badge.networkName = dataSource.network();
   badge.save();
