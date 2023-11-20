@@ -101,28 +101,3 @@ export function handleMintThirdPartyBadge(event: ThirdPartyBadgeMinted): void {
   badgeThirdPartyMetaData.tcrStatus = getTBStatus(itemStatus);
   badgeThirdPartyMetaData.save();
 }
-
-// event ThirdPartyBadgeClaimed(address indexed originAddress,address indexed recipientAddress,uint256 indexed badgeId);
-export function handleThirdPartyBadgeClaim(
-  event: ThirdPartyBadgeClaimed
-): void {
-  const badgeId = event.params.badgeId;
-  const recipientAddress = event.params.recipientAddress;
-
-  // badge
-  const badgeFound = Badge.load(badgeId.toString());
-
-  if (!badgeFound) {
-    log.error(
-      `handleThirdPartyBadgeClaim - badge claimed with id: {} not found!`,
-      [badgeId.toString()]
-    );
-    return;
-  }
-
-  // Loads or creates the recipient user if does not exists
-  const user = loadUserOrGetDefault(recipientAddress.toHexString());
-
-  badgeFound.account = user.id;
-  badgeFound.save();
-}
