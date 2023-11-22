@@ -30,7 +30,6 @@ import {
   TheBadgeBadgeStatus_Requested
 } from "./utils";
 import {
-  TheBadgeUsers,
   UpdatedUser,
   UserRegistered
 } from "../generated/TheBadgeUsers/TheBadgeUsers";
@@ -41,6 +40,7 @@ import {
   TheBadgeModels
 } from "../generated/TheBadgeModels/TheBadgeModels";
 import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
+import { TheBadgeUsers } from "../generated/TheBadge/TheBadgeUsers";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
@@ -48,7 +48,6 @@ export function handleContractInitialized(event: Initialize): void {
   const admin = event.params.admin;
   const theBadge = TheBadge.bind(event.address);
   const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
-  const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
@@ -58,7 +57,10 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.feeCollector = theBadgeStore.feeCollector();
-  protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+
+  // TODO FIX
+  // protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+  protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();

@@ -5,21 +5,19 @@ import {
   BadgeModelThirdPartyMetaData,
   BadgeModel,
   ControllerConfig,
-  BadgeThirdPartyMetaData,
-  Badge
+  BadgeThirdPartyMetaData
 } from "../generated/schema";
 import {
   Initialize,
   NewThirdPartyBadgeModel,
-  ThirdPartyBadgeClaimed,
   ThirdPartyBadgeMinted,
   TpBadgeModelController
 } from "../generated/TpBadgeModelController/TpBadgeModelController";
 import { TpBadgeModelControllerStore } from "../generated/TpBadgeModelController/TpBadgeModelControllerStore";
-import { getTBStatus, loadUserOrGetDefault } from "./utils";
+import { getTBStatus } from "./utils";
 
 // event Initialize(address indexed admin);
-export function handleContractInitialized(event: Initialize): void {
+export function handleThirdPartyContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const admin = event.params.admin;
   const tpBadgeModelController = TpBadgeModelController.bind(event.address);
