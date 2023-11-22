@@ -70,8 +70,10 @@ type Badge @entity {
   status: BadgeStatus!
   validUntil: BigInt!
   createdAt: BigInt!
+  claimedAt: BigInt
   createdTxHash: Bytes!
   claimedTxHash: Bytes
+  contractAddress: Bytes!
   badgeKlerosMetaData: BadgeKlerosMetaData @derivedFrom(field: "badge")
   badgeThirdPartyMetaData: BadgeThirdPartyMetaData @derivedFrom(field: "badge")
   networkName: String! # The id of the network in which this badgeModel has been created
