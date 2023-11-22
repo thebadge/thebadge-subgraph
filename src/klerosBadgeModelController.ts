@@ -28,7 +28,7 @@ import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
 import { KlerosBadgeModelControllerStore } from "../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
 
 // event Initialize(address indexed admin,address tcrFactory);
-export function handleContractInitialized(event: Initialize): void {
+export function handleKlerosContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const klerosBadgeModelController = KlerosBadgeModelController.bind(
     event.address

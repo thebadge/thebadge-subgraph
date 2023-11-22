@@ -25,6 +25,8 @@ dataSources:
           file: ./abis/TheBadge.json
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
       eventHandlers:
         - event: Initialize(indexed address)
           handler: handleContractInitialized
@@ -34,7 +36,7 @@ dataSources:
           handler: handlePaymentMade
         - event: BadgeRequested(indexed uint256,indexed uint256,indexed address,address,uint256)
           handler: handleMint
-        - event: BadgeTransferred(indexed uint256,indexed address,indexed address)
+        - event: BadgeClaimed(indexed uint256,indexed address,indexed address)
           handler: handleClaim
       file: ./src/theBadge.ts
 
@@ -85,6 +87,8 @@ dataSources:
           file: ./abis/TheBadge.json
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
       eventHandlers:
         - event: BadgeModelCreated(indexed uint256)
           handler: handleBadgeModelCreated
@@ -122,9 +126,11 @@ dataSources:
           file: ./abis/TheBadgeModels.json
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
       eventHandlers:
         - event: Initialize(indexed address,indexed address)
-          handler: handleContractInitialized
+          handler: handleKlerosContractInitialized
         - event: NewKlerosBadgeModel(indexed uint256,indexed address,string,string)
           handler: handleNewKlerosBadgeModel
         - event: MintKlerosBadge(indexed uint256,string)
@@ -156,9 +162,11 @@ dataSources:
           file: ./abis/TheBadgeModels.json
         - name: TpBadgeModelControllerStore
           file: ./abis/TpBadgeModelControllerStore.json
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
       eventHandlers:
         - event: Initialize(indexed address)
-          handler: handleContractInitialized
+          handler: handleThirdPartyContractInitialized
         - event: NewThirdPartyBadgeModel(indexed uint256,indexed address)
           handler: handleNewThirdPartyBadgeModel
         - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
