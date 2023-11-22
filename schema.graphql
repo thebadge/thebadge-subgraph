@@ -130,6 +130,7 @@ type User @entity {
   isCreator: Boolean!
   suspended: Boolean!
   isCurator: Boolean!
+  isRegistered: Boolean!
   "User protocol statistics."
   statistics: UserStatistic! @derivedFrom(field: "user")
 }

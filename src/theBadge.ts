@@ -1,7 +1,7 @@
 import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
 import {
+  BadgeClaimed,
   BadgeRequested,
-  BadgeTransferred,
   Initialize,
   PaymentMade,
   ProtocolSettingsUpdated,
@@ -30,7 +30,6 @@ import {
   TheBadgeBadgeStatus_Requested
 } from "./utils";
 import {
-  TheBadgeUsers,
   UpdatedUser,
   UserRegistered
 } from "../generated/TheBadgeUsers/TheBadgeUsers";
@@ -41,6 +40,7 @@ import {
   TheBadgeModels
 } from "../generated/TheBadgeModels/TheBadgeModels";
 import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
+import { TheBadgeUsers } from "../generated/TheBadge/TheBadgeUsers";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
@@ -57,7 +57,10 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.feeCollector = theBadgeStore.feeCollector();
-  protocolConfigs.registerUserProtocolFee = theBadgeStore.registerUserProtocolFee();
+
+  // TODO FIX
+  // protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+  protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
@@ -77,13 +80,14 @@ export function handleUserRegistered(event: UserRegistered): void {
   if (!user) {
     user = new User(id);
     user.metadataUri = event.params.metadata;
-    user.isCompany = theBadgeStore.getUser(event.params.user).isCompany;
+    user.isCompany = theBadgeUsers.getUser(event.params.user).isCompany;
     user.suspended = false;
     user.isCurator = false;
+    user.isCreator = false;
     user.createdBadgeModels = [];
   }
 
-  user.isCreator = true; // TODO REMOVE, this should be managed under the UpdatedUser() listener
+  user.isRegistered = true;
   user.save();
 
   // Setup statistics for the user
@@ -311,8 +315,8 @@ export function handleMint(event: BadgeRequested): void {
   );
 }
 
-// event BadgeTransferred(uint256 indexed badgeId, address indexed origin, address indexed destination);
-export function handleClaim(event: BadgeTransferred): void {
+// event BadgeClaimed(uint256 indexed badgeId, address indexed origin, address indexed destination);
+export function handleClaim(event: BadgeClaimed): void {
   const badgeId = event.params.badgeId;
   const recipientAddress = event.params.destination;
 
@@ -391,6 +395,7 @@ export function handleProtocolSettingsUpdated(
 ): void {
   const theBadge = TheBadge.bind(event.address);
   const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
+  const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
 
   const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
 
@@ -402,7 +407,7 @@ export function handleProtocolSettingsUpdated(
     return;
   }
 
-  protocolConfigs.registerUserProtocolFee = theBadgeStore.registerUserProtocolFee();
+  protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
   protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
   protocolConfigs.save();
