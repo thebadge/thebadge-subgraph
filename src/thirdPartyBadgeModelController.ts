@@ -43,6 +43,9 @@ export function handleNewThirdPartyBadgeModel(
 ): void {
   const badgeModelId = event.params.badgeModelId;
   const tcrAddress = event.params.tcrAddress;
+  const tpBadgeModelController = TpBadgeModelController.bind(event.address);
+  const tpBadgeModelControllerStore = TpBadgeModelControllerStore.bind(tpBadgeModelController.tpBadgeModelControllerStore());
+
 
   const badgeModel = BadgeModel.load(badgeModelId.toString());
   if (!badgeModel) {
@@ -53,6 +56,7 @@ export function handleNewThirdPartyBadgeModel(
     return;
   }
 
+  const tpBadgeModel = tpBadgeModelControllerStore.getBadgeModel(badgeModelId);
   LightGeneralizedTCRTemplate.create(tcrAddress);
   const tcrList = LightGeneralizedTCR.bind(tcrAddress);
 
@@ -66,6 +70,7 @@ export function handleNewThirdPartyBadgeModel(
   badgeModelThirdPartyMetaData.admin = tcrList.relayerContract();
   badgeModelThirdPartyMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelThirdPartyMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
+  badgeModelThirdPartyMetaData.requirementsIPFSHash = tpBadgeModel.requirementsIPFSHash;
   badgeModelThirdPartyMetaData.save();
 
   badgeModel.badgeModelThirdParty = badgeModelThirdPartyMetaData.id;

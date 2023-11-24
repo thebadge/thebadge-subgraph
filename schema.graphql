@@ -58,6 +58,7 @@ type BadgeModelThirdPartyMetaData @entity {
   admin: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
+  requirementsIPFSHash: String!
 }
 
 ## - BADGE
