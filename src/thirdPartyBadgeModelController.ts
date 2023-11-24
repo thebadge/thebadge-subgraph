@@ -102,5 +102,6 @@ export function handleMintThirdPartyBadge(event: ThirdPartyBadgeMinted): void {
   badgeThirdPartyMetaData.badge = badgeId.toString();
   badgeThirdPartyMetaData.itemID = itemID;
   badgeThirdPartyMetaData.tcrStatus = getTBStatus(itemStatus);
+  badgeThirdPartyMetaData.badgeDataUri = tpBadge.badgeDataUri;
   badgeThirdPartyMetaData.save();
 }
