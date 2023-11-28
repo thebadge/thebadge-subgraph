@@ -154,16 +154,13 @@ export function handleUserUpdated(event: UpdatedUser): void {
   }
 
   const contractUser = theBadgeUsers.getUser(event.params.userAddress);
-  const isCreator = contractUser.isCreator;
-  const suspended = contractUser.suspended;
-  const metadata = contractUser.metadata;
 
-  user.isCreator = isCreator;
-  user.metadataUri = metadata;
-  user.suspended = suspended;
+  user.isCreator = contractUser.isCreator;
+  user.metadataUri = contractUser.metadata;
+  user.suspended = contractUser.suspended;
   user.save();
 
-  if (isCreator) {
+  if (contractUser.isCreator) {
     // New creator registered
     if (!statistic.badgeCreators.includes(Bytes.fromHexString(id))) {
       statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
