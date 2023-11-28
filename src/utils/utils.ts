@@ -27,6 +27,7 @@ export function loadUserOrGetDefault(id: string): User {
   user.isCreator = false;
   user.suspended = false;
   user.isCurator = false;
+  user.isRegistered = false;
   user.createdBadgeModels = [];
   user.save();
 

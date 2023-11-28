@@ -59,7 +59,8 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.feeCollector = theBadgeStore.feeCollector();
 
   // TODO FIX
-  // protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+  //   const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+  //protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
@@ -209,6 +210,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
+  badgeModel.createdTxHash = event.transaction.hash;
   badgeModel.version = _badgeModel.getVersion();
   badgeModel.networkName = dataSource.network();
   badgeModel.save();

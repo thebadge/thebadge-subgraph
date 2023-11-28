@@ -28,6 +28,7 @@ type BadgeModel @entity {
   creator: User!
   badgesMintedAmount: BigInt!
   createdAt: BigInt!
+  createdTxHash: Bytes!
   badgeModelKleros: BadgeModelKlerosMetaData
   badgeModelThirdParty: BadgeModelThirdPartyMetaData
   contractAddress: Bytes!
@@ -58,6 +59,7 @@ type BadgeModelThirdPartyMetaData @entity {
   admin: Bytes!
   submissionBaseDeposit: BigInt!
   challengePeriodDuration: BigInt!
+  requirementsIPFSHash: String!
 }
 
 ## - BADGE
@@ -97,6 +99,7 @@ type BadgeThirdPartyMetaData @entity {
   badge: Badge!
   tcrStatus: BadgeStatus!
   itemID: Bytes!
+  badgeDataUri: String!
 }
 
 type _KlerosBadgeIdToBadgeId @entity {
