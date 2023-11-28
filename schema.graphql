@@ -28,6 +28,7 @@ type BadgeModel @entity {
   creator: User!
   badgesMintedAmount: BigInt!
   createdAt: BigInt!
+  createdTxHash: Bytes!
   badgeModelKleros: BadgeModelKlerosMetaData
   badgeModelThirdParty: BadgeModelThirdPartyMetaData
   contractAddress: Bytes!
