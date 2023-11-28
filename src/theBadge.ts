@@ -75,20 +75,25 @@ export function handleUserRegistered(event: UserRegistered): void {
   const theBadgeContractAddress = theBadgeStore.allowedContractAddressesByContractName(
     "TheBadge"
   );
+  const contractUser = theBadgeUsers.getUser(event.params.user);
 
   let user = User.load(id);
-
   if (!user) {
     user = new User(id);
-    user.metadataUri = event.params.metadata;
-    user.isCompany = theBadgeUsers.getUser(event.params.user).isCompany;
-    user.suspended = false;
+    user.metadataUri = contractUser.metadata;
+    user.isCompany = contractUser.isCompany;
+    user.suspended = contractUser.suspended;
     user.isCurator = false;
-    user.isCreator = false;
+    user.isCreator = contractUser.isCreator;
     user.createdBadgeModels = [];
+    user.isRegistered = true;
+  } else {
+    user.metadataUri = contractUser.metadata;
+    user.isCompany = contractUser.isCompany;
+    user.suspended = contractUser.suspended;
+    user.isCreator = contractUser.isCreator;
+    user.isRegistered = true;
   }
-
-  user.isRegistered = true;
   user.save();
 
   // Setup statistics for the user
@@ -138,10 +143,6 @@ export function handleUserUpdated(event: UpdatedUser): void {
   }
 
   const id = event.params.userAddress.toHexString();
-  const isCreator = event.params.isCreator;
-  const suspended = event.params.suspended;
-  const metadata = event.params.metadata;
-
   const user = User.load(id);
 
   if (!user) {
@@ -152,12 +153,14 @@ export function handleUserUpdated(event: UpdatedUser): void {
     return;
   }
 
-  user.isCreator = isCreator;
-  user.metadataUri = metadata;
-  user.suspended = suspended;
+  const contractUser = theBadgeUsers.getUser(event.params.userAddress);
+
+  user.isCreator = contractUser.isCreator;
+  user.metadataUri = contractUser.metadata;
+  user.suspended = contractUser.suspended;
   user.save();
 
-  if (isCreator) {
+  if (contractUser.isCreator) {
     // New creator registered
     if (!statistic.badgeCreators.includes(Bytes.fromHexString(id))) {
       statistic.badgeCreatorsAmount = statistic.badgeCreatorsAmount.plus(
