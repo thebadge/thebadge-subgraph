@@ -210,6 +210,7 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   badgeModel.badgesMintedAmount = BigInt.fromI32(0);
   badgeModel.createdAt = event.block.timestamp;
   badgeModel.contractAddress = event.address;
+  badgeModel.createdTxHash = event.transaction.hash;
   badgeModel.version = _badgeModel.getVersion();
   badgeModel.networkName = dataSource.network();
   badgeModel.save();
