@@ -267,11 +267,12 @@ type ProtocolConfig @entity {
 
   # Configured accounts
   contractAdmin: Bytes! # Address of the contract deployer
-  feeCollector: Bytes! # Address of the account configured to collect the protocol fees
+  feeCollector: Bytes # Address of the account configured to collect the protocol fees
   # Configured fees
   registerUserProtocolFee: BigInt! # Configured protocol fees to pay in order to register as creator
   createBadgeModelProtocolFee: BigInt! # Configured protocol fees to pay in order to create a badge model
   mintBadgeProtocolDefaultFeeInBps: BigInt! # Configured protocol fees in BPS to pay in order to mint a badge model (default value, this will be different in each model)
+  claimBadgeProtocolFee: BigInt! # Configured protocol fees to pay from in order to claim a badge
   controllerConfigs: [ControllerConfig!]
     @derivedFrom(field: "generalProtocolConfig") #
 }
@@ -288,4 +289,28 @@ type ControllerConfig @entity {
   tcrFactory: Bytes # Address of the factory that instanciastes the TCR lists (empty if not klerosController)
   # Configured fees
   verifyUserProtocolFee: BigInt!
+}
+type AdminChanged @entity(immutable: true) {
+  id: Bytes!
+  previousAdmin: Bytes! # address
+  newAdmin: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BeaconUpgraded @entity(immutable: true) {
+  id: Bytes!
+  beacon: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Upgraded @entity(immutable: true) {
+  id: Bytes!
+  implementation: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
 }
