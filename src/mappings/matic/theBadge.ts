@@ -45,23 +45,6 @@ import {
 export function handleContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const admin = event.params.admin;
-  const theBadge = TheBadge.bind(event.address);
-
-  log.error("handleContractInitialized - POLYGON LOADED {} with admin: {}", [
-    contractAddress,
-    admin.toHexString()
-  ]);
-
-  log.error(
-    "handleContractInitialized - theBadgeStore POLYGON LOADED {} at {} with symbol: {}",
-    [
-      event.block.number.toString(),
-      event.block.timestamp.toString(),
-      theBadge.symbol()
-    ]
-  );
-
-  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
@@ -70,14 +53,11 @@ export function handleContractInitialized(event: Initialize): void {
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
-  protocolConfigs.feeCollector = theBadgeStore.feeCollector();
 
-  // TODO FIX
-  //   const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
-  //protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
-  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
+  protocolConfigs.claimBadgeProtocolFee = new BigInt(0);
   protocolConfigs.save();
 }
 
@@ -420,33 +400,41 @@ export function handleBadgeModelSuspended(event: BadgeModelSuspended): void {
 export function handleProtocolSettingsUpdated(
   event: ProtocolSettingsUpdated
 ): void {
-  const theBadge = TheBadge.bind(event.address);
-  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
-  const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+  const theBadgeAddress = event.address;
+  const theBadge = TheBadge.bind(theBadgeAddress);
+  const tbSTore = theBadge.try__badgeStore();
 
-  const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
+  if (!tbSTore.reverted) {
+    log.error("try__badgeStore - NOT reverted!!!! {} {}", [
+      theBadgeAddress.toHexString(),
+      tbSTore.value.toHexString()
+    ]);
+    const theBadgeStore = TheBadgeStore.bind(tbSTore.value);
+    let protocolConfigs = ProtocolConfig.load(theBadgeAddress.toHexString());
 
-  const contractAddress = event.address.toHexString();
+    if (!protocolConfigs) {
+      protocolConfigs = new ProtocolConfig(theBadgeAddress.toHexString());
+    }
 
-  log.error("handleContractInitialized - POLYGON LOADED {}", [contractAddress]);
-
-  log.error(
-    "handleContractInitialized - theBadgeStore POLYGON LOADED with symbol: {}",
-    [theBadge.symbol()]
-  );
-
-  if (!protocolConfigs) {
-    log.error(
-      "handleProtocolSettingsUpdated - protocol settings not found!, ID: {}",
-      [event.address.toHexString()]
+    // Register new statistic using the contractAddress
+    const statistic = initializeProtocolStatistics(
+      theBadgeAddress.toHexString()
     );
-    return;
-  }
+    statistic.save();
 
-  protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
-  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
-  protocolConfigs.save();
+    protocolConfigs.protocolStatistics = statistic.id;
+    protocolConfigs.feeCollector = theBadgeStore.feeCollector();
+
+    const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+    protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+    protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
+    protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+    protocolConfigs.save();
+  } else {
+    log.error("try__badgeStore - reverted! {}", [
+      theBadgeAddress.toHexString()
+    ]);
+  }
 }
 
 // PaymentMade(address indexed recipient,address payer,uint256 amount, PaymentType indexed paymentType,uint256 indexed badgeModelId,string controllerName);
