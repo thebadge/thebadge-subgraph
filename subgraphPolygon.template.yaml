@@ -38,7 +38,7 @@ dataSources:
           handler: handleMint
         - event: BadgeClaimed(indexed uint256,indexed address,indexed address)
           handler: handleClaim
-      file: ./src/theBadge.ts
+      file: ./src/mappings/matic/theBadge.ts
 
   - kind: ethereum/contract
     name: TheBadgeUsers
@@ -64,7 +64,7 @@ dataSources:
           handler: handleUserRegistered
         - event: UpdatedUser(indexed address,string,bool,bool,bool)
           handler: handleUserUpdated
-      file: ./src/theBadge.ts
+      file: ./src/mappings/matic/theBadge.ts
 
   - kind: ethereum/contract
     name: TheBadgeModels
@@ -96,7 +96,7 @@ dataSources:
           handler: handleBadgeModelUpdated
         - event: BadgeModelSuspended(indexed uint256,bool)
           handler: handleBadgeModelSuspended
-      file: ./src/theBadge.ts
+      file: ./src/mappings/matic/theBadge.ts
 
   - kind: ethereum/contract
     name: TpBadgeModelController
@@ -133,39 +133,3 @@ dataSources:
           handler: handleNewThirdPartyBadgeModel
         - event: ThirdPartyBadgeMinted(indexed uint256,indexed bytes32)
           handler: handleMintThirdPartyBadge
-
-templates:
-  - kind: ethereum/contract
-    name: LightGeneralizedTCR
-    network: {{network}}
-    source:
-      abi: LightGeneralizedTCR
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - _EvidenceGroupIDToRequestIDToItemID
-        - Evidence
-        - BadgeModelKlerosMetaData
-      abis:
-        - name: KlerosBadgeModelController
-          file: ./abis/KlerosBadgeModelController.json
-        - name: LightGeneralizedTCR
-          file: ./abis/LightGeneralizedTCR.json
-        - name: TheBadgeModels
-          file: ./abis/TheBadgeModels.json
-        - name: TheBadgeStore
-          file: ./abis/TheBadgeStore.json
-      eventHandlers:
-        - event: RequestSubmitted(indexed bytes32,uint256)
-          handler: handleRequestSubmitted
-        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
-          handler: handleRequestChallenged
-        - event: ItemStatusChange(indexed bytes32,bool)
-          handler: handleStatusUpdated
-        - event: Evidence(indexed address,indexed uint256,indexed address,string)
-          handler: handleEvidence
-        - event: Ruling(indexed address,indexed uint256,uint256)
-          handler: handleRuling
-      file: ./src/lightGeneralizedTCRMapping.ts

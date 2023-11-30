@@ -8,6 +8,7 @@ const chainNameToChainId = {
   gnosis: 100, // Added to avoid bugs
   polygon: 137,
   matic: 137, // Added to avoid bugs
+  mumbai: 80001,
 };
 
 // This works for every chain except for polygon
@@ -142,7 +143,7 @@ async function main() {
   const networkName = process.argv[2];
   const chainId = chainNameToChainId[networkName];
 
-  if (chainId === chainNameToChainId.polygon) {
+  if (chainId === chainNameToChainId.polygon || chainId === chainNameToChainId.mumbai) {
     parsePolygonTemplate();
     return;
   }
