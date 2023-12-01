@@ -57,13 +57,10 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
   protocolConfigs.feeCollector = theBadgeStore.feeCollector();
-
-  // TODO FIX
-  //   const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
-  //protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+  ;
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
-  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
   protocolConfigs.save();
 }
 
@@ -396,26 +393,37 @@ export function handleBadgeModelSuspended(event: BadgeModelSuspended): void {
 
 // ProtocolSettingsUpdated();
 export function handleProtocolSettingsUpdated(
-  event: ProtocolSettingsUpdated
+    event: ProtocolSettingsUpdated
 ): void {
-  const theBadge = TheBadge.bind(event.address);
-  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
-  const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+  const theBadgeAddress = event.address;
+  const theBadge = TheBadge.bind(theBadgeAddress);
+  const tbSTore = theBadge.try__badgeStore();
 
-  const protocolConfigs = ProtocolConfig.load(event.address.toHexString());
+  if (!tbSTore.reverted) {
+    const theBadgeStore = TheBadgeStore.bind(tbSTore.value);
+    let protocolConfigs = ProtocolConfig.load(theBadgeAddress.toHexString());
 
-  if (!protocolConfigs) {
-    log.error(
-      "handleProtocolSettingsUpdated - protocol settings not found!, ID: {}",
-      [event.address.toHexString()]
+    if (!protocolConfigs) {
+      protocolConfigs = new ProtocolConfig(theBadgeAddress.toHexString());
+    }
+
+    // Register new statistic using the contractAddress
+    const statistic = initializeProtocolStatistics(
+        theBadgeAddress.toHexString()
     );
-    return;
-  }
+    statistic.save();
 
-  protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
-  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
-  protocolConfigs.save();
+    protocolConfigs.protocolStatistics = statistic.id;
+    protocolConfigs.feeCollector = theBadgeStore.feeCollector();
+
+    const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+    protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+    protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
+    protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+    protocolConfigs.save();
+  } else {
+    log.error("try__badgeStore reverted", []);
+  }
 }
 
 // PaymentMade(address indexed recipient,address payer,uint256 amount, PaymentType indexed paymentType,uint256 indexed badgeModelId,string controllerName);
