@@ -1,4 +1,4 @@
-import { BigInt, Bytes, log, dataSource, store } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log, store } from "@graphprotocol/graph-ts";
 import {
   BadgeClaimed,
   BadgeRequested,
@@ -9,12 +9,12 @@ import {
 } from "../generated/TheBadge/TheBadge";
 
 import {
-  BadgeModel,
   Badge,
-  ProtocolStatistic,
-  ProtocolConfig,
   BadgeKlerosMetaData,
+  BadgeModel,
   BadgeThirdPartyMetaData,
+  ProtocolConfig,
+  ProtocolStatistic,
   User
 } from "../generated/schema";
 import {
@@ -41,23 +41,27 @@ import {
 } from "../generated/TheBadgeModels/TheBadgeModels";
 import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
 import { TheBadgeUsers } from "../generated/TheBadge/TheBadgeUsers";
+import { BadgeModelBuilder } from "./utils/builders/badgeModelBuilder";
+import { BadgeBuilder } from "./utils/builders/badgeBuilder";
+import { UserBuilder } from "./utils/builders/userBuilder";
+import { ProtocolConfigsBuilder } from "./utils/builders/protocolConfigsBuilder";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const admin = event.params.admin;
-  const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
   const statistic = initializeProtocolStatistics(contractAddress);
   statistic.save();
 
-  protocolConfigs.protocolStatistics = statistic.id;
-  protocolConfigs.contractAdmin = admin;
-  protocolConfigs.registerUserProtocolFee = new BigInt(0);
-  protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
-  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
-  protocolConfigs.claimBadgeProtocolFee = new BigInt(0);
+  // Example usage
+  const protocolConfigsBuilder = new ProtocolConfigsBuilder(
+    contractAddress,
+    statistic.id,
+    admin
+  );
+  const protocolConfigs = protocolConfigsBuilder.build();
   protocolConfigs.save();
 }
 
@@ -71,23 +75,8 @@ export function handleUserRegistered(event: UserRegistered): void {
   );
   const contractUser = theBadgeUsers.getUser(event.params.user);
 
-  let user = User.load(id);
-  if (!user) {
-    user = new User(id);
-    user.metadataUri = contractUser.metadata;
-    user.isCompany = contractUser.isCompany;
-    user.suspended = contractUser.suspended;
-    user.isCurator = false;
-    user.isCreator = contractUser.isCreator;
-    user.createdBadgeModels = [];
-    user.isRegistered = true;
-  } else {
-    user.metadataUri = contractUser.metadata;
-    user.isCompany = contractUser.isCompany;
-    user.suspended = contractUser.suspended;
-    user.isCreator = contractUser.isCreator;
-    user.isRegistered = true;
-  }
+  const userBuilder = new UserBuilder(id, contractUser);
+  const user = userBuilder.build();
   user.save();
 
   // Setup statistics for the user
@@ -195,21 +184,13 @@ export function handleBadgeModelCreated(event: BadgeModelCreated): void {
   }
 
   // Badge model
-  const badgeModel = new BadgeModel(badgeModelId.toString());
-  badgeModel.uri = _badgeModel.getMetadata();
-  badgeModel.controllerType = _badgeModel.getControllerName();
-  badgeModel.validFor = _badgeModel.getValidFor();
-  badgeModel.creatorFee = _badgeModel.getMintCreatorFee();
-  badgeModel.protocolFeeInBps = _badgeModel.getMintProtocolFee();
-  badgeModel.totalFeesGenerated = BigInt.fromI32(0);
-  badgeModel.paused = false;
-  badgeModel.creator = user.id;
-  badgeModel.badgesMintedAmount = BigInt.fromI32(0);
-  badgeModel.createdAt = event.block.timestamp;
-  badgeModel.contractAddress = event.address;
-  badgeModel.createdTxHash = event.transaction.hash;
-  badgeModel.version = _badgeModel.getVersion();
-  badgeModel.networkName = dataSource.network();
+  const badgeModelBuilder = new BadgeModelBuilder(
+    badgeModelId.toString(),
+    _badgeModel,
+    user,
+    event
+  );
+  const badgeModel = badgeModelBuilder.build();
   badgeModel.save();
 
   // Updates the user with the new created badge
@@ -287,19 +268,17 @@ export function handleMint(event: BadgeRequested): void {
   );
   badgeModel.save();
 
-  // badge
-  const badgeId = badgeID;
-  const badge = new Badge(badgeId.toString());
-  badge.badgeModel = badgeModelID;
-  badge.account = badgeRecipient;
-  badge.status = badgeStatus;
-  // TODO CONVERT * 1000 is used to convert the Ethereum timestamp (in seconds) to JavaScript's expected milliseconds.
-  badge.validUntil = _badge.getDueDate();
-  badge.createdAt = event.block.timestamp;
-  badge.createdTxHash = event.transaction.hash;
-  badge.contractAddress = event.address;
-  badge.uri = theBadge.uri(badgeId);
-  badge.networkName = dataSource.network();
+  // Badge
+  const badgeBuilder = new BadgeBuilder(
+    badgeID.toString(),
+    badgeModelID,
+    badgeRecipient,
+    badgeStatus,
+    _badge,
+    theBadge.uri(badgeID),
+    event
+  );
+  const badge = badgeBuilder.build();
   badge.save();
 
   // Loads or creates an user if does not exists
