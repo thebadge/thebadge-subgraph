@@ -108,10 +108,5 @@
       "address": "0xB085F625E976c913b82Bf291d32Dc0E55566D3Af",
       "startBlock": 4744555
     }
-  },
-  "matic": {
-    "Contract": {
-      "address": "0xE6c5c3174439DA7D2D60456Ca7eB97E7Dcd551e6"
-    }
   }
 }

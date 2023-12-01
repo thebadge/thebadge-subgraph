@@ -402,39 +402,27 @@ export function handleProtocolSettingsUpdated(
 ): void {
   const theBadgeAddress = event.address;
   const theBadge = TheBadge.bind(theBadgeAddress);
-  const tbSTore = theBadge.try__badgeStore();
 
-  if (!tbSTore.reverted) {
-    log.error("try__badgeStore - NOT reverted!!!! {} {}", [
-      theBadgeAddress.toHexString(),
-      tbSTore.value.toHexString()
-    ]);
-    const theBadgeStore = TheBadgeStore.bind(tbSTore.value);
-    let protocolConfigs = ProtocolConfig.load(theBadgeAddress.toHexString());
+  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
+  let protocolConfigs = ProtocolConfig.load(theBadgeAddress.toHexString());
 
-    if (!protocolConfigs) {
-      protocolConfigs = new ProtocolConfig(theBadgeAddress.toHexString());
-    }
-
-    // Register new statistic using the contractAddress
-    const statistic = initializeProtocolStatistics(
-      theBadgeAddress.toHexString()
-    );
-    statistic.save();
-
-    protocolConfigs.protocolStatistics = statistic.id;
-    protocolConfigs.feeCollector = theBadgeStore.feeCollector();
-
-    const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
-    protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
-    protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
-    protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
-    protocolConfigs.save();
-  } else {
-    log.error("try__badgeStore - reverted! {}", [
-      theBadgeAddress.toHexString()
-    ]);
+  if (!protocolConfigs) {
+    protocolConfigs = new ProtocolConfig(theBadgeAddress.toHexString());
   }
+
+  // Register new statistic using the contractAddress
+  const statistic = initializeProtocolStatistics(theBadgeAddress.toHexString());
+  statistic.save();
+
+  protocolConfigs.protocolStatistics = statistic.id;
+  protocolConfigs.feeCollector = theBadgeStore.feeCollector();
+
+  const theBadgeUsers = TheBadgeUsers.bind(theBadge._badgeUsers());
+  protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
+  protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
+  protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+  protocolConfigs.claimBadgeProtocolFee = new BigInt(0);
+  protocolConfigs.save();
 }
 
 // PaymentMade(address indexed recipient,address payer,uint256 amount, PaymentType indexed paymentType,uint256 indexed badgeModelId,string controllerName);

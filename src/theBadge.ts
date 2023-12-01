@@ -57,6 +57,7 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
+  protocolConfigs.claimBadgeProtocolFee = new BigInt(0);
   protocolConfigs.save();
 }
 
