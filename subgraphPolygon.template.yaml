@@ -111,7 +111,7 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/thirdPartyBadgeModelController.ts
+      file: ./src/mappings/matic/thirdPartyBadgeModelController.ts
       entities:
         - BadgeModelThirdPartyMetaData
         - BadgeThirdPartyMetaData
@@ -150,12 +150,10 @@ templates:
         - _EvidenceGroupIDToRequestIDToItemID
         - Evidence
       abis:
-        - name: KlerosBadgeModelController
-          file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadgeModels
           file: ./abis/TheBadgeModels.json
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
-      file: ./src/lightGeneralizedTCRMapping.ts
+      file: ./src/mappings/matic/thirdPartyBadgeModelController.ts
