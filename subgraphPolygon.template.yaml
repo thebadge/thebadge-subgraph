@@ -27,6 +27,8 @@ dataSources:
           file: ./abis/TheBadgeStore.json
         - name: TheBadgeUsers
           file: ./abis/TheBadgeUsers.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
       eventHandlers:
         - event: Initialize(indexed address)
           handler: handleContractInitialized

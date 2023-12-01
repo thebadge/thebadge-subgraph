@@ -39,7 +39,7 @@ import {
   BadgeModelSuspended,
   BadgeModelUpdated,
   TheBadgeModels
-} from "../../../generated/TheBadgeModels/TheBadgeModels";
+} from "../../../generated/TheBadge/TheBadgeModels";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {
