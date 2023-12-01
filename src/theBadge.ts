@@ -46,8 +46,6 @@ import { TheBadgeUsers } from "../generated/TheBadge/TheBadgeUsers";
 export function handleContractInitialized(event: Initialize): void {
   const contractAddress = event.address.toHexString();
   const admin = event.params.admin;
-  const theBadge = TheBadge.bind(event.address);
-  const theBadgeStore = TheBadgeStore.bind(theBadge._badgeStore());
   const protocolConfigs = new ProtocolConfig(contractAddress);
 
   // Register new statistic using the contractAddress
@@ -56,8 +54,6 @@ export function handleContractInitialized(event: Initialize): void {
 
   protocolConfigs.protocolStatistics = statistic.id;
   protocolConfigs.contractAdmin = admin;
-  protocolConfigs.feeCollector = theBadgeStore.feeCollector();
-  ;
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
@@ -393,7 +389,7 @@ export function handleBadgeModelSuspended(event: BadgeModelSuspended): void {
 
 // ProtocolSettingsUpdated();
 export function handleProtocolSettingsUpdated(
-    event: ProtocolSettingsUpdated
+  event: ProtocolSettingsUpdated
 ): void {
   const theBadgeAddress = event.address;
   const theBadge = TheBadge.bind(theBadgeAddress);
@@ -409,7 +405,7 @@ export function handleProtocolSettingsUpdated(
 
     // Register new statistic using the contractAddress
     const statistic = initializeProtocolStatistics(
-        theBadgeAddress.toHexString()
+      theBadgeAddress.toHexString()
     );
     statistic.save();
 
