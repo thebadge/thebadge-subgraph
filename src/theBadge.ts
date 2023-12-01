@@ -57,6 +57,7 @@ export function handleContractInitialized(event: Initialize): void {
   protocolConfigs.registerUserProtocolFee = new BigInt(0);
   protocolConfigs.createBadgeModelProtocolFee = new BigInt(0);
   protocolConfigs.mintBadgeProtocolDefaultFeeInBps = new BigInt(0);
+  protocolConfigs.claimBadgeProtocolFee = new BigInt(0);
   protocolConfigs.save();
 }
 
@@ -416,6 +417,7 @@ export function handleProtocolSettingsUpdated(
     protocolConfigs.registerUserProtocolFee = theBadgeUsers.getRegisterFee();
     protocolConfigs.createBadgeModelProtocolFee = theBadgeStore.createBadgeModelProtocolFee();
     protocolConfigs.mintBadgeProtocolDefaultFeeInBps = theBadgeStore.mintBadgeProtocolDefaultFeeInBps();
+    protocolConfigs.claimBadgeProtocolFee = theBadgeStore.claimBadgeProtocolFee();
     protocolConfigs.save();
   } else {
     log.error("try__badgeStore reverted", []);
