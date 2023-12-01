@@ -4,6 +4,14 @@
       "address": "0x4e14816A80D7c4FeEeb56C225e821c6374F4AB56",
       "startBlock": 10087962
     },
+    "11155111": {
+      "address": "0x4e14816A80D7c4FeEeb56C225e821c6374F4AB56",
+      "startBlock": 4744183
+    },
+    "80001": {
+      "address": "0xBc8B15322279D7DEDfA6f38EC22075491aEDDB0f",
+      "startBlock": 43011272
+    },
     "100": {
       "address": "0x5f90580636AE29a9E4CD2AFFCE6d73501cD594F2",
       "startBlock": 31079376
@@ -11,20 +19,20 @@
     "137": {
       "address": "0xE6c5c3174439DA7D2D60456Ca7eB97E7Dcd551e6",
       "startBlock": 50544671
-    },
-    "80001": {
-      "address": "0xBc8B15322279D7DEDfA6f38EC22075491aEDDB0f",
-      "startBlock": 43011272
-    },
-    "11155111": {
-      "address": "0x4e14816A80D7c4FeEeb56C225e821c6374F4AB56",
-      "startBlock": 4744183
     }
   },
   "TheBadgeUsers": {
     "5": {
       "address": "0xbAaA5510144470eBE7260B743CA5516596A0250E",
       "startBlock": 10087961
+    },
+    "11155111": {
+      "address": "0xbAaA5510144470eBE7260B743CA5516596A0250E",
+      "startBlock": 4744182
+    },
+    "80001": {
+      "address": "0xAdCd2Cd1249211EeD1D4d72b1E8B53F3A792e5da",
+      "startBlock": 43011254
     },
     "100": {
       "address": "0x8C0DcD187127b88665fE8FD4F39Cb18758946C0f",
@@ -33,20 +41,20 @@
     "137": {
       "address": "0x8Edfc741aED6B2C43485983d4C7b6B095b00500c",
       "startBlock": 50544539
-    },
-    "80001": {
-      "address": "0xAdCd2Cd1249211EeD1D4d72b1E8B53F3A792e5da",
-      "startBlock": 43011254
-    },
-    "11155111": {
-      "address": "0xbAaA5510144470eBE7260B743CA5516596A0250E",
-      "startBlock": 4744182
     }
   },
   "TheBadgeModels": {
     "5": {
       "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
       "startBlock": 10088118
+    },
+    "11155111": {
+      "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
+      "startBlock": 4744346
+    },
+    "80001": {
+      "address": "0x3540D8484C5ab270b53e16EDD71791d37A49BBf8",
+      "startBlock": 43011262
     },
     "100": {
       "address": "0x277D01AACE02C9e6Fa617Ea61Ece24BEDa46453c",
@@ -55,20 +63,20 @@
     "137": {
       "address": "0x3C838b8571c53D29108F69b98145f8FcC446Fa5a",
       "startBlock": 50544663
-    },
-    "80001": {
-      "address": "0x3540D8484C5ab270b53e16EDD71791d37A49BBf8",
-      "startBlock": 43011262
-    },
-    "11155111": {
-      "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
-      "startBlock": 4744346
     }
   },
   "KlerosBadgeModelController": {
     "5": {
       "address": "0x2C68a077fc4b4e694958A978b409e4127D68f811",
       "startBlock": 10088369
+    },
+    "11155111": {
+      "address": "0x2C68a077fc4b4e694958A978b409e4127D68f811",
+      "startBlock": 4744553
+    },
+    "80001": {
+      "address": "0xfD4403b0A7e39232bADFC188298F4a08AB20A6D9",
+      "startBlock": 43011296
     },
     "100": {
       "address": "0x51e6775fFcDc4E7bd819663E9CabD2bE723C4fBf",
@@ -77,20 +85,20 @@
     "137": {
       "address": "0x5b7a6b423246df397daa10f416e42ebff63d0bc4",
       "startBlock": 50613363
-    },
-    "80001": {
-      "address": "0xfD4403b0A7e39232bADFC188298F4a08AB20A6D9",
-      "startBlock": 43011296
-    },
-    "11155111": {
-      "address": "0x2C68a077fc4b4e694958A978b409e4127D68f811",
-      "startBlock": 4744553
     }
   },
   "TpBadgeModelController": {
     "5": {
       "address": "0xB085F625E976c913b82Bf291d32Dc0E55566D3Af",
       "startBlock": 10088371
+    },
+    "11155111": {
+      "address": "0xB085F625E976c913b82Bf291d32Dc0E55566D3Af",
+      "startBlock": 4744555
+    },
+    "80001": {
+      "address": "0x323370530CC8481Bb1599d4C9d565053c8BADAb1",
+      "startBlock": 43011311
     },
     "100": {
       "address": "0xDd3472bD0B1382e90238D19b5916C71a657eF223",
@@ -99,14 +107,6 @@
     "137": {
       "address": "0x4dC5E2FaC3D0254fEF7f40163261b9307c1C9df3",
       "startBlock": 50547525
-    },
-    "80001": {
-      "address": "0x323370530CC8481Bb1599d4C9d565053c8BADAb1",
-      "startBlock": 43011311
-    },
-    "11155111": {
-      "address": "0xB085F625E976c913b82Bf291d32Dc0E55566D3Af",
-      "startBlock": 4744555
     }
   }
 }
