@@ -55,7 +55,6 @@ export function handleContractInitialized(event: Initialize): void {
   const statistic = initializeProtocolStatistics(contractAddress);
   statistic.save();
 
-  // Example usage
   const protocolConfigsBuilder = new ProtocolConfigsBuilder(
     contractAddress,
     statistic.id,
