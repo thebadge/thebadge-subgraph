@@ -34,7 +34,7 @@ After installing Nodejs and npm you are close to done with installing all of the
 - [graph-cli](https://www.npmjs.com/package/@graphprotocol/graph-cli)
 - [graph-ts](https://www.npmjs.com/package/@graphprotocol/graph-ts)
 
-This is really all that you need, but you can read more about the graph packages [here](https://thegraph.com/docs/en/developing/creating-a-subgraph/#install-the-graph-cli).
+This is really all that you need, but you can read more about The Graph packages [here](https://thegraph.com/docs/en/developing/creating-a-subgraph/#install-the-graph-cli).
 
 After cloning the repo and moving into the head of the repository you should install the project-level npm packages:
 
@@ -57,7 +57,7 @@ In general we follow Google's styling [guide](https://google.github.io/styleguid
 
 From here you should be set to build, run, but what about deploy?
 
-## Authenticate with WheGraph
+## Authenticate with TheGraph
 
 1) First authenticate to TheGraph:
 > Configure your .env file: THE_GRAPH_DEV_TESTING_AUTH_TOKEN
