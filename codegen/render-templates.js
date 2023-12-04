@@ -11,10 +11,9 @@ const chainNameToChainId = {
   mumbai: 80001
 };
 
-const parsePolygonTemplate = () => {
+const getTemplateData = () => {
   const networkName = process.argv[2];
   const chainId = chainNameToChainId[networkName];
-
   const deployments = JSON.parse(fs.readFileSync("networks.json", "utf8"));
   const templateData = {
     network: networkName
@@ -59,23 +58,47 @@ const parsePolygonTemplate = () => {
     startBlock: ThirdPartyBadgeModelControllerStartBlock
   };
 
+  if (
+    chainId !== chainNameToChainId.polygon &&
+    chainId !== chainNameToChainId.mumbai
+  ) {
+    const {
+      address: KlerosBadgeModelControllerAdd,
+      startBlock: KlerosBadgeModelControllerStartBlock
+    } = deployments["KlerosBadgeModelController"][chainId];
+    templateData["KlerosBadgeModelController"] = {
+      address: KlerosBadgeModelControllerAdd,
+      addressLowerCase: KlerosBadgeModelControllerAdd.toLowerCase(),
+      startBlock: KlerosBadgeModelControllerStartBlock
+    };
+  }
+
+  return templateData;
+};
+
+async function main() {
+  const networkName = process.argv[2];
+  const chainId = chainNameToChainId[networkName];
+  let templateNetworkName = "";
+
+  const templateData = getTemplateData();
+
+  if (
+    chainId === chainNameToChainId.polygon ||
+    chainId === chainNameToChainId.mumbai
+  ) {
+    templateNetworkName = "Polygon";
+  }
+
   for (const templatedFileDesc of [["subgraph", "yaml"]]) {
     const template = fs
-      .readFileSync(
-        `${templatedFileDesc[0]}Polygon.template.${templatedFileDesc[1]}`
-      )
+      .readFileSync(`${templatedFileDesc[0]}${templateNetworkName}.template.${templatedFileDesc[1]}`)
       .toString();
     fs.writeFileSync(
       `${templatedFileDesc[0]}.${templatedFileDesc[1]}`,
       mustache.render(template, templateData)
     );
   }
-};
-
-async function main() {
-  const networkName = process.argv[2];
-
-  parsePolygonTemplate();
 }
 
 main();
