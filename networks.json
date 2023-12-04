@@ -81,10 +81,6 @@
     "100": {
       "address": "0x51e6775fFcDc4E7bd819663E9CabD2bE723C4fBf",
       "startBlock": 31079385
-    },
-    "137": {
-      "address": "0x5b7a6b423246df397daa10f416e42ebff63d0bc4",
-      "startBlock": 50613363
     }
   },
   "TpBadgeModelController": {
