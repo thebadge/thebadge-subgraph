@@ -6,13 +6,13 @@ import {
   PaymentMade,
   ProtocolSettingsUpdated,
   TheBadge
-} from "../../../generated/TheBadge/TheBadge";
+} from "../../generated/TheBadge/TheBadge";
 import {
   TheBadgeUsers,
   UpdatedUser,
   UserRegistered
-} from "../../../generated/TheBadge/TheBadgeUsers";
-import { TheBadgeStore } from "../../../generated/TheBadge/TheBadgeStore";
+} from "../../generated/TheBadge/TheBadgeUsers";
+import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
 import {
   Badge,
   BadgeKlerosMetaData,
@@ -21,7 +21,7 @@ import {
   ProtocolConfig,
   ProtocolStatistic,
   User
-} from "../../../generated/schema";
+} from "../../generated/schema";
 import {
   handleMintStatisticsUpdate,
   initializeProtocolStatistics,
@@ -33,13 +33,13 @@ import {
   PaymentType_UserRegistrationFee,
   PaymentType_UserVerificationFee,
   TheBadgeBadgeStatus_Requested
-} from "../../utils";
+} from "../utils";
 import {
   BadgeModelCreated,
   BadgeModelSuspended,
   BadgeModelUpdated,
   TheBadgeModels
-} from "../../../generated/TheBadge/TheBadgeModels";
+} from "../../generated/TheBadge/TheBadgeModels";
 
 // event Initialize(address indexed admin);
 export function handleContractInitialized(event: Initialize): void {

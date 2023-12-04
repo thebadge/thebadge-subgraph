@@ -5,17 +5,17 @@ import {
   BadgeModel,
   ControllerConfig,
   BadgeThirdPartyMetaData
-} from "../../../generated/schema";
+} from "../../generated/schema";
 import {
   Initialize,
   NewThirdPartyBadgeModel,
   ThirdPartyBadgeMinted,
   TpBadgeModelController
-} from "../../../generated/TpBadgeModelController/TpBadgeModelController";
-import { TpBadgeModelControllerStore } from "../../../generated/TpBadgeModelController/TpBadgeModelControllerStore";
-import { getTBStatus } from "../../utils";
-import { LightGeneralizedTCR } from "../../../generated/TpBadgeModelController/LightGeneralizedTCR";
-import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../../../generated/templates";
+} from "../../generated/TpBadgeModelController/TpBadgeModelController";
+import { TpBadgeModelControllerStore } from "../../generated/TpBadgeModelController/TpBadgeModelControllerStore";
+import { getTBStatus } from "../utils";
+import { LightGeneralizedTCR } from "../../generated/TpBadgeModelController/LightGeneralizedTCR";
+import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../../generated/templates";
 
 // event Initialize(address indexed admin);
 export function handleThirdPartyContractInitialized(event: Initialize): void {

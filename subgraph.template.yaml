@@ -101,6 +101,44 @@ dataSources:
       file: ./src/theBadge.ts
 
   - kind: ethereum/contract
+    name: KlerosBadgeModelController
+    network: {{network}}
+    source:
+      address: "{{KlerosBadgeModelController.address}}"
+      startBlock: {{KlerosBadgeModelController.startBlock}}
+      abi: KlerosBadgeModelController
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/klerosBadgeModelController.ts
+      entities:
+        - BadgeModelKlerosMetaData
+        - BadgeKlerosMetaData
+      abis:
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
+        - name: KlerosBadgeModelControllerStore
+          file: ./abis/KlerosBadgeModelControllerStore.json
+        - name: LightGeneralizedTCR
+          file: ./abis/LightGeneralizedTCR.json
+        - name: TheBadge
+          file: ./abis/TheBadge.json
+        - name: TheBadgeModels
+          file: ./abis/TheBadgeModels.json
+        - name: TheBadgeStore
+          file: ./abis/TheBadgeStore.json
+        - name: TheBadgeUsers
+          file: ./abis/TheBadgeUsers.json
+      eventHandlers:
+        - event: Initialize(indexed address,indexed address)
+          handler: handleKlerosContractInitialized
+        - event: NewKlerosBadgeModel(indexed uint256,indexed address,string,string)
+          handler: handleNewKlerosBadgeModel
+        - event: MintKlerosBadge(indexed uint256,string)
+          handler: handleMintKlerosBadge
+
+  - kind: ethereum/contract
     name: TpBadgeModelController
     network: {{network}}
     source:
@@ -149,11 +187,25 @@ templates:
       entities:
         - _EvidenceGroupIDToRequestIDToItemID
         - Evidence
+        - BadgeModelKlerosMetaData
       abis:
+        - name: KlerosBadgeModelController
+          file: ./abis/KlerosBadgeModelController.json
         - name: LightGeneralizedTCR
           file: ./abis/LightGeneralizedTCR.json
         - name: TheBadgeModels
           file: ./abis/TheBadgeModels.json
         - name: TheBadgeStore
           file: ./abis/TheBadgeStore.json
-      file: ./src/mappings/thirdPartyBadgeModelController.ts
+      eventHandlers:
+        - event: RequestSubmitted(indexed bytes32,uint256)
+          handler: handleRequestSubmitted
+        - event: Dispute(indexed address,indexed uint256,uint256,uint256)
+          handler: handleRequestChallenged
+        - event: ItemStatusChange(indexed bytes32,bool)
+          handler: handleStatusUpdated
+        - event: Evidence(indexed address,indexed uint256,indexed address,string)
+          handler: handleEvidence
+        - event: Ruling(indexed address,indexed uint256,uint256)
+          handler: handleRuling
+      file: ./src/mappings/lightGeneralizedTCRMapping.ts
