@@ -7,7 +7,7 @@ import {
   RequestSubmitted,
   Evidence as EvidenceEvent,
   Ruling
-} from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+} from "../../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   Evidence,
   KlerosBadgeRequest,
@@ -20,7 +20,7 @@ import {
   ProtocolStatistic,
   User,
   BadgeModel
-} from "../generated/schema";
+} from "../../generated/schema";
 import {
   DISPUTE_OUTCOME_NONE,
   getArbitrationParamsIndex,
@@ -32,9 +32,9 @@ import {
   TCRItemStatusCode_CLEARING_REQUESTED_CODE,
   TheBadgeBadgeStatus_Challenged,
   updateUsersChallengesStatistics
-} from "./utils";
-import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
-import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
+} from "../utils";
+import { TheBadgeModels } from "../../generated/TheBadgeModels/TheBadgeModels";
+import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
 
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.

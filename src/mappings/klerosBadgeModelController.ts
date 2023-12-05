@@ -1,6 +1,6 @@
 import { Address, BigInt, log } from "@graphprotocol/graph-ts";
-import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../generated/templates";
-import { LightGeneralizedTCR } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../../generated/templates";
+import { LightGeneralizedTCR } from "../../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
 import {
   BadgeModelKlerosMetaData,
   BadgeKlerosMetaData,
@@ -10,22 +10,22 @@ import {
   BadgeModel,
   _ItemIDToEvidenceGroupIDToBadgeID,
   ControllerConfig,
-} from "../generated/schema";
+} from "../../generated/schema";
 import {
   KlerosBadgeModelController,
   NewKlerosBadgeModel,
   MintKlerosBadge,
   Initialize
-} from "../generated/KlerosBadgeModelController/KlerosBadgeModelController";
+} from "../../generated/KlerosBadgeModelController/KlerosBadgeModelController";
 import {
   getArbitrationParamsIndex,
   getTCRRequestIndex,
   DISPUTE_OUTCOME_NONE,
   getTBStatus
-} from "./utils";
-import { TheBadgeStore } from "../generated/TheBadge/TheBadgeStore";
-import { TheBadgeModels } from "../generated/TheBadgeModels/TheBadgeModels";
-import { KlerosBadgeModelControllerStore } from "../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
+} from "../utils";
+import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
+import { TheBadgeModels } from "../../generated/TheBadgeModels/TheBadgeModels";
+import { KlerosBadgeModelControllerStore } from "../../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
 
 // event Initialize(address indexed admin,address tcrFactory);
 export function handleKlerosContractInitialized(event: Initialize): void {

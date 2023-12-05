@@ -5,10 +5,13 @@ const chainNameToChainId = {
   goerli: 5,
   sepolia: 11155111,
   xdai: 100,
-  gnosis: 100 // Added to avoid bugs
+  gnosis: 100, // Added to avoid bugs
+  polygon: 137,
+  matic: 137, // Added to avoid bugs
+  mumbai: 80001
 };
 
-async function main() {
+const getTemplateData = () => {
   const networkName = process.argv[2];
   const chainId = chainNameToChainId[networkName];
   const deployments = JSON.parse(fs.readFileSync("networks.json", "utf8"));
@@ -46,16 +49,6 @@ async function main() {
   };
 
   const {
-    address: KlerosBadgeModelControllerAdd,
-    startBlock: KlerosBadgeModelControllerStartBlock
-  } = deployments["KlerosBadgeModelController"][chainId];
-  templateData["KlerosBadgeModelController"] = {
-    address: KlerosBadgeModelControllerAdd,
-    addressLowerCase: KlerosBadgeModelControllerAdd.toLowerCase(),
-    startBlock: KlerosBadgeModelControllerStartBlock
-  };
-
-  const {
     address: ThirdPartyBadgeModelControllerAdd,
     startBlock: ThirdPartyBadgeModelControllerStartBlock
   } = deployments["TpBadgeModelController"][chainId];
@@ -65,9 +58,41 @@ async function main() {
     startBlock: ThirdPartyBadgeModelControllerStartBlock
   };
 
+  if (
+    chainId !== chainNameToChainId.polygon &&
+    chainId !== chainNameToChainId.mumbai
+  ) {
+    const {
+      address: KlerosBadgeModelControllerAdd,
+      startBlock: KlerosBadgeModelControllerStartBlock
+    } = deployments["KlerosBadgeModelController"][chainId];
+    templateData["KlerosBadgeModelController"] = {
+      address: KlerosBadgeModelControllerAdd,
+      addressLowerCase: KlerosBadgeModelControllerAdd.toLowerCase(),
+      startBlock: KlerosBadgeModelControllerStartBlock
+    };
+  }
+
+  return templateData;
+};
+
+async function main() {
+  const networkName = process.argv[2];
+  const chainId = chainNameToChainId[networkName];
+  let templateNetworkName = "";
+
+  const templateData = getTemplateData();
+
+  if (
+    chainId === chainNameToChainId.polygon ||
+    chainId === chainNameToChainId.mumbai
+  ) {
+    templateNetworkName = "Polygon";
+  }
+
   for (const templatedFileDesc of [["subgraph", "yaml"]]) {
     const template = fs
-      .readFileSync(`${templatedFileDesc[0]}.template.${templatedFileDesc[1]}`)
+      .readFileSync(`${templatedFileDesc[0]}${templateNetworkName}.template.${templatedFileDesc[1]}`)
       .toString();
     fs.writeFileSync(
       `${templatedFileDesc[0]}.${templatedFileDesc[1]}`,

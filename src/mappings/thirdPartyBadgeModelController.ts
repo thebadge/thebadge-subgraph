@@ -1,20 +1,21 @@
 import { log } from "@graphprotocol/graph-ts";
-import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../generated/templates";
-import { LightGeneralizedTCR } from "../generated/templates/LightGeneralizedTCR/LightGeneralizedTCR";
+
 import {
   BadgeModelThirdPartyMetaData,
   BadgeModel,
   ControllerConfig,
   BadgeThirdPartyMetaData
-} from "../generated/schema";
+} from "../../generated/schema";
 import {
   Initialize,
   NewThirdPartyBadgeModel,
   ThirdPartyBadgeMinted,
   TpBadgeModelController
-} from "../generated/TpBadgeModelController/TpBadgeModelController";
-import { TpBadgeModelControllerStore } from "../generated/TpBadgeModelController/TpBadgeModelControllerStore";
-import { getTBStatus } from "./utils";
+} from "../../generated/TpBadgeModelController/TpBadgeModelController";
+import { TpBadgeModelControllerStore } from "../../generated/TpBadgeModelController/TpBadgeModelControllerStore";
+import { getTBStatus } from "../utils";
+import { LightGeneralizedTCR } from "../../generated/TpBadgeModelController/LightGeneralizedTCR";
+import { LightGeneralizedTCR as LightGeneralizedTCRTemplate } from "../../generated/templates";
 
 // event Initialize(address indexed admin);
 export function handleThirdPartyContractInitialized(event: Initialize): void {
@@ -44,8 +45,9 @@ export function handleNewThirdPartyBadgeModel(
   const badgeModelId = event.params.badgeModelId;
   const tcrAddress = event.params.tcrAddress;
   const tpBadgeModelController = TpBadgeModelController.bind(event.address);
-  const tpBadgeModelControllerStore = TpBadgeModelControllerStore.bind(tpBadgeModelController.tpBadgeModelControllerStore());
-
+  const tpBadgeModelControllerStore = TpBadgeModelControllerStore.bind(
+    tpBadgeModelController.tpBadgeModelControllerStore()
+  );
 
   const badgeModel = BadgeModel.load(badgeModelId.toString());
   if (!badgeModel) {
@@ -70,7 +72,8 @@ export function handleNewThirdPartyBadgeModel(
   badgeModelThirdPartyMetaData.admin = tcrList.relayerContract();
   badgeModelThirdPartyMetaData.submissionBaseDeposit = tcrList.submissionBaseDeposit();
   badgeModelThirdPartyMetaData.challengePeriodDuration = tcrList.challengePeriodDuration();
-  badgeModelThirdPartyMetaData.requirementsIPFSHash = tpBadgeModel.requirementsIPFSHash;
+  badgeModelThirdPartyMetaData.requirementsIPFSHash =
+    tpBadgeModel.requirementsIPFSHash;
   badgeModelThirdPartyMetaData.save();
 
   badgeModel.badgeModelThirdParty = badgeModelThirdPartyMetaData.id;
