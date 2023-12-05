@@ -2,7 +2,7 @@
   "name": "thebadge-subgraph",
   "license": "MIT",
   "description": "Subgraph for TheBadge smart contracts",
-  "version": "1.1.0.rc98",
+  "version": "1.1.1",
   "scripts": {
     "codegen:goerli": "node codegen/render-templates.js goerli && graph codegen",
     "codegen:sepolia": "node codegen/render-templates.js sepolia && graph codegen",
