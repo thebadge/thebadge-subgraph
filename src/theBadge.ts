@@ -76,6 +76,7 @@ export function handleUserRegistered(event: UserRegistered): void {
 
   const userBuilder = new UserBuilder(id, contractUser);
   const user = userBuilder.build();
+  user.isRegistered = true;
   user.save();
 
   // Setup statistics for the user
