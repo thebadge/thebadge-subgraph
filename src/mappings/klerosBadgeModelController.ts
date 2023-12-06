@@ -5,7 +5,6 @@ import {
   BadgeModelKlerosMetaData,
   BadgeKlerosMetaData,
   _KlerosBadgeIdToBadgeId,
-  KlerosBadgeRequest,
   Evidence,
   BadgeModel,
   _ItemIDToEvidenceGroupIDToBadgeID,
@@ -17,16 +16,11 @@ import {
   MintKlerosBadge,
   Initialize
 } from "../../generated/KlerosBadgeModelController/KlerosBadgeModelController";
-import {
-  getArbitrationParamsIndex,
-  getTCRRequestIndex,
-  DISPUTE_OUTCOME_NONE,
-  getTBStatus
-} from "../utils";
+import { getTCRRequestIndex, getTBStatus } from "../utils";
 import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
 import { TheBadgeModels } from "../../generated/TheBadgeModels/TheBadgeModels";
 import { KlerosBadgeModelControllerStore } from "../../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
-import { BadgeModelBuilder } from "../utils/builders/badgeModelBuilder";
+
 import { KlerosBadgeRequestBuilder } from "../utils/builders/KlerosBadgeRequestBuilder";
 
 // event Initialize(address indexed admin,address tcrFactory);
@@ -130,19 +124,23 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   const tcr = LightGeneralizedTCR.bind(tcrListAddress);
 
+  const disputeData = tcr.requestsDisputeData(itemID, requestIndex);
   const requestID = itemID.toHexString() + "-" + requestIndex.toString();
-  const request = new KlerosBadgeRequestBuilder({
+  const requesterAddress = klerosBadgeModelControllerStore
+    .klerosBadges(badgeId)
+    .getCallee();
+
+  const request = new KlerosBadgeRequestBuilder(
     requestID,
-    createdAt: event.block.timestamp,
-    badgeKlerosMetadata: badgeId.toString(),
-    type: "Registration",
+    "Registration",
+    event.block.timestamp,
+    badgeId.toString(),
     requestIndex,
+    disputeData.getDisputeID(),
     tcrListAddress,
-    requesterAddress: klerosBadgeModelControllerStore
-      .klerosBadges(badgeId)
-      .getCallee(),
-    arbitrator: tcr.arbitrator()
-  }).build();
+    requesterAddress,
+    tcr.arbitrator()
+  ).build();
 
   request.save();
 

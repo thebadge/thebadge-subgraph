@@ -18,11 +18,9 @@ import {
   BadgeKlerosMetaData,
   _KlerosBadgeIdToBadgeId,
   ProtocolStatistic,
-
   BadgeModel
 } from "../../generated/schema";
 import {
-
   getFinalRuling,
   getTBStatus,
   loadUserCuratorStatisticsOrGetDefault,
@@ -136,17 +134,22 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   const tcrList = Address.fromBytes(badgeModelKlerosMetaData.tcrList);
   const requestIndex = badgeKlerosMetadata.numberOfRequests.toString();
   const requestID = itemID + "-" + requestIndex.toString();
+  const disputeData = tcr.requestsDisputeData(
+    event.params._itemID,
+    badgeKlerosMetadata.numberOfRequests
+  );
 
-  const request = new KlerosBadgeRequestBuilder({
+  const request = new KlerosBadgeRequestBuilder(
     requestID,
-    type: "Clearing",
-    createdAt: event.block.timestamp,
-    badgeKlerosMetadata: badgeKlerosMetadata.id,
-    requestIndex: BigInt.fromString(requestIndex),
-    tcrListAddress: tcrList,
-    requesterAddress: event.transaction.from,
-    arbitrator: tcr.arbitrator()
-  }).build();
+    "Clearing",
+    event.block.timestamp,
+    badgeKlerosMetadata.id,
+    BigInt.fromString(requestIndex),
+    disputeData.getDisputeID(),
+    tcrList,
+    event.transaction.from,
+    tcr.arbitrator()
+  ).build();
 
   request.save();
 
