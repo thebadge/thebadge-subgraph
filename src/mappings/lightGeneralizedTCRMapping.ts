@@ -18,12 +18,9 @@ import {
   BadgeKlerosMetaData,
   _KlerosBadgeIdToBadgeId,
   ProtocolStatistic,
-  User,
   BadgeModel
 } from "../../generated/schema";
 import {
-  DISPUTE_OUTCOME_NONE,
-  getArbitrationParamsIndex,
   getFinalRuling,
   getTBStatus,
   loadUserCuratorStatisticsOrGetDefault,
@@ -35,6 +32,7 @@ import {
 } from "../utils";
 import { TheBadgeModels } from "../../generated/TheBadgeModels/TheBadgeModels";
 import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
+import { KlerosBadgeRequestBuilder } from "../utils/builders/KlerosBadgeRequestBuilder";
 
 // Items on a TCR can be in 1 of 4 states:
 // - (0) Absent: The item is not registered on the TCR and there are no pending requests.
@@ -136,22 +134,23 @@ export function handleRequestSubmitted(event: RequestSubmitted): void {
   const tcrList = Address.fromBytes(badgeModelKlerosMetaData.tcrList);
   const requestIndex = badgeKlerosMetadata.numberOfRequests.toString();
   const requestID = itemID + "-" + requestIndex.toString();
+  const disputeData = tcr.requestsDisputeData(
+    event.params._itemID,
+    badgeKlerosMetadata.numberOfRequests
+  );
 
-  const request = new KlerosBadgeRequest(requestID);
-  request.type = "Clearing";
-  request.createdAt = event.block.timestamp;
-  request.badgeKlerosMetaData = badgeKlerosMetadata.id;
-  request.requestIndex = BigInt.fromString(requestIndex);
-  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrList);
-  request.numberOfEvidences = BigInt.fromI32(1);
-  request.disputed = false;
-  request.disputeID = BigInt.fromI32(0);
-  request.challenger = event.transaction.from;
-  request.disputeOutcome = DISPUTE_OUTCOME_NONE;
-  request.resolved = false;
-  request.resolutionTime = BigInt.fromI32(0);
-  request.arbitrator = tcr.arbitrator();
-  request.requester = event.transaction.from;
+  const request = new KlerosBadgeRequestBuilder(
+    requestID,
+    "Clearing",
+    event.block.timestamp,
+    badgeKlerosMetadata.id,
+    BigInt.fromString(requestIndex),
+    disputeData.getDisputeID(),
+    tcrList,
+    event.transaction.from,
+    tcr.arbitrator()
+  ).build();
+
   request.save();
 
   badgeKlerosMetadata.numberOfRequests = badgeKlerosMetadata.numberOfRequests.plus(
@@ -243,7 +242,7 @@ export function handleRequestChallenged(event: Dispute): void {
   // Marks the user as curator
   const userAddress = event.transaction.from.toHexString();
   const user = loadUserOrGetDefault(userAddress);
-  user.save()
+  user.save();
 
   if (!user) {
     log.error(`handleRequestChallenged - user with address: {} not found`, [
