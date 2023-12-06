@@ -9,7 +9,7 @@ import {
   Evidence,
   BadgeModel,
   _ItemIDToEvidenceGroupIDToBadgeID,
-  ControllerConfig,
+  ControllerConfig
 } from "../../generated/schema";
 import {
   KlerosBadgeModelController,
@@ -26,6 +26,8 @@ import {
 import { TheBadgeStore } from "../../generated/TheBadge/TheBadgeStore";
 import { TheBadgeModels } from "../../generated/TheBadgeModels/TheBadgeModels";
 import { KlerosBadgeModelControllerStore } from "../../generated/KlerosBadgeModelController/KlerosBadgeModelControllerStore";
+import { BadgeModelBuilder } from "../utils/builders/badgeModelBuilder";
+import { KlerosBadgeRequestBuilder } from "../utils/builders/KlerosBadgeRequestBuilder";
 
 // event Initialize(address indexed admin,address tcrFactory);
 export function handleKlerosContractInitialized(event: Initialize): void {
@@ -37,7 +39,7 @@ export function handleKlerosContractInitialized(event: Initialize): void {
   const tcrFactory = event.params.tcrFactory;
 
   const klerosBadgeModelControllerStore = KlerosBadgeModelControllerStore.bind(
-      klerosBadgeModelController.klerosBadgeModelControllerStore()
+    klerosBadgeModelController.klerosBadgeModelControllerStore()
   );
   const controllerConfig = new ControllerConfig(contractAddress);
   controllerConfig.verifyUserProtocolFee = klerosBadgeModelController.getVerifyUserProtocolFee();
@@ -125,27 +127,26 @@ export function handleMintKlerosBadge(event: MintKlerosBadge): void {
     Address.fromBytes(_badgeModelKlerosMetaData.tcrList),
     itemID
   );
-  const requestId = itemID.toHexString() + "-" + requestIndex.toString();
-  const request = new KlerosBadgeRequest(requestId);
   const tcrListAddress = Address.fromBytes(_badgeModelKlerosMetaData.tcrList);
   const tcr = LightGeneralizedTCR.bind(tcrListAddress);
-  request.type = "Registration";
-  request.createdAt = event.block.timestamp;
-  request.badgeKlerosMetaData = badgeId.toString();
-  request.requestIndex = requestIndex;
-  request.arbitrationParamsIndex = getArbitrationParamsIndex(tcrListAddress);
-  request.requester = klerosBadgeModelControllerStore
-    .klerosBadges(badgeId)
-    .getCallee();
-  request.numberOfEvidences = BigInt.fromI32(1);
-  request.disputed = false;
-  request.disputeOutcome = DISPUTE_OUTCOME_NONE;
-  request.resolved = false;
-  request.resolutionTime = BigInt.fromI32(0);
-  request.arbitrator = tcr.arbitrator();
+
+  const requestID = itemID.toHexString() + "-" + requestIndex.toString();
+  const request = new KlerosBadgeRequestBuilder({
+    requestID,
+    createdAt: event.block.timestamp,
+    badgeKlerosMetadata: badgeId.toString(),
+    type: "Registration",
+    requestIndex,
+    tcrListAddress,
+    requesterAddress: klerosBadgeModelControllerStore
+      .klerosBadges(badgeId)
+      .getCallee(),
+    arbitrator: tcr.arbitrator()
+  }).build();
+
   request.save();
 
-  const evidence = new Evidence(requestId + "-" + "0");
+  const evidence = new Evidence(requestID + "-" + "0");
   evidence.uri = event.params.evidence;
   evidence.timestamp = event.block.timestamp;
   evidence.request = request.id;
