@@ -2,7 +2,7 @@
   "name": "thebadge-subgraph",
   "license": "MIT",
   "description": "Subgraph for TheBadge smart contracts",
-  "version": "1.1.2.rc3",
+  "version": "1.1.2.rc4",
   "scripts": {
     "codegen:goerli": "node codegen/render-templates.js goerli && graph codegen",
     "codegen:sepolia": "node codegen/render-templates.js sepolia && graph codegen",
@@ -25,7 +25,7 @@
     "deploy:gnosis-prod": "yarn build:gnosis && graph deploy --version-label=${npm_package_version} --studio thebadge-gnosis-prod",
     "deploy:polygon-prod": "yarn build:matic && graph deploy --version-label=${npm_package_version} --studio thebadge-polygon-prod",
     "deploy:matic-prod": "yarn build:matic && graph deploy --product hosted-service thebadgeadmin/thebadge-polygon-prod",
-    "deploy:avalanche": "yarn build:avalanche && graph deploy --version-label=${npm_package_version} --studio thebadge-polygon-prod",
+    "deploy:avalanche": "yarn build:avalanche && graph deploy --version-label=${npm_package_version} --studio thebadge-avax-prod",
     "deploy:dev": "yarn deploy:goerli-dev && yarn deploy:sepolia-dev && yarn deploy:mumbai-dev",
     "deploy:staging": "yarn deploy:goerli-staging && yarn deploy:sepolia-staging",
     "deploy:prod": "yarn deploy:gnosis-prod && yarn deploy:polygon-prod",
