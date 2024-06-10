@@ -22,7 +22,11 @@
     },
     "43114": {
       "address": "0xd7859d7f8fc33Eee2df9edbafd247a2F398087a6",
-      "startBlock": 46422838
+      "startBlock": 46423013
+    },
+    "10": {
+      "address": "0xd7859d7f8fc33Eee2df9edbafd247a2F398087a6",
+      "startBlock": 121205976
     }
   },
   "TheBadgeUsers": {
@@ -48,7 +52,11 @@
     },
     "43114": {
       "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
-      "startBlock": 46422838
+      "startBlock": 46423001
+    },
+    "10": {
+      "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
+      "startBlock": 121205961
     }
   },
   "TheBadgeModels": {
@@ -74,7 +82,11 @@
     },
     "43114": {
       "address": "0xd53Ec6aB9242cD8f8A8aa839BA91BDeDe6219475",
-      "startBlock": 46422838
+      "startBlock": 46423007
+    },
+    "10": {
+      "address": "0xDb5c2bcfD8cc522B8DD634DC507E135383049566",
+      "startBlock": 121205961
     }
   },
   "KlerosBadgeModelController": {
@@ -97,6 +109,10 @@
     "43114": {
       "address": "0xf668aff78410CAB48ccEB5c804704050c2096eC2",
       "startBlock": 46422838
+    },
+    "10": {
+      "address": "0xf668aff78410CAB48ccEB5c804704050c2096eC2",
+      "startBlock": 121206147
     }
   },
   "TpBadgeModelController": {
@@ -122,7 +138,11 @@
     },
     "43114": {
       "address": "0xA76ba1A457BBCBc4736D9a9028dD29f4e89322e5",
-      "startBlock": 46422838
+      "startBlock": 46423036
+    },
+    "10": {
+      "address": "0xf668aff78410CAB48ccEB5c804704050c2096eC2",
+      "startBlock": 121206147
     }
   }
 }
