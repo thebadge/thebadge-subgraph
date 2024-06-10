@@ -8,7 +8,8 @@ const chainNameToChainId = {
   gnosis: 100, // Added to avoid bugs
   polygon: 137,
   matic: 137, // Added to avoid bugs
-  mumbai: 80001
+  mumbai: 80001,
+  avalanche: 43114
 };
 
 const getTemplateData = () => {
