@@ -9,7 +9,8 @@ const chainNameToChainId = {
   polygon: 137,
   matic: 137, // Added to avoid bugs
   mumbai: 80001,
-  avalanche: 43114
+  avalanche: 43114,
+  optimism: 10
 };
 
 const getTemplateData = () => {
